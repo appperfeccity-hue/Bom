@@ -1,0 +1,29 @@
+{
+  "id": "FEAT-001",
+  "type": "feat",
+  "description": "Mounting/Construction Rules UI - Designer can configure mounting types (DIRECT/PROFILE/COVE) per template lighting entry, with gap values and structure requirements displayed per spec section 55.",
+  "status": "in_progress",
+  "steps": [
+    "Create directory frontend/src/components/MountingRules/ with files: MountingRulesPanel.tsx, AddMountingRuleDialog.tsx, index.ts, and __tests__/ directory.",
+    "In MountingRulesPanel.tsx: Follow the exact pattern from HiddenComponentsPanel.tsx. Accept templateId prop. Check CanvasMode.DESIGNER to hide in consultant mode. Fetch from 'template_lighting' table using fromTable('template_lighting').select('*').eq('template_id', templateId). Display each lighting entry showing: sku_id, edge_selection, mounting_type (with color-coded badge like trigger-type badges), and computed gap/structure info based on mounting_type: DIRECT (gap=0mm, no structure required), PROFILE (gap=0mm, no structure required), COVE (gap=10mm, structure required). Include an 'Add Mounting Rule' button that opens the dialog. Use data-testid='mounting-rules-panel', data-testid='add-mounting-rule-btn', data-testid='no-mounting-rules-msg', data-testid='mounting-rule-item-{id}', data-testid='mounting-type-{id}'.",
+    "In AddMountingRuleDialog.tsx: Follow AddHiddenComponentDialog pattern. Fields: SKU ID (text input), Edge Selection (text input), Mounting Type (select: DIRECT, PROFILE, COVE). Show computed info panel below the mounting type select showing gap_mm and structure_required based on selection. Insert into 'template_lighting' table. Use data-testid='add-mounting-rule-dialog', data-testid='sku-id-input', data-testid='edge-selection-input', data-testid='mounting-type-select', data-testid='gap-info', data-testid='structure-info', data-testid='confirm-btn', data-testid='cancel-btn'.",
+    "In index.ts: Export MountingRulesPanel and AddMountingRuleDialog.",
+    "Create __tests__/MountingRulesPanel.test.tsx following HiddenComponentsPanel.test.tsx pattern. Mock fromTable to return sample lighting data with all 3 mounting types. Test: renders in DESIGNER mode, hidden in CONSULTANT mode, displays items after fetch, shows correct mounting type badges, shows correct gap/structure info for each type, shows empty state, opens dialog on button click. Minimum 8 test cases."
+  ],
+  "acceptance_criteria": [
+    "MountingRulesPanel renders in DESIGNER mode and is hidden in CONSULTANT mode",
+    "Panel fetches and displays template_lighting entries with sku_id, edge_selection, mounting_type",
+    "Gap and structure info is correctly computed and displayed: DIRECT(0mm,no), PROFILE(0mm,no), COVE(10mm,yes)",
+    "Add button opens AddMountingRuleDialog which allows creating new entries",
+    "Dialog inserts into template_lighting table with correct fields",
+    "All new tests pass along with existing 673 tests",
+    "TypeScript strict mode passes with no errors"
+  ],
+  "verification": [
+    "cd frontend && unset NODE_OPTIONS && npx vitest --run src/components/MountingRules/__tests__/",
+    "cd frontend && unset NODE_OPTIONS && npx tsc --noEmit",
+    "cd frontend && unset NODE_OPTIONS && npx vitest --run"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}
