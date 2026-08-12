@@ -13,6 +13,7 @@ import { FurnitureLayer } from './layers/FurnitureLayer';
 import { TrimLayer } from './layers/TrimLayer';
 import { SelectionLayer } from './layers/SelectionLayer';
 import { MeasurementsLayer } from './layers/MeasurementsLayer';
+import { ZoneDimensionsLayer } from './layers/ZoneDimensionsLayer';
 import { useCanvasViewport } from './interactions/useCanvasViewport';
 import { useZoneCreate } from './interactions/useZoneCreate';
 import { useKeyboardShortcuts } from './interactions/useKeyboardShortcuts';
@@ -213,6 +214,7 @@ export function CanvasContainer({ mode }: CanvasContainerProps) {
         <FurnitureLayer wallHeight={wallHeight} />
         <TrimLayer wallHeight={wallHeight} />
         <MeasurementsLayer wallWidth={wallWidth} wallHeight={wallHeight} />
+        <ZoneDimensionsLayer wallHeight={wallHeight} />
         <SelectionLayer wallHeight={wallHeight} />
 
         {/* Creation preview rectangle */}

@@ -9,6 +9,8 @@ import {
   MIN_ZONE_WIDTH,
   MIN_ZONE_HEIGHT,
 } from '@/canvas/utils/zoneConstraints';
+import { doesZoneCrossCorner } from '@/canvas/utils/segmentConstraint';
+import { assignSegment } from '@/canvas/utils/segmentAssignment';
 import { CanvasMode, ZoneWidthStrategy, ZoneHeightStrategy, ZonePositionStrategy } from '@/types/database';
 import type { BoundingBox } from '@/types/canvas';
 import type { HistoryState } from '@/canvas/history/useHistory';
@@ -112,6 +114,27 @@ export function useZoneCreate(history?: HistoryState) {
       return;
     }
 
+    // L_CORNER: reject if zone would cross corner boundary
+    const { wallGeometry, measurements } = useProjectStore.getState();
+    if (wallGeometry === 'L_CORNER' && measurements?.segment_a_width_mm != null) {
+      const cornerAt = { x: measurements.segment_a_width_mm, y: 0 };
+      if (doesZoneCrossCorner(newBox, cornerAt)) {
+        setIsCreating(false);
+        setCreatePreview(null);
+        startPos.current = null;
+        return;
+      }
+    }
+
+    // Compute segment assignment
+    const segment = wallGeometry === 'L_CORNER' && measurements?.segment_a_width_mm != null
+      ? assignSegment(
+          { x_mm: constrained.x, y_mm: constrained.y, width_mm: createPreview.width, height_mm: createPreview.height },
+          { x: measurements.segment_a_width_mm, y: 0 },
+          wallGeometry,
+        )
+      : null;
+
     void (() => {
       // Push current state to history before adding zone
       if (history) {
@@ -128,6 +151,7 @@ export function useZoneCreate(history?: HistoryState) {
         height_strategy: ZoneHeightStrategy.FIXED,
         position_strategy: ZonePositionStrategy.ABSOLUTE,
         z_index: zones.length,
+        segment,
       });
     })();
 

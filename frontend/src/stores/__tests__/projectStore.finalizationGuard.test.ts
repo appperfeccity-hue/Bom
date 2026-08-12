@@ -58,6 +58,7 @@ const makeZone = (id: string): TemplateZone => ({
   height_strategy: ZoneHeightStrategy.FIXED,
   position_strategy: ZonePositionStrategy.ABSOLUTE,
   z_index: 0,
+  segment: null,
   created_at: '2024-01-01T00:00:00Z',
   updated_at: '2024-01-01T00:00:00Z',
 });
@@ -114,6 +115,7 @@ describe('projectStore - finalization guards', () => {
         height_strategy: ZoneHeightStrategy.FIXED,
         position_strategy: ZonePositionStrategy.ABSOLUTE,
         z_index: 1,
+        segment: null,
       });
 
       expect(useProjectStore.getState().zones).toEqual(originalZones);

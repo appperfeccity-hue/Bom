@@ -15,6 +15,7 @@ const makeZone = (id: string, x: number = 0, y: number = 0): TemplateZone => ({
   height_strategy: 'FIXED' as never,
   position_strategy: 'ABSOLUTE' as never,
   z_index: 0,
+  segment: null,
   created_at: '',
   updated_at: '',
 });

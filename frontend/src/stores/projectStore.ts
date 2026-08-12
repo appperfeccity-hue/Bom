@@ -15,6 +15,7 @@ import { fromTable } from '@/lib/supabase';
 import { createDebouncedSave } from '@/lib/autosave';
 import type { SaveStatus } from '@/types/canvas';
 import { useCanvasStore } from '@/stores/canvasStore';
+import { assignSegment } from '@/canvas/utils/segmentAssignment';
 
 export interface ProjectState {
   currentTemplate: Template | null;
@@ -166,6 +167,21 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   updateZone: async (zone: TemplateZone) => {
     // Guard: prevent mutations on a finalized project
     if (get().currentProject?.status === 'FINALIZED') return;
+
+    // Auto-compute segment based on position for L_CORNER walls
+    const { wallGeometry, measurements } = get();
+    if (wallGeometry === 'L_CORNER' && measurements?.segment_a_width_mm != null) {
+      zone = {
+        ...zone,
+        segment: assignSegment(
+          { x_mm: zone.x_mm, y_mm: zone.y_mm, width_mm: zone.width_mm, height_mm: zone.height_mm },
+          { x: measurements.segment_a_width_mm, y: 0 },
+          wallGeometry,
+        ),
+      };
+    } else {
+      zone = { ...zone, segment: null };
+    }
 
     // Optimistic update
     const prevZones = get().zones;

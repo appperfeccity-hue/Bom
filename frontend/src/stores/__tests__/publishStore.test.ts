@@ -50,6 +50,7 @@ const makeZone = (overrides: Partial<TemplateZone> = {}): TemplateZone => ({
   height_strategy: 'FIXED' as TemplateZone['height_strategy'],
   position_strategy: 'ABSOLUTE' as TemplateZone['position_strategy'],
   z_index: 0,
+  segment: null,
   created_at: '2024-01-01T00:00:00Z',
   updated_at: '2024-01-01T00:00:00Z',
   ...overrides,

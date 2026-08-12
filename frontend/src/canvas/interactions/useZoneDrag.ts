@@ -3,6 +3,7 @@ import { useCanvasStore } from '@/stores/canvasStore';
 import { useProjectStore } from '@/stores/projectStore';
 import { snapToGrid } from '@/lib/coordinates';
 import { constrainToWall, hasOverlap } from '@/canvas/utils/zoneConstraints';
+import { doesZoneCrossCorner } from '@/canvas/utils/segmentConstraint';
 import { CanvasMode } from '@/types/database';
 import type { TemplateZone } from '@/types/database';
 import type { HistoryState } from '@/canvas/history/useHistory';
@@ -131,6 +132,27 @@ export function useZoneDrag(history?: HistoryState) {
           }
         }
 
+        // L_CORNER: reject multi-drag if any zone would cross corner boundary
+        const { wallGeometry, measurements } = useProjectStore.getState();
+        if (wallGeometry === 'L_CORNER' && measurements?.segment_a_width_mm != null) {
+          const cornerAt = { x: measurements.segment_a_width_mm, y: 0 };
+          for (const sz of selectedZones) {
+            const newBox = { x: sz.x_mm + dx, y: sz.y_mm + dy, width: sz.width_mm, height: sz.height_mm };
+            if (doesZoneCrossCorner(newBox, cornerAt)) {
+              if (dragStartPos.current) {
+                const revertedZone: TemplateZone = {
+                  ...zone,
+                  x_mm: dragStartPos.current.x,
+                  y_mm: dragStartPos.current.y,
+                };
+                void updateZone(revertedZone);
+              }
+              dragStartPos.current = null;
+              return;
+            }
+          }
+        }
+
         // Push current state to history before applying drag
         if (history) {
           history.pushState(allZones);
@@ -161,6 +183,24 @@ export function useZoneDrag(history?: HistoryState) {
           }
           dragStartPos.current = null;
           return;
+        }
+
+        // L_CORNER: reject drag that would cross corner boundary
+        const { wallGeometry, measurements } = useProjectStore.getState();
+        if (wallGeometry === 'L_CORNER' && measurements?.segment_a_width_mm != null) {
+          const cornerAt = { x: measurements.segment_a_width_mm, y: 0 };
+          if (doesZoneCrossCorner(newBox, cornerAt)) {
+            if (dragStartPos.current) {
+              const revertedZone: TemplateZone = {
+                ...zone,
+                x_mm: dragStartPos.current.x,
+                y_mm: dragStartPos.current.y,
+              };
+              void updateZone(revertedZone);
+            }
+            dragStartPos.current = null;
+            return;
+          }
         }
 
         // Push current state to history before applying drag

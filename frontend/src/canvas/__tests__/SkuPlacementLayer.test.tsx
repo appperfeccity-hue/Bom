@@ -76,6 +76,7 @@ const mockZone: TemplateZone = {
   height_strategy: 'FIXED' as never,
   position_strategy: 'ABSOLUTE' as never,
   z_index: 0,
+  segment: null,
   created_at: '',
   updated_at: '',
 };
@@ -120,6 +121,7 @@ describe('SkuPlacementLayer', () => {
         [CanvasLayer.FURNITURE]: true,
         [CanvasLayer.TRIMS]: true,
         [CanvasLayer.MEASUREMENTS]: true,
+        [CanvasLayer.ZONE_DIMENSIONS]: true,
         [CanvasLayer.SELECTION]: true,
         [CanvasLayer.GRID_OVERLAY]: true,
       },
@@ -141,6 +143,7 @@ describe('SkuPlacementLayer', () => {
         [CanvasLayer.FURNITURE]: true,
         [CanvasLayer.TRIMS]: true,
         [CanvasLayer.MEASUREMENTS]: true,
+        [CanvasLayer.ZONE_DIMENSIONS]: true,
         [CanvasLayer.SELECTION]: true,
         [CanvasLayer.GRID_OVERLAY]: true,
       },

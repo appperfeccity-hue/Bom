@@ -81,6 +81,7 @@ export interface TemplateZone {
   height_strategy: ZoneHeightStrategy;
   position_strategy: ZonePositionStrategy;
   z_index: number;
+  segment: 'SEGMENT_A' | 'SEGMENT_B' | null;
   created_at: string;
   updated_at: string;
 }

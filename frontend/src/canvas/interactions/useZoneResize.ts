@@ -3,6 +3,7 @@ import { useCanvasStore } from '@/stores/canvasStore';
 import { useProjectStore } from '@/stores/projectStore';
 import { snapToGrid } from '@/lib/coordinates';
 import { clampDimensions, constrainToWall, hasOverlap } from '@/canvas/utils/zoneConstraints';
+import { doesZoneCrossCorner } from '@/canvas/utils/segmentConstraint';
 import { CanvasMode } from '@/types/database';
 import type { TemplateZone } from '@/types/database';
 import type { ZoneResizeHandle } from '@/types/canvas';
@@ -144,6 +145,17 @@ export function useZoneResize(history?: HistoryState) {
         resizeState.current = null;
         setResizeHandle(null);
         return;
+      }
+
+      // L_CORNER: reject resize that would cross corner boundary
+      const { wallGeometry, measurements } = useProjectStore.getState();
+      if (wallGeometry === 'L_CORNER' && measurements?.segment_a_width_mm != null) {
+        const cornerAt = { x: measurements.segment_a_width_mm, y: 0 };
+        if (doesZoneCrossCorner(newBox, cornerAt)) {
+          resizeState.current = null;
+          setResizeHandle(null);
+          return;
+        }
       }
 
       // Push current state to history before applying resize

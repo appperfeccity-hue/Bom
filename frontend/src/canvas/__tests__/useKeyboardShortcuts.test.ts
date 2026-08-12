@@ -36,6 +36,7 @@ const makeZone = (id: string, x: number = 0, y: number = 0, width: number = 400,
   height_strategy: 'FIXED' as never,
   position_strategy: 'ABSOLUTE' as never,
   z_index: 0,
+  segment: null,
   created_at: '',
   updated_at: '',
 });

@@ -19,6 +19,7 @@ describe('canvasStore', () => {
         [CanvasLayer.FURNITURE]: true,
         [CanvasLayer.TRIMS]: true,
         [CanvasLayer.MEASUREMENTS]: true,
+        [CanvasLayer.ZONE_DIMENSIONS]: true,
         [CanvasLayer.SELECTION]: true,
         [CanvasLayer.GRID_OVERLAY]: true,
       },

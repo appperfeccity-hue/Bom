@@ -23,6 +23,7 @@ export function ZonePropertiesPanel() {
   const validationMap = useZoneValidation();
 
   const selectedZone = zones.find((z) => z.id === selection.selectedZoneId);
+  const wallGeometry = useProjectStore((s) => s.wallGeometry);
 
   // Multi-selection info
   if (selection.selectedZoneIds.length > 1) {
@@ -153,6 +154,43 @@ export function ZonePropertiesPanel() {
             data-testid="input-zone-name"
           />
         </label>
+
+        {/* Segment badge (L_CORNER only) */}
+        {wallGeometry === 'L_CORNER' && (
+          <div
+            style={{
+              display: 'inline-block',
+              padding: '4px 8px',
+              borderRadius: '4px',
+              fontSize: '12px',
+              fontWeight: 600,
+              backgroundColor: selectedZone.segment === 'SEGMENT_A'
+                ? '#e8f5e9'
+                : selectedZone.segment === 'SEGMENT_B'
+                  ? '#e3f2fd'
+                  : '#fff3e0',
+              color: selectedZone.segment === 'SEGMENT_A'
+                ? '#2e7d32'
+                : selectedZone.segment === 'SEGMENT_B'
+                  ? '#1565c0'
+                  : '#e65100',
+              border: `1px solid ${
+                selectedZone.segment === 'SEGMENT_A'
+                  ? '#a5d6a7'
+                  : selectedZone.segment === 'SEGMENT_B'
+                    ? '#90caf9'
+                    : '#ffcc80'
+              }`,
+            }}
+            data-testid="segment-badge"
+          >
+            {selectedZone.segment === 'SEGMENT_A'
+              ? 'Segment A'
+              : selectedZone.segment === 'SEGMENT_B'
+                ? 'Segment B'
+                : 'Unassigned'}
+          </div>
+        )}
 
         {/* Position */}
         <div style={{ display: 'flex', gap: '8px' }}>

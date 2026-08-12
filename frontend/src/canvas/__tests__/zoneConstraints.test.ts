@@ -29,6 +29,7 @@ function makeZone(overrides: Partial<TemplateZone> = {}): TemplateZone {
     height_strategy: ZoneHeightStrategy.FIXED,
     position_strategy: ZonePositionStrategy.ABSOLUTE,
     z_index: 0,
+    segment: null,
     created_at: '',
     updated_at: '',
     ...overrides,
