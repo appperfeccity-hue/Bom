@@ -179,7 +179,9 @@ export const useProjectCreationStore = create<ProjectCreationStore>((set, get) =
         },
       };
 
-      // Compute hash
+      // Compute hash over the design freeze only (excludes project_metadata).
+      // The hash is a content-addressable identifier for the template geometry/materials,
+      // not the full payload. project_metadata (customer/site refs) is mutable context.
       const snapshotHash = await computeSnapshotHash(snapshotData);
 
       // Call RPC to create project atomically
