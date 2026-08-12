@@ -2,7 +2,7 @@
   "id": "FEAT-002",
   "type": "feat",
   "description": "Comprehensive tests for the project creation store, snapshot builder, and ProjectCreationWizard components",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "Step 1 - Create src/stores/__tests__/projectCreationStore.test.ts following the pattern in publishStore.test.ts. Mock @/lib/supabase (both fromTable and supabase.rpc). Test: initial state is IDLE, fetchAvailableTemplates populates templates list, selectTemplate updates selectedTemplate and advances to PROJECT_DETAILS step, setCustomerReference/setSiteReference update state, createProject calls supabase.rpc with correct params (verify p_template_id, p_user_id, p_idempotency_key, p_snapshot_data, p_snapshot_hash), createProject success transitions to CREATED step with project id, createProject error transitions to ERROR step with error message, reset returns to initial state.",
     "Step 2 - Create src/lib/__tests__/snapshotBuilder.test.ts. Test: buildSnapshotData returns correctly structured object with all frozen fields (wall_geometry, zones with sku data, lighting, furniture, trims), computeSnapshotHash returns consistent hex string for same input, computeSnapshotHash returns different values for different inputs, snapshot data includes zone SKU freeze data when zoneSku map has entries.",
@@ -23,5 +23,5 @@
     "cd /projects/sandbox/Bom/frontend && unset NODE_OPTIONS && npx vitest run src/components/ProjectCreation/__tests__/ProjectCreationWizard.test.tsx"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All 48 new tests pass. The createProject store tests needed careful mock chaining because fromTable().select().eq().order() is used for template_zone queries while fromTable().select().eq() (thenable) is used for other tables. Created a mock pattern where .eq() returns an object with both .order() and .then() methods. DesignLibrary component tests required mocking fetchAvailableTemplates as a no-op because the useEffect on mount would otherwise override test state. Total test count went from 175 to 223. crypto.subtle.digest works natively in vitest/jsdom."
 }
