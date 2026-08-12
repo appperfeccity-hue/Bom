@@ -1,0 +1,35 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "Create PublishWorkflow UI components: a wizard-style panel with step indicator, ValidationResultsPanel, ApprovalStep with Master BOM preview, PublishConfirmation, and a 'Publish Template' button in the Toolbar. Integrate into App.tsx.",
+  "status": "in_progress",
+  "steps": [
+    "Create src/components/PublishWorkflow/ directory with index.ts barrel export.",
+    "Create PublishWorkflow.tsx: A fixed overlay panel (similar to BomPanel.tsx pattern) that shows when publishStore.currentStep !== IDLE. Contains a step indicator showing the 4 steps (Validate, Generate BOM, Approve BOM, Publish) with current step highlighted. Renders the appropriate sub-component based on currentStep. Has a close/cancel button that calls publishStore.reset().",
+    "Create StepIndicator.tsx: Shows 4 steps with labels and visual states (completed/active/pending). Steps: 1-Validate, 2-Generate BOM, 3-Approve BOM, 4-Publish. Use data-testid='publish-step-indicator'.",
+    "Create ValidationResultsPanel.tsx: Renders publishStore.validationResults as a list of gate checks with pass/fail icons and messages. If all pass, shows a 'Generate Master BOM' button. If any fail, shows actionable error messages. Use data-testid='validation-results-panel'.",
+    "Create ApprovalStep.tsx: Shows the generated Master BOM in a read-only table (reuse BomSectionTable pattern from BomPanel/BomSectionTable.tsx for display). Shows BOM metadata (generated_at, engine_version). Has an 'Approve Master BOM' button that calls publishStore.approveMasterBom(). Use data-testid='approval-step'.",
+    "Create PublishConfirmation.tsx: Final step showing template name, confirmation message, and a 'Publish Template' button. Shows success state after publish completes. Use data-testid='publish-confirmation'.",
+    "Add 'Publish Template' button to Toolbar.tsx: visible only in DESIGNER mode when currentTemplate.status === 'DRAFT'. Clicking it calls publishStore.runValidation(currentTemplate.id) which starts the workflow. Use data-testid='publish-template-btn'.",
+    "Integrate PublishWorkflow into App.tsx: import and render PublishWorkflow component (conditionally based on publishStore step not being IDLE).",
+    "Handle error states: if publishTemplate fails due to DB trigger rejection, show the error message in PublishConfirmation with a retry button."
+  ],
+  "acceptance_criteria": [
+    "PublishWorkflow panel renders as an overlay when workflow is active (currentStep !== IDLE)",
+    "StepIndicator shows 4 steps with correct active/completed/pending states",
+    "ValidationResultsPanel shows pass/fail results for each validation gate",
+    "ApprovalStep shows generated BOM lines and has Approve button",
+    "PublishConfirmation has Publish button and shows success/error states",
+    "Publish Template button appears in Toolbar only for DESIGNER mode with DRAFT template",
+    "Cancel/close resets the workflow state",
+    "DB trigger rejection errors are displayed to the user",
+    "TypeScript compiles without errors",
+    "All existing tests still pass"
+  ],
+  "verification": [
+    "Run: cd /projects/sandbox/Bom/frontend && unset NODE_OPTIONS && npx tsc --noEmit",
+    "Run: cd /projects/sandbox/Bom/frontend && unset NODE_OPTIONS && npx vitest run"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

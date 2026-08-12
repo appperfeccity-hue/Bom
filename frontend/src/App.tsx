@@ -3,6 +3,8 @@ import { useCanvasStore } from '@/stores/canvasStore';
 import { useAuthStore } from '@/stores/authStore';
 import { useSkuStore } from '@/stores/skuStore';
 import { useBomStore } from '@/stores/bomStore';
+import { usePublishStore } from '@/stores/publishStore';
+import { PublishStep } from '@/stores/publishStore';
 import { CanvasMode } from '@/types/database';
 import { CanvasContainer } from '@/canvas/CanvasContainer';
 import { Toolbar } from '@/components/Toolbar';
@@ -10,6 +12,7 @@ import { ZonePropertiesPanel } from '@/components/ZonePropertiesPanel';
 import { MeasurementPanel } from '@/components/MeasurementPanel';
 import { SkuBrowser } from '@/components/SkuBrowser';
 import { BomPanel } from '@/components/BomPanel';
+import { PublishWorkflow } from '@/components/PublishWorkflow';
 
 function App() {
   const mode = useCanvasStore((s) => s.mode);
@@ -19,6 +22,7 @@ function App() {
   const isBrowserOpen = useSkuStore((s) => s.isBrowserOpen);
   const isBomPanelOpen = useBomStore((s) => s.isBomPanelOpen);
   const openBomPanel = useBomStore((s) => s.openBomPanel);
+  const publishStep = usePublishStore((s) => s.currentStep);
 
   // Subscribe to Supabase auth state changes on mount
   useEffect(() => {
@@ -121,6 +125,9 @@ function App() {
 
       {/* BOM Panel overlay */}
       {isBomPanelOpen && <BomPanel />}
+
+      {/* Publish Workflow overlay */}
+      {publishStep !== PublishStep.IDLE && <PublishWorkflow />}
     </div>
   );
 }

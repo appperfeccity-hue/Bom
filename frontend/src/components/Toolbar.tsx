@@ -1,6 +1,7 @@
 import { useCanvasStore } from '@/stores/canvasStore';
 import { useProjectStore } from '@/stores/projectStore';
-import { CanvasMode } from '@/types/database';
+import { usePublishStore } from '@/stores/publishStore';
+import { CanvasMode, TemplateStatus } from '@/types/database';
 import { CanvasLayer } from '@/types/canvas';
 import { canAddZone } from '@/canvas/utils/zoneConstraints';
 
@@ -20,6 +21,8 @@ export function Toolbar() {
   const removeZone = useProjectStore((s) => s.removeZone);
   const toggleLayer = useCanvasStore((s) => s.toggleLayer);
   const layerVisibility = useCanvasStore((s) => s.layerVisibility);
+  const currentTemplate = useProjectStore((s) => s.currentTemplate);
+  const runValidation = usePublishStore((s) => s.runValidation);
 
   const zoomPercent = Math.round(viewport.zoom * 100);
   const isDesigner = mode === CanvasMode.DESIGNER;
@@ -147,6 +150,25 @@ export function Toolbar() {
           >
             Delete Zone
           </button>
+          {currentTemplate?.status === TemplateStatus.DRAFT && (
+            <button
+              onClick={() => void runValidation(currentTemplate.id)}
+              title="Publish Template"
+              data-testid="publish-template-btn"
+              style={{
+                padding: '4px 12px',
+                fontSize: '13px',
+                fontWeight: 600,
+                backgroundColor: '#7b1fa2',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+              }}
+            >
+              Publish Template
+            </button>
+          )}
         </div>
       )}
 
