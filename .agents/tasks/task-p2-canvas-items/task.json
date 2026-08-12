@@ -1,0 +1,8 @@
+{
+  "task_id": "task-p2-canvas-items",
+  "task_description": "Implement all 7 remaining P2 Canvas items: Multi-select, Copy/Paste/Duplicate, BOM-Canvas bidirectional link, L-corner segment assignment, Per-zone dimension annotations, Object/wall snapping, and Mobile/responsive touch support.",
+  "status": "completed",
+  "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003", "FEAT-004"],
+  "blocked_reason": null,
+  "review_fixes_applied": "Fixed 5 review issues: (1) SnapGuidesLayer horizontal Y inversion, (2) Toolbar delete with history+clearSelection, (3) marquee guarded during zone creation, (4) paste skips zones on non-source overlap after 10 attempts, (5) multi-drag snapping enabled. All 901 tests pass."
+}
