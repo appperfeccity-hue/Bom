@@ -33,6 +33,7 @@ export interface SkuState {
   page: number;
   pageSize: number;
   totalCount: number;
+  hasNextPage: boolean;
   isBrowserOpen: boolean;
 }
 
@@ -73,8 +74,18 @@ const initialState: SkuState = {
   page: 0,
   pageSize: 20,
   totalCount: 0,
+  hasNextPage: false,
   isBrowserOpen: false,
 };
+
+/**
+ * Escape characters that are meaningful in PostgREST filter strings.
+ * PostgREST uses `.` as field/operator separator, `,` as expression separator,
+ * and `(` / `)` for grouping in .or() strings.
+ */
+function escapePostgrestValue(value: string): string {
+  return value.replace(/[.,()\\]/g, (ch) => `\\${ch}`);
+}
 
 export const useSkuStore = create<SkuStore>((set, get) => ({
   ...initialState,
@@ -84,7 +95,11 @@ export const useSkuStore = create<SkuStore>((set, get) => ({
     try {
       const { filters, page, pageSize } = get();
       const from = page * pageSize;
-      const to = from + pageSize - 1;
+
+      // When catalogue status filter is active, we fetch one extra item to detect
+      // if there's a next page (since client-side filtering makes count inaccurate)
+      const fetchSize = filters.catalogueStatus ? pageSize + 1 : pageSize;
+      const to = from + fetchSize - 1;
 
       // Build query on sku_master
       let query = fromTable('sku_master')
@@ -110,7 +125,8 @@ export const useSkuStore = create<SkuStore>((set, get) => ({
         query = query.eq('status', filters.skuStatus);
       }
       if (filters.searchQuery) {
-        query = query.or(`sku_code.ilike.%${filters.searchQuery}%,material.ilike.%${filters.searchQuery}%`);
+        const escaped = escapePostgrestValue(filters.searchQuery);
+        query = query.or(`sku_code.ilike.%${escaped}%,material.ilike.%${escaped}%`);
       }
 
       // Pagination
@@ -196,15 +212,33 @@ export const useSkuStore = create<SkuStore>((set, get) => ({
         }
       }
 
-      // When catalogue status filter is applied client-side, adjust totalCount
-      // to reflect filtered results since pagination count is from the DB query
-      const adjustedCount = filters.catalogueStatus
-        ? skus.length + page * pageSize
-        : count ?? 0;
+      // When catalogue status filter is applied client-side, use hasNextPage
+      // approach since DB count doesn't reflect client-side filtering.
+      // We fetched pageSize+1 items: if we got more than pageSize after filtering,
+      // there's a next page. For non-catalogue-filtered queries, use the DB count.
+      let hasNextPage: boolean;
+      let adjustedCount: number;
+
+      if (filters.catalogueStatus) {
+        // We may have more items than pageSize if the extra fetch found enough
+        hasNextPage = skus.length > pageSize;
+        // Trim to pageSize for display
+        if (hasNextPage) {
+          skus.splice(pageSize);
+        }
+        // Use a synthetic count to drive pagination (prev/next only)
+        adjustedCount = hasNextPage
+          ? (page + 2) * pageSize
+          : (page * pageSize) + skus.length;
+      } else {
+        adjustedCount = count ?? 0;
+        hasNextPage = (page + 1) * pageSize < adjustedCount;
+      }
 
       set({
         skus,
         totalCount: adjustedCount,
+        hasNextPage,
         isLoading: false,
       });
     } catch (err) {

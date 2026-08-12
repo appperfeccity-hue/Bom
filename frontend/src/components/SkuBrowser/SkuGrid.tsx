@@ -24,6 +24,7 @@ export function SkuGrid() {
   const page = useSkuStore((s) => s.page);
   const pageSize = useSkuStore((s) => s.pageSize);
   const totalCount = useSkuStore((s) => s.totalCount);
+  const hasNextPage = useSkuStore((s) => s.hasNextPage);
   const setPage = useSkuStore((s) => s.setPage);
 
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
@@ -170,14 +171,14 @@ export function SkuGrid() {
         </span>
         <button
           onClick={() => setPage(page + 1)}
-          disabled={page + 1 >= totalPages}
+          disabled={!hasNextPage}
           style={{
             padding: '4px 12px',
             fontSize: '12px',
             border: '1px solid #ccc',
             borderRadius: '4px',
-            cursor: page + 1 >= totalPages ? 'not-allowed' : 'pointer',
-            opacity: page + 1 >= totalPages ? 0.5 : 1,
+            cursor: !hasNextPage ? 'not-allowed' : 'pointer',
+            opacity: !hasNextPage ? 0.5 : 1,
           }}
           data-testid="sku-grid-next-btn"
         >

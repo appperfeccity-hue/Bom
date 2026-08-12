@@ -1,10 +1,12 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { useSkuStore } from '@/stores/skuStore';
 import { ProductType, SkuStatus, CatalogueStatus } from '@/types/database';
 
 /**
  * Filter bar for the SKU Browser panel.
  * Provides dropdowns and text inputs for filtering SKUs.
+ * Discrete dropdown changes trigger fetch immediately.
+ * Text input changes (searchQuery, material, colour) are debounced at 300ms.
  */
 export function SkuFilterBar() {
   const filters = useSkuStore((s) => s.filters);
@@ -18,6 +20,7 @@ export function SkuFilterBar() {
   const fetchSkus = useSkuStore((s) => s.fetchSkus);
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isInitialMount = useRef(true);
 
   // Load families on mount
   useEffect(() => {
@@ -29,7 +32,30 @@ export function SkuFilterBar() {
     void fetchCategories(filters.familyId ?? undefined);
   }, [filters.familyId, fetchCategories]);
 
-  // Fetch SKUs when filters change, with debounce for text inputs
+  // Discrete (dropdown/enum) filter fields - fetch immediately on change
+  const discreteFilters = useCallback(() => {
+    return JSON.stringify([
+      filters.productType,
+      filters.familyId,
+      filters.categoryId,
+      filters.skuStatus,
+      filters.catalogueStatus,
+    ]);
+  }, [filters.productType, filters.familyId, filters.categoryId, filters.skuStatus, filters.catalogueStatus]);
+
+  // Immediate fetch for discrete dropdown changes
+  useEffect(() => {
+    // Skip the initial mount - the debounced effect handles the first fetch
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      void fetchSkus();
+      return;
+    }
+    void fetchSkus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [discreteFilters, fetchSkus]);
+
+  // Debounced fetch for text input changes (searchQuery, material, colour)
   useEffect(() => {
     if (debounceRef.current) {
       clearTimeout(debounceRef.current);
@@ -42,7 +68,8 @@ export function SkuFilterBar() {
         clearTimeout(debounceRef.current);
       }
     };
-  }, [filters, fetchSkus]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters.searchQuery, filters.material, filters.colour, fetchSkus]);
 
   const inputStyle: React.CSSProperties = {
     display: 'block',

@@ -42,6 +42,7 @@ describe('skuStore', () => {
       page: 0,
       pageSize: 20,
       totalCount: 0,
+      hasNextPage: false,
       isBrowserOpen: false,
     });
   });
@@ -66,6 +67,7 @@ describe('skuStore', () => {
       expect(state.page).toBe(0);
       expect(state.pageSize).toBe(20);
       expect(state.totalCount).toBe(0);
+      expect(state.hasNextPage).toBe(false);
       expect(state.isBrowserOpen).toBe(false);
     });
   });
@@ -287,6 +289,58 @@ describe('skuStore', () => {
 
       await useSkuStore.getState().fetchSkus();
       expect(mockChain.or).toHaveBeenCalledWith('sku_code.ilike.%WP-001%,material.ilike.%WP-001%');
+    });
+
+    it('should escape PostgREST meta-characters in searchQuery', async () => {
+      const { fromTable } = await import('@/lib/supabase');
+      const mockedFromTable = vi.mocked(fromTable);
+
+      const mockChain = {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        in: vi.fn().mockReturnThis(),
+        ilike: vi.fn().mockReturnThis(),
+        or: vi.fn().mockReturnThis(),
+        range: vi.fn().mockReturnThis(),
+        order: vi.fn().mockResolvedValue({ data: [], error: null, count: 0 }),
+      };
+      mockedFromTable.mockReturnValue(mockChain as unknown as ReturnType<typeof fromTable>);
+
+      useSkuStore.setState({
+        filters: {
+          ...useSkuStore.getState().filters,
+          searchQuery: 'oak.dark',
+        },
+      });
+
+      await useSkuStore.getState().fetchSkus();
+      expect(mockChain.or).toHaveBeenCalledWith('sku_code.ilike.%oak\\.dark%,material.ilike.%oak\\.dark%');
+    });
+
+    it('should escape commas in searchQuery', async () => {
+      const { fromTable } = await import('@/lib/supabase');
+      const mockedFromTable = vi.mocked(fromTable);
+
+      const mockChain = {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        in: vi.fn().mockReturnThis(),
+        ilike: vi.fn().mockReturnThis(),
+        or: vi.fn().mockReturnThis(),
+        range: vi.fn().mockReturnThis(),
+        order: vi.fn().mockResolvedValue({ data: [], error: null, count: 0 }),
+      };
+      mockedFromTable.mockReturnValue(mockChain as unknown as ReturnType<typeof fromTable>);
+
+      useSkuStore.setState({
+        filters: {
+          ...useSkuStore.getState().filters,
+          searchQuery: 'oak,birch',
+        },
+      });
+
+      await useSkuStore.getState().fetchSkus();
+      expect(mockChain.or).toHaveBeenCalledWith('sku_code.ilike.%oak\\,birch%,material.ilike.%oak\\,birch%');
     });
 
     it('should apply pagination range', async () => {

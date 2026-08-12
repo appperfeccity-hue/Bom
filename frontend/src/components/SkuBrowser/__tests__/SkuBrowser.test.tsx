@@ -139,6 +139,7 @@ describe('SkuBrowser', () => {
       page: 0,
       pageSize: 20,
       totalCount: 2,
+      hasNextPage: false,
       // Override fetch actions to prevent useEffect from calling real supabase
       fetchSkus: noopFetchSkus,
       fetchFamilies: noopFetchFamilies,
@@ -259,7 +260,7 @@ describe('SkuBrowser', () => {
   });
 
   it('pagination next button calls setPage', () => {
-    useSkuStore.setState({ totalCount: 40, pageSize: 20 });
+    useSkuStore.setState({ totalCount: 40, pageSize: 20, hasNextPage: true });
     render(<SkuBrowser />);
 
     expect(screen.getByTestId('sku-grid-page-indicator')).toHaveTextContent('Page 1 of 2');
