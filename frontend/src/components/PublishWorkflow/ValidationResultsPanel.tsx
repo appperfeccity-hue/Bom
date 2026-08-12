@@ -4,6 +4,7 @@ import { useProjectStore } from '@/stores/projectStore';
 export function ValidationResultsPanel() {
   const validationResults = usePublishStore((s) => s.validationResults);
   const generateMasterBom = usePublishStore((s) => s.generateMasterBom);
+  const rerunValidation = usePublishStore((s) => s.rerunValidation);
   const isLoading = usePublishStore((s) => s.isLoading);
   const currentTemplate = useProjectStore((s) => s.currentTemplate);
 
@@ -12,6 +13,12 @@ export function ValidationResultsPanel() {
   const handleGenerateBom = () => {
     if (currentTemplate) {
       void generateMasterBom(currentTemplate.id);
+    }
+  };
+
+  const handleRerunValidation = () => {
+    if (currentTemplate) {
+      void rerunValidation(currentTemplate.id);
     }
   };
 
@@ -58,32 +65,70 @@ export function ValidationResultsPanel() {
         ))}
       </ul>
 
-      {allPassed && (
+      {/* Informational note about server-side checks */}
+      <div
+        data-testid="server-validation-note"
+        style={{
+          marginTop: '12px',
+          padding: '10px 12px',
+          backgroundColor: '#e3f2fd',
+          borderRadius: '4px',
+          fontSize: '11px',
+          color: '#1565c0',
+          lineHeight: 1.4,
+        }}
+      >
+        Note: The server performs additional eligibility checks (lighting, furniture,
+        trim, and hidden component SKUs) that may reject activation even if all
+        client-side gates pass.
+      </div>
+
+      <div style={{ display: 'flex', gap: '8px', marginTop: '16px', alignItems: 'center' }}>
+        {allPassed && (
+          <button
+            onClick={handleGenerateBom}
+            disabled={isLoading}
+            data-testid="generate-bom-btn"
+            style={{
+              padding: '8px 16px',
+              fontSize: '13px',
+              fontWeight: 600,
+              backgroundColor: '#1976d2',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: isLoading ? 'not-allowed' : 'pointer',
+              opacity: isLoading ? 0.6 : 1,
+            }}
+          >
+            {isLoading ? 'Generating...' : 'Generate Master BOM'}
+          </button>
+        )}
+
         <button
-          onClick={handleGenerateBom}
+          onClick={handleRerunValidation}
           disabled={isLoading}
-          data-testid="generate-bom-btn"
+          data-testid="rerun-validation-btn"
           style={{
-            marginTop: '16px',
             padding: '8px 16px',
             fontSize: '13px',
-            fontWeight: 600,
-            backgroundColor: '#1976d2',
-            color: '#ffffff',
-            border: 'none',
+            fontWeight: 500,
+            backgroundColor: 'transparent',
+            color: '#1976d2',
+            border: '1px solid #1976d2',
             borderRadius: '4px',
             cursor: isLoading ? 'not-allowed' : 'pointer',
             opacity: isLoading ? 0.6 : 1,
           }}
         >
-          {isLoading ? 'Generating...' : 'Generate Master BOM'}
+          Re-run Validation
         </button>
-      )}
+      </div>
 
       {!allPassed && (
         <div
           style={{
-            marginTop: '16px',
+            marginTop: '12px',
             padding: '12px',
             backgroundColor: '#fff3e0',
             borderRadius: '4px',

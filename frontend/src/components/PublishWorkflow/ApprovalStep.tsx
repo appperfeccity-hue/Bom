@@ -1,14 +1,23 @@
 import { usePublishStore } from '@/stores/publishStore';
+import { useProjectStore } from '@/stores/projectStore';
 
 export function ApprovalStep() {
   const generatedBom = usePublishStore((s) => s.generatedBom);
   const generatedBomLines = usePublishStore((s) => s.generatedBomLines);
   const approveMasterBom = usePublishStore((s) => s.approveMasterBom);
+  const rerunValidation = usePublishStore((s) => s.rerunValidation);
   const isLoading = usePublishStore((s) => s.isLoading);
+  const currentTemplate = useProjectStore((s) => s.currentTemplate);
 
   const handleApprove = () => {
     if (generatedBom) {
       void approveMasterBom(generatedBom.master_bom_id);
+    }
+  };
+
+  const handleRerunValidation = () => {
+    if (currentTemplate) {
+      void rerunValidation(currentTemplate.id);
     }
   };
 
@@ -87,29 +96,64 @@ export function ApprovalStep() {
       )}
 
       {generatedBomLines.length === 0 && (
-        <div style={{ fontSize: '12px', color: '#666', marginBottom: '16px' }}>
-          No BOM lines generated. The BOM structure will be populated by the engine.
+        <div
+          data-testid="bom-engine-note"
+          style={{
+            fontSize: '12px',
+            color: '#666',
+            marginBottom: '16px',
+            padding: '10px 12px',
+            backgroundColor: '#f5f5f5',
+            borderRadius: '4px',
+            borderLeft: '3px solid #90a4ae',
+            lineHeight: 1.4,
+          }}
+        >
+          No BOM lines are shown here. Line items are populated by the BOM engine
+          as a separate process after approval. You are approving the BOM structure
+          and metadata at this stage.
         </div>
       )}
 
-      <button
-        onClick={handleApprove}
-        disabled={isLoading || !generatedBom}
-        data-testid="approve-bom-btn"
-        style={{
-          padding: '8px 16px',
-          fontSize: '13px',
-          fontWeight: 600,
-          backgroundColor: '#388e3c',
-          color: '#ffffff',
-          border: 'none',
-          borderRadius: '4px',
-          cursor: isLoading ? 'not-allowed' : 'pointer',
-          opacity: isLoading ? 0.6 : 1,
-        }}
-      >
-        {isLoading ? 'Approving...' : 'Approve Master BOM'}
-      </button>
+      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+        <button
+          onClick={handleApprove}
+          disabled={isLoading || !generatedBom}
+          data-testid="approve-bom-btn"
+          style={{
+            padding: '8px 16px',
+            fontSize: '13px',
+            fontWeight: 600,
+            backgroundColor: '#388e3c',
+            color: '#ffffff',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: isLoading ? 'not-allowed' : 'pointer',
+            opacity: isLoading ? 0.6 : 1,
+          }}
+        >
+          {isLoading ? 'Approving...' : 'Approve Master BOM'}
+        </button>
+
+        <button
+          onClick={handleRerunValidation}
+          disabled={isLoading}
+          data-testid="rerun-validation-btn"
+          style={{
+            padding: '8px 16px',
+            fontSize: '13px',
+            fontWeight: 500,
+            backgroundColor: 'transparent',
+            color: '#1976d2',
+            border: '1px solid #1976d2',
+            borderRadius: '4px',
+            cursor: isLoading ? 'not-allowed' : 'pointer',
+            opacity: isLoading ? 0.6 : 1,
+          }}
+        >
+          Re-run Validation
+        </button>
+      </div>
     </div>
   );
 }

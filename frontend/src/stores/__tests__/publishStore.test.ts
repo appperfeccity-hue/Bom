@@ -436,7 +436,35 @@ describe('publishStore', () => {
 
       const state = usePublishStore.getState();
       expect(state.currentStep).toBe(PublishStep.ERROR);
-      expect(state.error).toBe('Permission denied');
+      expect(state.error).toBe(
+        'You do not have permission to approve this BOM. Only authorized roles can approve.',
+      );
+    });
+
+    it('passes through non-permission errors unchanged', async () => {
+      const { fromTable } = await import('@/lib/supabase');
+      const mockedFromTable = vi.mocked(fromTable);
+
+      const mockEq = vi.fn().mockResolvedValue({
+        data: null,
+        error: { message: 'Network timeout' },
+      });
+      const mockUpdate = vi.fn().mockReturnValue({ eq: mockEq });
+
+      mockedFromTable.mockReturnValue({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        in: vi.fn().mockReturnThis(),
+        insert: vi.fn().mockReturnThis(),
+        update: mockUpdate,
+        single: vi.fn().mockResolvedValue({ data: null, error: null }),
+      } as unknown as ReturnType<typeof fromTable>);
+
+      await usePublishStore.getState().approveMasterBom('bom-1');
+
+      const state = usePublishStore.getState();
+      expect(state.currentStep).toBe(PublishStep.ERROR);
+      expect(state.error).toBe('Network timeout');
     });
   });
 
@@ -468,6 +496,31 @@ describe('publishStore', () => {
       expect(state.isLoading).toBe(false);
     });
 
+    it('syncs projectStore.currentTemplate.status to ACTIVE after success', async () => {
+      const { fromTable } = await import('@/lib/supabase');
+      const mockedFromTable = vi.mocked(fromTable);
+
+      const mockEq = vi.fn().mockResolvedValue({ data: null, error: null });
+      const mockUpdate = vi.fn().mockReturnValue({ eq: mockEq });
+
+      mockedFromTable.mockReturnValue({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        in: vi.fn().mockReturnThis(),
+        insert: vi.fn().mockReturnThis(),
+        update: mockUpdate,
+        single: vi.fn().mockResolvedValue({ data: null, error: null }),
+      } as unknown as ReturnType<typeof fromTable>);
+
+      // Verify initial state is DRAFT
+      expect(useProjectStore.getState().currentTemplate?.status).toBe(TemplateStatus.DRAFT);
+
+      await usePublishStore.getState().publishTemplate('tpl-1');
+
+      // After publish, projectStore.currentTemplate.status should be ACTIVE
+      expect(useProjectStore.getState().currentTemplate?.status).toBe('ACTIVE');
+    });
+
     it('handles DB trigger error gracefully', async () => {
       const { fromTable } = await import('@/lib/supabase');
       const mockedFromTable = vi.mocked(fromTable);
@@ -493,6 +546,52 @@ describe('publishStore', () => {
       expect(state.currentStep).toBe(PublishStep.ERROR);
       expect(state.error).toBe('Trigger validation failed: template has no approved BOM');
       expect(state.isLoading).toBe(false);
+    });
+  });
+
+  describe('rerunValidation', () => {
+    it('resets BOM state and re-runs validation', async () => {
+      const { fromTable } = await import('@/lib/supabase');
+      const mockedFromTable = vi.mocked(fromTable);
+      mockedFromTable.mockReturnValue({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        in: vi.fn().mockResolvedValue({ data: [], error: null }),
+        insert: vi.fn().mockReturnThis(),
+        update: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({ data: null, error: null }),
+      } as unknown as ReturnType<typeof fromTable>);
+
+      // Set up state as if BOM was already generated
+      usePublishStore.setState({
+        currentStep: PublishStep.BOM_GENERATED,
+        generatedBom: {
+          master_bom_id: 'bom-1',
+          template_id: 'tpl-1',
+          status: 'GENERATED' as never,
+          generated_at: '2024-01-01T00:00:00Z',
+          engine_version: '1.0',
+          rule_set_id: 'default',
+          approved_by: null,
+          approved_at: null,
+          created_at: '2024-01-01T00:00:00Z',
+        },
+        generatedBomLines: [],
+      });
+
+      useProjectStore.setState({
+        currentTemplate: makeTemplate({ name: 'Valid Template' }),
+        zones: [],
+        zoneSku: new Map(),
+      });
+
+      await usePublishStore.getState().rerunValidation('tpl-1');
+
+      const state = usePublishStore.getState();
+      expect(state.currentStep).toBe(PublishStep.VALIDATION_RESULTS);
+      expect(state.generatedBom).toBeNull();
+      expect(state.generatedBomLines).toEqual([]);
+      expect(state.validationResults.length).toBeGreaterThan(0);
     });
   });
 

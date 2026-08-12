@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { MasterBom, MasterBomLine } from '@/types/database';
+import type { MasterBom, MasterBomLine, Template } from '@/types/database';
 import { fromTable } from '@/lib/supabase';
 import { useProjectStore } from '@/stores/projectStore';
 import { useAuthStore } from '@/stores/authStore';
@@ -45,6 +45,7 @@ export interface PublishState {
 
 export interface PublishActions {
   runValidation: (templateId: string) => Promise<void>;
+  rerunValidation: (templateId: string) => Promise<void>;
   generateMasterBom: (templateId: string) => Promise<void>;
   approveMasterBom: (bomId: string) => Promise<void>;
   publishTemplate: (templateId: string) => Promise<void>;
@@ -213,6 +214,18 @@ export const usePublishStore = create<PublishStore>((set) => ({
     }
   },
 
+  rerunValidation: async (templateId: string) => {
+    // Reset BOM-related state and re-run validation from scratch.
+    // Allows users to go back after making template changes without
+    // closing and reopening the workflow panel.
+    set({
+      generatedBom: null,
+      generatedBomLines: [],
+      error: null,
+    });
+    await usePublishStore.getState().runValidation(templateId);
+  },
+
   generateMasterBom: async (templateId: string) => {
     set({ currentStep: PublishStep.GENERATING_BOM, isLoading: true, error: null });
 
@@ -251,6 +264,11 @@ export const usePublishStore = create<PublishStore>((set) => ({
     set({ currentStep: PublishStep.APPROVING_BOM, isLoading: true, error: null });
 
     try {
+      // Authorization note: The client does not perform role/permission checks here.
+      // Supabase Row-Level Security (RLS) policies enforce that only users with the
+      // appropriate role can update master_bom.approved_by. If an unauthorized user
+      // attempts this action, the RLS policy will reject the request and the error
+      // handler below will surface a clear message to the user.
       const userId = useAuthStore.getState().user?.id;
 
       const { error } = await fromTable('master_bom')
@@ -261,7 +279,14 @@ export const usePublishStore = create<PublishStore>((set) => ({
         })
         .eq('master_bom_id', bomId);
 
-      if (error) throw error;
+      if (error) {
+        // Surface permission-denied errors with a clear message
+        const message = error.message.toLowerCase().includes('permission')
+          || error.message.toLowerCase().includes('policy')
+          ? 'You do not have permission to approve this BOM. Only authorized roles can approve.'
+          : error.message;
+        throw new Error(message);
+      }
 
       set({
         currentStep: PublishStep.BOM_APPROVED,
@@ -291,6 +316,18 @@ export const usePublishStore = create<PublishStore>((set) => ({
           isLoading: false,
         });
         return;
+      }
+
+      // Sync local projectStore state so the UI reflects the template is now ACTIVE.
+      // This prevents the "Publish Template" button from remaining visible after publish.
+      const projectState = useProjectStore.getState();
+      if (projectState.currentTemplate?.id === templateId) {
+        useProjectStore.setState({
+          currentTemplate: {
+            ...projectState.currentTemplate,
+            status: 'ACTIVE' as Template['status'],
+          },
+        });
       }
 
       set({
