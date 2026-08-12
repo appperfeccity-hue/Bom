@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "feat",
   "description": "Implement the Site Adaptation Engine (section 77) that transforms template zone geometry to match actual site dimensions, with 4 strategies (PROPORTIONAL, PRIORITY_ZONE, EQUAL_DISTRIBUTION, FIXED) and height adaptation modes.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "Add Site Adaptation Engine types to frontend/src/engines/types.ts: SiteAdaptationStrategy enum ('PROPORTIONAL' | 'PRIORITY_ZONE' | 'EQUAL_DISTRIBUTION' | 'FIXED'), WidthStrategy enum ('LOCKED' | 'RESIZABLE' or similar), HeightMode enum ('DERIVED_FROM_WALL' | 'FIXED' | 'RESIZABLE'), SiteAdaptationZoneInput interface (zone_id: number, width_mm: number, width_strategy: string, min_width: number default 200, max_width: number default 3000, height_mm?: number, height_mode?: HeightMode), SiteAdaptationInput interface (template_wall_width: number, actual_wall_width: number, zones: SiteAdaptationZoneInput[], strategy: SiteAdaptationStrategy, priority_zone_id?: number, template_wall_height?: number, actual_wall_height?: number), SiteAdaptationZoneOutput interface (zone_id: number, adapted_width_mm: number, adapted_height_mm?: number), SiteAdaptationOutput interface (adapted_zones: SiteAdaptationZoneOutput[]) or error result.",
     "Create frontend/src/engines/siteAdaptationEngine.ts implementing the adaptZonesToSite function. PROPORTIONAL strategy: compute ratio = actual_wall_width / template_wall_width, scale each zone width by ratio using ROUND_HALF_UP (Math.round), compute sum, distribute remainder (actual - sum) by incrementing/decrementing zones in zone_id ASC order. PRIORITY_ZONE strategy: compute delta = actual_wall_width - template_wall_width, apply entire delta to the zone matching priority_zone_id, leave others unchanged. EQUAL_DISTRIBUTION strategy: compute delta = actual_wall_width - template_wall_width, count resizable zones (width_strategy != 'LOCKED'), divide delta equally among them with ROUND_HALF_UP, distribute remainder by zone_id ASC among resizable zones. FIXED strategy: if Math.abs(actual_wall_width - template_wall_width) > 5, throw EngineError, otherwise return zones unchanged.",
@@ -25,5 +25,5 @@
     "cd /projects/sandbox/Bom && make test"
   ],
   "blocked_reason": null,
-  "findings": "NODE_OPTIONS must be cleared (NODE_OPTIONS=\"\") to run vitest/tsc/build due to a missing proxy-bootstrap.js preload module in the sandbox. All 467 tests pass, typecheck clean, build succeeds."
+  "findings": "NODE_OPTIONS must be cleared (NODE_OPTIONS=\"\") to run vitest/tsc/build due to a missing proxy-bootstrap.js preload module in the sandbox. All 473 tests pass, typecheck clean. Review fixes: added zone_id uniqueness validation, zone-sum vs template_wall_width check (1mm tolerance), wall-height pair validation (both or neither), fixed height truthy check for zero values, added comment documenting intentional PROPORTIONAL LOCKED behavior per spec. Two existing tests had zone-sum mismatches that were corrected."
 }
