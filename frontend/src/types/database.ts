@@ -294,6 +294,39 @@ export interface SkuCompatibility {
   created_at: string;
 }
 
+export interface DesignFamilyMaster {
+  design_family_id: string;
+  name: string;
+  created_by: string;
+  created_at: string;
+}
+
+export interface DesignSubfamilyMaster {
+  design_subfamily_id: string;
+  design_family_id: string;
+  name: string;
+  created_by: string;
+  created_at: string;
+}
+
+export enum RuleSetStatus {
+  DRAFT = 'DRAFT',
+  ACTIVE = 'ACTIVE',
+  SUPERSEDED = 'SUPERSEDED',
+}
+
+export interface RuleSet {
+  rule_set_id: string;
+  rule_set_code: string;
+  version: number;
+  status: RuleSetStatus;
+  effective_from: string | null;
+  effective_to: string | null;
+  constants: Record<string, unknown>;
+  created_by: string;
+  created_at: string;
+}
+
 /**
  * Joined type: SKU with its catalogue entry and RENDER asset thumbnail URL.
  * Used for SKU browser display.

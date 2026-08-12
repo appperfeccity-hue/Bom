@@ -1,0 +1,29 @@
+{
+  "project_type": "React 18 SPA with TypeScript (strict), Vite bundler, Zustand state management",
+  "language": "TypeScript (strict mode, noUnusedLocals, noUnusedParameters)",
+  "build_system": "Vite + npm; tsconfig uses path alias @/* -> src/*",
+  "test_framework": "Vitest with jsdom environment, @testing-library/react, setup in src/test-setup.ts",
+  "build_command": "cd /projects/sandbox/Bom/frontend && unset NODE_OPTIONS && npx vite build",
+  "test_command": "cd /projects/sandbox/Bom/frontend && unset NODE_OPTIONS && npx vitest run",
+  "verification_instructions": "1. Run build command to confirm TypeScript compiles without errors. 2. Run test command to confirm all tests pass. 3. Check typecheck: unset NODE_OPTIONS && npx tsc --noEmit",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "cd /projects/sandbox/Bom/frontend && npm install (dependencies already installed)",
+  "environment_constraints": "COMMON_DEPENDENCIES network mode. NODE_OPTIONS env var must be unset before running node tools (proxy-bootstrap issue). No docker daemon available for docker build.",
+  "contribution_requirements": "TypeScript strict mode. Inline styles used throughout (no CSS framework). Components use data-testid attributes. Zustand stores follow create() pattern. Supabase queries use fromTable() helper for perfecity schema.",
+  "key_patterns": "1. Pages are in src/pages/ and re-exported from src/pages/index.ts. 2. Components organized in subdirectories with index.ts barrel files (e.g., src/components/SkuBrowser/). 3. Stores in src/stores/ with __tests__ subfolder. 4. ProtectedRoute uses Outlet pattern. 5. Types in src/types/database.ts with enums and interfaces. 6. Tests mock @/lib/supabase with vi.mock(). 7. Inline styles for all UI (no Tailwind/CSS modules). 8. Dashboard cards navigate via useNavigate().",
+  "relevant_files": [
+    "frontend/src/main.tsx",
+    "frontend/src/pages/index.ts",
+    "frontend/src/pages/DashboardPage.tsx",
+    "frontend/src/components/ProtectedRoute.tsx",
+    "frontend/src/stores/authStore.ts",
+    "frontend/src/stores/skuStore.ts",
+    "frontend/src/lib/supabase.ts",
+    "frontend/src/types/database.ts",
+    "frontend/src/components/SkuBrowser/SkuBrowser.tsx",
+    "frontend/src/components/SkuBrowser/SkuFilterBar.tsx",
+    "frontend/src/components/SkuBrowser/SkuGrid.tsx",
+    "frontend/src/stores/__tests__/skuStore.test.ts"
+  ],
+  "directory_structure": "frontend/src/ contains: main.tsx (router), App.tsx (canvas), pages/ (route pages), components/ (organized in feature directories), stores/ (Zustand), lib/ (supabase client), types/ (database types), hooks/, canvas/ (Konva canvas logic)"
+}
