@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "feat",
   "description": "Update TypeScript types to match actual DB schema and create skuStore for SKU browsing state management",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "Update the SkuMaster interface in src/types/database.ts to match the actual sku_master table columns from baseline/v1.1.5_baseline.sql: sku_id (rename from id), sku_code, product_type (enum: WALL_PANEL/LIGHT/FURNITURE), family_id, category_id, width_mm (nullable), height_mm (nullable), thickness_mm (nullable), depth_mm (nullable), unit_length_mm (nullable), material, colour, finish, pattern_identity (nullable), gh_mm, gv_mm, quantity_mode (nullable, enum: DISCRETE/LINEAR), commercial_attributes (JSONB), status (enum: ACTIVE/INACTIVE), created_by, created_at, updated_at",
     "Add new interfaces to src/types/database.ts: CatalogueEntry (catalogue_entry_id, sku_id, status: INCOMPLETE/READY, created_at, updated_at), CatalogueAsset (asset_id, catalogue_entry_id, asset_type: GEOMETRY/PATTERN/RENDER, version, content_hash, file_reference, status: UPLOADING/VALIDATING/VALID/INVALID, created_at, is_current), FamilyMaster (family_id, name, created_by, created_at), CategoryMaster (category_id, family_id, name, created_by, created_at), SkuCompatibility (compatibility_id, source_sku_id, target_sku_id, relationship_type: REQUIRES/COMPATIBLE_WITH/ALTERNATIVE_TO, directionality: UNIDIRECTIONAL/BIDIRECTIONAL, is_mandatory, status: ACTIVE/INACTIVE, created_at)",
@@ -30,5 +30,5 @@
     "cd /projects/sandbox/Bom/frontend && npx vitest run"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "Build uses 'unset NODE_OPTIONS' workaround due to missing proxy-bootstrap.js in sandbox. tsc -b and vite build both pass. All 89 tests pass (22 new skuStore tests). tsconfig.tsbuildinfo is updated by the build. ZonePropertiesPanel.tsx updated to use sku.material + sku.colour instead of removed sku.name field."
 }
