@@ -1,0 +1,37 @@
+{
+  "id": "FEAT-003",
+  "type": "feat",
+  "description": "Build Designer configuration UIs: Promoted Alternatives, Consultant Permissions, and Hidden Components panels with dialogs",
+  "status": "in_progress",
+  "steps": [
+    "Create src/components/PromotedAlternatives/PromotedAlternativesPanel.tsx - Panel showing promoted alternative SKUs per zone. Lists zones with their promoted alternatives. Each alternative shows SKU code, product type, and a remove button. Includes 'Add Alternative' button that opens the dialog. Only visible in DESIGNER mode. Uses fromTable('template_zone_alternative') to fetch data. data-testid='promoted-alternatives-panel'.",
+    "Create src/components/PromotedAlternatives/AddAlternativeDialog.tsx - Dialog to browse and select alternative SKUs for a zone. Shows a simple SKU list (from skuStore or direct query to sku_master). Has zone selector, SKU search/select, and confirm/cancel buttons. On confirm, inserts into template_zone_alternative table. data-testid='add-alternative-dialog'.",
+    "Create src/components/PromotedAlternatives/index.ts - barrel export.",
+    "Create src/components/ConsultantPermissions/ConsultantPermissionsPanel.tsx - Panel showing per-template consultant permissions. Lists existing permissions with parameter_name, permission_type (LOCKED, RANGE, SELECTION), and constraints. Includes 'Add Permission' button. Only visible in DESIGNER mode. Uses fromTable('template_consultant_permission'). data-testid='consultant-permissions-panel'.",
+    "Create src/components/ConsultantPermissions/AddPermissionDialog.tsx - Dialog with controlled vocabulary: parameter_name dropdown (from known parameters like zone_width, zone_height, sku_selection, quantity), permission_type selector (LOCKED/RANGE/SELECTION), constraint fields (min_value, max_value for RANGE; allowed_values[] for SELECTION). On confirm, inserts into template_consultant_permission. data-testid='add-permission-dialog'.",
+    "Create src/components/ConsultantPermissions/index.ts - barrel export.",
+    "Create src/components/HiddenComponents/HiddenComponentsPanel.tsx - Panel listing hidden components for the template. Shows component name, trigger type (ALWAYS/CONDITION/DEPENDENCY), quantity rule, and condition details. Includes 'Add Hidden Component' button. Only visible in DESIGNER mode. Uses fromTable('template_hidden_component'). data-testid='hidden-components-panel'.",
+    "Create src/components/HiddenComponents/AddHiddenComponentDialog.tsx - Dialog to define a hidden component: SKU selector, trigger type dropdown (ALWAYS/CONDITION/DEPENDENCY), condition fields (field, operator, value - shown when CONDITION selected), quantity rule dropdown (FIXED/PER_ZONE/PER_PANEL/DERIVED_FROM_PARENT), fixed value input. On confirm, inserts into template_hidden_component. data-testid='add-hidden-component-dialog'.",
+    "Create src/components/HiddenComponents/index.ts - barrel export.",
+    "Create src/components/PromotedAlternatives/__tests__/PromotedAlternativesPanel.test.tsx - Test rendering with mocked alternatives data, add button visibility in DESIGNER mode, removal of alternatives.",
+    "Create src/components/ConsultantPermissions/__tests__/ConsultantPermissionsPanel.test.tsx - Test rendering with mocked permissions, add button opens dialog, permission types display correctly.",
+    "Create src/components/HiddenComponents/__tests__/HiddenComponentsPanel.test.tsx - Test rendering with mocked hidden components, trigger type display, add button works."
+  ],
+  "acceptance_criteria": [
+    "PromotedAlternativesPanel renders zone alternatives from template_zone_alternative and supports add/remove",
+    "AddAlternativeDialog allows SKU selection and persists to template_zone_alternative",
+    "ConsultantPermissionsPanel renders permissions with controlled vocabulary and supports add",
+    "AddPermissionDialog provides LOCKED/RANGE/SELECTION types with appropriate constraint fields",
+    "HiddenComponentsPanel renders hidden components with trigger types and supports add",
+    "AddHiddenComponentDialog provides ALWAYS/CONDITION/DEPENDENCY triggers with condition fields",
+    "All new component tests pass",
+    "TypeScript strict mode passes",
+    "All existing tests still pass"
+  ],
+  "verification": [
+    "cd frontend && unset NODE_OPTIONS && npx tsc --noEmit",
+    "cd frontend && unset NODE_OPTIONS && npx vitest --run"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}
