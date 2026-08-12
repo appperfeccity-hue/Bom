@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useSkuStore } from '@/stores/skuStore';
 import { ProductType, SkuStatus, CatalogueStatus } from '@/types/database';
 
@@ -17,6 +17,8 @@ export function SkuFilterBar() {
   const fetchCategories = useSkuStore((s) => s.fetchCategories);
   const fetchSkus = useSkuStore((s) => s.fetchSkus);
 
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // Load families on mount
   useEffect(() => {
     void fetchFamilies();
@@ -27,9 +29,19 @@ export function SkuFilterBar() {
     void fetchCategories(filters.familyId ?? undefined);
   }, [filters.familyId, fetchCategories]);
 
-  // Fetch SKUs when filters change
+  // Fetch SKUs when filters change, with debounce for text inputs
   useEffect(() => {
-    void fetchSkus();
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+    debounceRef.current = setTimeout(() => {
+      void fetchSkus();
+    }, 300);
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+    };
   }, [filters, fetchSkus]);
 
   const inputStyle: React.CSSProperties = {

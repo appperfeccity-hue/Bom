@@ -3,5 +3,12 @@
   "task_description": "Build SKU Browser / Catalogue UI: update types to match DB schema, create skuStore for browsing state, build SKU browser panel with search/filter/grid/detail/assign workflow, wire into canvas designer mode",
   "status": "in_progress",
   "feature_order": ["FEAT-001", "FEAT-002"],
-  "blocked_reason": null
+  "blocked_reason": null,
+  "verification": {
+    "build": "pass",
+    "tests": "pass",
+    "test_quality": "pass",
+    "docker_build": "skipped",
+    "summary": "Build (tsc -b && vite build) passes. All 105 tests pass (6 test files). Review fixes applied: debounce on filter fetch, ilike for material/colour, or-filter for search covering sku_code+material, adjusted pagination count for catalogue filter, deduplicated isSelectable."
+  }
 }

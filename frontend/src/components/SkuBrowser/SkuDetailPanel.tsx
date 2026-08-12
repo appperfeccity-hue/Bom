@@ -1,18 +1,8 @@
 import { useSkuStore } from '@/stores/skuStore';
 import { useProjectStore } from '@/stores/projectStore';
 import { useCanvasStore } from '@/stores/canvasStore';
-import { SkuStatus, CatalogueStatus } from '@/types/database';
-import type { SkuWithCatalogue } from '@/types/database';
-
-/**
- * Determine if a SKU is selectable for assignment.
- */
-function isSelectable(sku: SkuWithCatalogue): boolean {
-  return (
-    sku.sku.status === SkuStatus.ACTIVE &&
-    sku.catalogueEntry?.status === CatalogueStatus.READY
-  );
-}
+import { CatalogueStatus } from '@/types/database';
+import { isSelectable } from './SkuGrid';
 
 /**
  * Detail panel shown when a SKU is selected in the browser.

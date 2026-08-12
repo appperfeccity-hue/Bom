@@ -9,6 +9,7 @@ vi.mock('@/lib/supabase', () => {
     eq: vi.fn().mockReturnThis(),
     in: vi.fn().mockReturnThis(),
     ilike: vi.fn().mockReturnThis(),
+    or: vi.fn().mockReturnThis(),
     range: vi.fn().mockReturnThis(),
     order: vi.fn().mockReturnThis(),
   };
@@ -205,6 +206,7 @@ describe('skuStore', () => {
         eq: vi.fn().mockReturnThis(),
         in: vi.fn().mockReturnThis(),
         ilike: vi.fn().mockReturnThis(),
+        or: vi.fn().mockReturnThis(),
         range: vi.fn().mockReturnThis(),
         order: vi.fn().mockResolvedValue({ data: [], error: null, count: 0 }),
       };
@@ -224,6 +226,7 @@ describe('skuStore', () => {
         eq: vi.fn().mockReturnThis(),
         in: vi.fn().mockReturnThis(),
         ilike: vi.fn().mockReturnThis(),
+        or: vi.fn().mockReturnThis(),
         range: vi.fn().mockReturnThis(),
         order: vi.fn().mockResolvedValue({ data: null, error: { message: 'Network error' }, count: null }),
       };
@@ -243,6 +246,7 @@ describe('skuStore', () => {
         eq: vi.fn().mockReturnThis(),
         in: vi.fn().mockReturnThis(),
         ilike: vi.fn().mockReturnThis(),
+        or: vi.fn().mockReturnThis(),
         range: vi.fn().mockReturnThis(),
         order: vi.fn().mockResolvedValue({ data: [], error: null, count: 0 }),
       };
@@ -259,7 +263,7 @@ describe('skuStore', () => {
       expect(mockChain.eq).toHaveBeenCalledWith('product_type', ProductType.WALL_PANEL);
     });
 
-    it('should apply searchQuery as ilike filter', async () => {
+    it('should apply searchQuery as or filter on sku_code and material', async () => {
       const { fromTable } = await import('@/lib/supabase');
       const mockedFromTable = vi.mocked(fromTable);
 
@@ -268,6 +272,7 @@ describe('skuStore', () => {
         eq: vi.fn().mockReturnThis(),
         in: vi.fn().mockReturnThis(),
         ilike: vi.fn().mockReturnThis(),
+        or: vi.fn().mockReturnThis(),
         range: vi.fn().mockReturnThis(),
         order: vi.fn().mockResolvedValue({ data: [], error: null, count: 0 }),
       };
@@ -281,7 +286,7 @@ describe('skuStore', () => {
       });
 
       await useSkuStore.getState().fetchSkus();
-      expect(mockChain.ilike).toHaveBeenCalledWith('sku_code', '%WP-001%');
+      expect(mockChain.or).toHaveBeenCalledWith('sku_code.ilike.%WP-001%,material.ilike.%WP-001%');
     });
 
     it('should apply pagination range', async () => {
@@ -293,6 +298,7 @@ describe('skuStore', () => {
         eq: vi.fn().mockReturnThis(),
         in: vi.fn().mockReturnThis(),
         ilike: vi.fn().mockReturnThis(),
+        or: vi.fn().mockReturnThis(),
         range: vi.fn().mockReturnThis(),
         order: vi.fn().mockResolvedValue({ data: [], error: null, count: 0 }),
       };

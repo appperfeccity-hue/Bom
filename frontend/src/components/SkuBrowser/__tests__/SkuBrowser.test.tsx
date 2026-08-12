@@ -20,6 +20,7 @@ vi.mock('@/lib/supabase', () => ({
     eq: vi.fn().mockReturnThis(),
     in: vi.fn().mockReturnThis(),
     ilike: vi.fn().mockReturnThis(),
+    or: vi.fn().mockReturnThis(),
     range: vi.fn().mockReturnThis(),
     order: vi.fn().mockResolvedValue({ data: [], error: null, count: 0 }),
     insert: vi.fn().mockReturnThis(),

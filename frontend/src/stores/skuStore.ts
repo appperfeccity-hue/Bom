@@ -101,16 +101,16 @@ export const useSkuStore = create<SkuStore>((set, get) => ({
         query = query.eq('category_id', filters.categoryId);
       }
       if (filters.material) {
-        query = query.eq('material', filters.material);
+        query = query.ilike('material', `%${filters.material}%`);
       }
       if (filters.colour) {
-        query = query.eq('colour', filters.colour);
+        query = query.ilike('colour', `%${filters.colour}%`);
       }
       if (filters.skuStatus) {
         query = query.eq('status', filters.skuStatus);
       }
       if (filters.searchQuery) {
-        query = query.ilike('sku_code', `%${filters.searchQuery}%`);
+        query = query.or(`sku_code.ilike.%${filters.searchQuery}%,material.ilike.%${filters.searchQuery}%`);
       }
 
       // Pagination
@@ -196,9 +196,15 @@ export const useSkuStore = create<SkuStore>((set, get) => ({
         }
       }
 
+      // When catalogue status filter is applied client-side, adjust totalCount
+      // to reflect filtered results since pagination count is from the DB query
+      const adjustedCount = filters.catalogueStatus
+        ? skus.length + page * pageSize
+        : count ?? 0;
+
       set({
         skus,
-        totalCount: count ?? 0,
+        totalCount: adjustedCount,
         isLoading: false,
       });
     } catch (err) {
