@@ -2,7 +2,7 @@
   "id": "FEAT-002",
   "type": "feat",
   "description": "Build SKU Browser panel component with search/filter UI, grid view with thumbnails, detail view, and assignment action wired into the canvas workflow",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "Create src/components/SkuBrowser/SkuBrowser.tsx as the main browser panel component. It should be a slide-over or modal panel that opens when isBrowserOpen is true in skuStore. Include a header with title 'SKU Browser' and a close button.",
     "Create src/components/SkuBrowser/SkuFilterBar.tsx with filter controls: ProductType dropdown (WALL_PANEL/LIGHT/FURNITURE), Family dropdown (populated from skuStore.families), Category dropdown (populated from skuStore.categories, filtered by selected family), Material text input, Colour text input, SKU Status toggle (ACTIVE/INACTIVE/All), Catalogue Status toggle (READY/INCOMPLETE/All), and a search input for free-text search by sku_code or material. Include a 'Clear Filters' button.",
@@ -34,5 +34,5 @@
     "cd /projects/sandbox/Bom/frontend && npx vitest run"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All 105 tests pass (16 new SkuBrowser tests). Build passes cleanly. The SkuFilterBar useEffect triggers fetchSkus/fetchFamilies/fetchCategories on mount and filter changes - in tests, these are overridden with no-op mocks to prevent store state from being overwritten by the supabase mock. The act() warnings in stderr are benign (async state updates from useEffect) and don't affect test results."
 }
