@@ -1,0 +1,21 @@
+{
+  "project_type": "PostgreSQL database project (Supabase-hosted) - PERFECCITY MVP BOM platform",
+  "language": "SQL (PostgreSQL 17.6)",
+  "build_system": "Supabase MCP apply_migration for DDL changes, git for version control",
+  "test_framework": "SQL regression harness (DO $$ blocks with RAISE NOTICE/EXCEPTION pattern), run via psql or Supabase execute_sql",
+  "build_command": "N/A - DDL applied via Supabase MCP apply_migration tool",
+  "test_command": "Execute tests/regression_v1.1.5.sql via Supabase execute_sql or psql",
+  "verification_instructions": "1. Apply migration via Supabase MCP apply_migration. 2. Verify RLS enabled on all 34 tables via pg_tables query. 3. Run RLS-specific test harness to confirm policies work correctly. 4. Run get_advisors security check to confirm no new RLS warnings for perfecity schema.",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "No local setup needed - all changes applied to live Supabase project fbiemsbykrmrbqcsobvh via MCP tools",
+  "environment_constraints": "COMMON_DEPENDENCIES network mode. Supabase MCP tools available (apply_migration, execute_sql, list_tables, get_advisors). No local psql needed. The perfecity schema is NOT currently exposed to PostgREST (authenticated/anon roles lack USAGE). The migration must GRANT USAGE ON SCHEMA perfecity to authenticated and grant SELECT on appropriate tables.",
+  "contribution_requirements": "Migration files go in migrations/ directory in the repo. Must also be applied to live Supabase via apply_migration MCP tool. Branch: feat/db-baseline-v1.1.5. Must push after changes.",
+  "key_patterns": "Auth model: auth.uid() for user identity, auth.jwt()->'app_metadata'->>'role' for role. Roles: ADMIN, DESIGNER, CONSULTANT, SYSTEM. created_by UUID columns link to auth.uid(). Templates owned by DESIGNER, Projects owned by CONSULTANT. Master data ADMIN-write/all-read. service_role bypasses RLS. Triggers use SECURITY DEFINER functions (already exist). 34 tables in perfecity schema.",
+  "relevant_files": [
+    "baseline/v1.1.5_baseline.sql",
+    "migrations/v1.1.4_to_v1.1.5.sql",
+    "tests/regression_v1.1.5.sql",
+    "docs/deployment_runbook.md"
+  ],
+  "directory_structure": "baseline/ - authoritative DDL, migrations/ - incremental patches, tests/ - regression harness SQL, docs/ - runbooks and guides, ci/ - CI runner scripts"
+}

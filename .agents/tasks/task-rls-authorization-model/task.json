@@ -1,0 +1,7 @@
+{
+  "task_id": "task-rls-authorization-model",
+  "task_description": "Enable Row Level Security on all 34 perfecity schema tables and create comprehensive RLS policies implementing the PERFECCITY authority model (ADMIN, DESIGNER, CONSULTANT, SYSTEM roles). Apply migration to live Supabase, save migration file to repository, create test harness, and push to GitHub.",
+  "status": "in_progress",
+  "feature_order": ["FEAT-001", "FEAT-002"],
+  "blocked_reason": null
+}

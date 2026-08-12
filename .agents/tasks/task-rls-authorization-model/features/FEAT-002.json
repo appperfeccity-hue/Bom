@@ -1,0 +1,27 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "Create an RLS regression test harness that validates the policies are correctly enforced for each role. Save test file to repository and run validation queries against live Supabase.",
+  "status": "pending",
+  "steps": [
+    "Create tests/regression_rls.sql following the same pattern as tests/regression_v1.1.5.sql (DO $$ blocks with RAISE NOTICE for PASS, RAISE EXCEPTION for FAIL)",
+    "Test T-RLS-01: Verify all 34 tables have RLS enabled",
+    "Test T-RLS-02: Verify authenticated role has USAGE on perfecity schema",
+    "Test T-RLS-03: Verify policies exist for all 34 tables (check pg_policies)",
+    "Test T-RLS-04: Verify the perfecity.current_user_role() helper function exists and returns expected claims from JWT",
+    "Test T-RLS-05: Count total policies and verify minimum expected count (at least 1 SELECT + appropriate write policies per table category)",
+    "Run the test harness via execute_sql on Supabase to confirm all checks pass",
+    "Update docs/deployment_runbook.md Post-Deployment Security section to reference the new migration and test file"
+  ],
+  "acceptance_criteria": [
+    "tests/regression_rls.sql exists and follows project test patterns",
+    "All T-RLS tests pass when run against live Supabase",
+    "docs/deployment_runbook.md updated to reference RLS migration"
+  ],
+  "verification": [
+    "Run tests/regression_rls.sql via execute_sql on Supabase - all tests must pass",
+    "Verify file exists at tests/regression_rls.sql in the repository"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

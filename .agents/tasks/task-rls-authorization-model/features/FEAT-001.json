@@ -1,0 +1,45 @@
+{
+  "id": "FEAT-001",
+  "type": "feat",
+  "description": "Enable RLS on all 34 perfecity schema tables, grant schema/table access to authenticated role, and create comprehensive RLS policies implementing the PERFECCITY authority model (ADMIN, DESIGNER, CONSULTANT, SYSTEM). Apply to live Supabase via apply_migration MCP tool and save migration file to the repository.",
+  "status": "completed",
+  "steps": [
+    "Create a single comprehensive migration SQL file at migrations/v1.1.5_rls_policies.sql that contains all RLS enablement and policy definitions",
+    "The migration must first: GRANT USAGE ON SCHEMA perfecity TO authenticated, service_role; GRANT SELECT ON ALL TABLES IN SCHEMA perfecity TO authenticated; (service_role already bypasses RLS)",
+    "Enable RLS on all 34 tables using ALTER TABLE perfecity.<table> ENABLE ROW LEVEL SECURITY for each table: product_master, family_master, category_master, design_family_master, design_subfamily_master, sku_master, sku_variant, sku_compatibility, catalogue_entry, catalogue_asset, catalogue_asset_metadata, rule_set, template, template_zone, template_zone_sku, template_zone_alternative, template_lighting, template_furniture, template_trim, template_hidden_component, template_consultant_permission, master_bom, master_bom_line, project, project_snapshot, project_configuration, project_measurement, actual_bom, actual_bom_line, final_bom, final_bom_line, audit_event, project_idempotency, finalization_idempotency",
+    "Create a helper SQL function perfecity.current_user_role() that returns auth.jwt()->'app_metadata'->>'role' for use in policies",
+    "MASTER DATA policies (product_master, family_master, category_master, design_family_master, design_subfamily_master): SELECT for all authenticated users, INSERT/UPDATE/DELETE only for role='ADMIN'",
+    "SKU policies (sku_master, sku_variant, sku_compatibility): SELECT for all authenticated users, INSERT/UPDATE/DELETE only for role='ADMIN'",
+    "CATALOGUE policies (catalogue_entry, catalogue_asset, catalogue_asset_metadata): SELECT for all authenticated users, INSERT/UPDATE for role='ADMIN' (catalogue_entry status managed by triggers so also allow service_role writes)",
+    "RULE SET policies (rule_set): SELECT for all authenticated users, INSERT/UPDATE for role='ADMIN'",
+    "TEMPLATE policies (template): SELECT for all authenticated (needed for Project creation). INSERT/UPDATE/DELETE for role='DESIGNER' with ownership check (created_by = auth.uid()). ADMIN can SELECT all templates.",
+    "TEMPLATE CHILD TABLE policies (template_zone, template_zone_sku, template_zone_alternative, template_lighting, template_furniture, template_trim, template_hidden_component, template_consultant_permission): SELECT for all authenticated. INSERT/UPDATE/DELETE only if the parent template.created_by = auth.uid() AND role='DESIGNER'. Use a subquery joining to template via template_id (or via template_zone for indirect children).",
+    "MASTER BOM policies (master_bom, master_bom_line): SELECT for all authenticated. INSERT/UPDATE for role='SYSTEM' or role='DESIGNER' (designer approves). The system generates BOMs via service_role so these writes bypass RLS. DESIGNER needs UPDATE for approval.",
+    "PROJECT policies (project): SELECT only own projects for role='CONSULTANT' (created_by = auth.uid()). ADMIN can SELECT all. DESIGNER can SELECT all (to view). INSERT for role='CONSULTANT'. UPDATE for role='CONSULTANT' on own projects.",
+    "PROJECT CHILD TABLE policies (project_snapshot, project_configuration, project_measurement): SELECT/INSERT/UPDATE only if the parent project.created_by = auth.uid() AND role='CONSULTANT'. ADMIN can SELECT all. System operations use service_role.",
+    "ACTUAL BOM policies (actual_bom, actual_bom_line): SELECT if owns the parent project (role='CONSULTANT'). ADMIN can SELECT all. INSERT/UPDATE via service_role (SYSTEM role). No direct user writes.",
+    "FINAL BOM policies (final_bom, final_bom_line): SELECT if owns the parent project (role='CONSULTANT'). ADMIN can SELECT all. No INSERT/UPDATE/DELETE by any user role (immutable, created by service_role/SYSTEM).",
+    "AUDIT EVENT policies (audit_event): SELECT for role='ADMIN' only. INSERT for all authenticated (append-only; actual inserts typically by service_role). No UPDATE/DELETE (already enforced by immutability trigger).",
+    "IDEMPOTENCY TABLE policies (project_idempotency, finalization_idempotency): SELECT for role='CONSULTANT' on own projects. INSERT by service_role. ADMIN can SELECT all.",
+    "Apply the migration to live Supabase using the apply_migration MCP tool with project_id fbiemsbykrmrbqcsobvh",
+    "After applying, verify with execute_sql that all 34 tables show rowsecurity=true in pg_tables",
+    "Run get_advisors security check to confirm perfecity tables no longer flagged"
+  ],
+  "acceptance_criteria": [
+    "All 34 perfecity schema tables have RLS enabled (rowsecurity=true in pg_tables)",
+    "Migration applied successfully to Supabase project fbiemsbykrmrbqcsobvh without errors",
+    "Migration file exists at migrations/v1.1.5_rls_policies.sql in the repository",
+    "Policies enforce: ADMIN can read everything, write master data only",
+    "Policies enforce: DESIGNER can read all, write own templates and children only",
+    "Policies enforce: CONSULTANT can read own projects, write own projects only",
+    "Policies enforce: service_role bypasses RLS (Supabase default for SYSTEM operations)",
+    "authenticated role has USAGE on perfecity schema and SELECT on all tables"
+  ],
+  "verification": [
+    "Run execute_sql: SELECT tablename, rowsecurity FROM pg_tables WHERE schemaname = 'perfecity' ORDER BY tablename - all must show true",
+    "Run get_advisors type=security and confirm no perfecity RLS warnings",
+    "Run execute_sql to test a sample policy by setting role to authenticated with a specific JWT and attempting a query"
+  ],
+  "blocked_reason": null,
+  "findings": "Migration applied successfully via Supabase MCP apply_migration. All 34 perfecity tables confirmed RLS enabled (rowsecurity=true). 151 policies created total. Security advisor shows no RLS warnings for perfecity schema - remaining warnings are for pre-existing public schema tables and function search_path issues (out of scope). The apply_migration tool wraps in its own transaction so BEGIN/COMMIT from the SQL file should be omitted when using the MCP tool directly. The local SQL file retains BEGIN/COMMIT for documentation/manual replay purposes."
+}
