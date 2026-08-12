@@ -1,0 +1,7 @@
+{
+  "task_id": "task-project-finalization",
+  "task_description": "Implement Project Finalisation Flow (Spec sections 96-97, 99, 73): Consultant confirms finalization, creating an immutable Final BOM. Includes finalizationStore (Zustand), FinalizeButton, FinalizationConfirmDialog, FinalizationSuccessPanel, lock controls when FINALIZED, and tests.",
+  "status": "in_progress",
+  "feature_order": ["FEAT-001"],
+  "blocked_reason": null
+}

@@ -1,9 +1,10 @@
 import { useCanvasStore } from '@/stores/canvasStore';
 import { useProjectStore } from '@/stores/projectStore';
 import { usePublishStore } from '@/stores/publishStore';
-import { CanvasMode, TemplateStatus } from '@/types/database';
+import { CanvasMode, TemplateStatus, ProjectStatus } from '@/types/database';
 import { CanvasLayer } from '@/types/canvas';
 import { canAddZone } from '@/canvas/utils/zoneConstraints';
+import { FinalizeButton } from '@/components/Finalization/FinalizeButton';
 
 /**
  * Top toolbar with mode indicator, zoom controls, grid snap toggle,
@@ -22,10 +23,12 @@ export function Toolbar() {
   const toggleLayer = useCanvasStore((s) => s.toggleLayer);
   const layerVisibility = useCanvasStore((s) => s.layerVisibility);
   const currentTemplate = useProjectStore((s) => s.currentTemplate);
+  const currentProject = useProjectStore((s) => s.currentProject);
   const runValidation = usePublishStore((s) => s.runValidation);
 
   const zoomPercent = Math.round(viewport.zoom * 100);
   const isDesigner = mode === CanvasMode.DESIGNER;
+  const isFinalized = currentProject?.status === ProjectStatus.FINALIZED;
 
   const handleZoomIn = () => setZoom(viewport.zoom * 1.25);
   const handleZoomOut = () => setZoom(viewport.zoom / 1.25);
@@ -136,16 +139,16 @@ export function Toolbar() {
       {isDesigner && (
         <div style={{ display: 'flex', gap: '4px' }}>
           <button
-            disabled={!canAddZone(zones.length)}
-            title={canAddZone(zones.length) ? 'Click and drag on canvas to create zone' : 'Maximum 12 zones reached'}
+            disabled={!canAddZone(zones.length) || isFinalized}
+            title={isFinalized ? 'Project is finalized' : canAddZone(zones.length) ? 'Click and drag on canvas to create zone' : 'Maximum 12 zones reached'}
             data-testid="create-zone-btn"
           >
             + Zone
           </button>
           <button
             onClick={handleDeleteZone}
-            disabled={!selection.selectedZoneId}
-            title="Delete selected zone"
+            disabled={!selection.selectedZoneId || isFinalized}
+            title={isFinalized ? 'Project is finalized' : 'Delete selected zone'}
             data-testid="delete-zone-btn"
           >
             Delete Zone
@@ -171,6 +174,27 @@ export function Toolbar() {
           )}
         </div>
       )}
+
+      {/* Finalized lock badge */}
+      {isFinalized && (
+        <span
+          data-testid="finalized-lock-badge"
+          style={{
+            padding: '4px 8px',
+            borderRadius: '4px',
+            fontSize: '12px',
+            fontWeight: 600,
+            backgroundColor: '#e8f5e9',
+            color: '#2e7d32',
+            border: '1px solid #a5d6a7',
+          }}
+        >
+          Finalized (Immutable)
+        </span>
+      )}
+
+      {/* Finalize button - CONSULTANT mode, VALIDATED status */}
+      <FinalizeButton />
 
       {/* Save status */}
       <span

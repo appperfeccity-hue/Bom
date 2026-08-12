@@ -1,0 +1,30 @@
+{
+  "project_type": "React 18 SPA with Vite, TypeScript, Zustand state management, Supabase backend",
+  "language": "TypeScript / TSX",
+  "build_system": "Vite with npm scripts",
+  "test_framework": "Vitest with @testing-library/react, jsdom environment, vi.mock for supabase",
+  "build_command": "cd frontend && unset NODE_OPTIONS && npx vite build",
+  "test_command": "cd frontend && unset NODE_OPTIONS && npx vitest run",
+  "verification_instructions": "1. Run 'npx vitest run' to confirm all tests pass. 2. Run 'npx vite build' to confirm TypeScript compiles without errors. 3. Run 'npx tsc --noEmit' for type checking.",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "cd /projects/sandbox/Bom/frontend && npm install (already installed)",
+  "environment_constraints": "COMMON_DEPENDENCIES network mode. NODE_OPTIONS must be unset before running node commands due to proxy-bootstrap preload issue. Use 'unset NODE_OPTIONS &&' prefix.",
+  "contribution_requirements": "Follow existing patterns: Zustand stores with create(), fromTable() for Supabase queries, supabase.schema('perfecity').rpc() for stored functions, data-testid attributes on components, vi.mock('@/lib/supabase') in tests.",
+  "key_patterns": "Stores follow pattern: State interface + Actions interface + Store type + initialState + create<Store>. Components use inline styles. Tests mock supabase via vi.mock. PublishWorkflow is the closest parallel to finalization flow (multi-step wizard). Store exports are re-exported from stores/index.ts. The supabase helper is fromTable() for table queries and supabase.schema('perfecity').rpc() for RPC calls.",
+  "relevant_files": [
+    "frontend/src/stores/publishStore.ts",
+    "frontend/src/stores/projectStore.ts",
+    "frontend/src/stores/authStore.ts",
+    "frontend/src/stores/bomStore.ts",
+    "frontend/src/stores/index.ts",
+    "frontend/src/types/database.ts",
+    "frontend/src/lib/supabase.ts",
+    "frontend/src/components/PublishWorkflow/PublishWorkflow.tsx",
+    "frontend/src/components/PublishWorkflow/PublishConfirmation.tsx",
+    "frontend/src/components/BomPanel/FinalBomTable.tsx",
+    "frontend/src/components/Toolbar.tsx",
+    "frontend/src/stores/__tests__/publishStore.test.ts",
+    "frontend/src/components/PublishWorkflow/__tests__/PublishWorkflow.test.tsx"
+  ],
+  "directory_structure": "frontend/src/stores/ (Zustand stores), frontend/src/components/ (React components grouped by feature), frontend/src/types/database.ts (all DB type definitions), frontend/src/lib/supabase.ts (Supabase client + fromTable helper), frontend/src/engines/ (calculation engines), frontend/src/pages/ (route pages)"
+}

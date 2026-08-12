@@ -18,3 +18,6 @@ export type { ProjectCreationState, ProjectCreationActions, ProjectCreationStore
 
 export { useTemplateManagementStore } from './templateManagementStore';
 export type { TemplateManagementState, TemplateManagementActions, TemplateManagementStore, TemplateFilters as TemplateManagementFilters } from './templateManagementStore';
+
+export { useFinalizationStore, FinalizationStep } from './finalizationStore';
+export type { FinalizationState, FinalizationActions, FinalizationStore } from './finalizationStore';

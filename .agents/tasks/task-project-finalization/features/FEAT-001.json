@@ -1,0 +1,33 @@
+{
+  "id": "FEAT-001",
+  "type": "feat",
+  "description": "Implement finalizationStore and the complete finalization UI flow: FinalizeButton, FinalizationConfirmDialog, FinalizationSuccessPanel, and lock controls when FINALIZED. Includes adding VALIDATED/FINALIZED to ProjectStatus enum, creating the Zustand store that calls supabase.schema('perfecity').rpc('finalize_project', {...}), and all UI components.",
+  "status": "in_progress",
+  "steps": [
+    "1. Add VALIDATED and FINALIZED values to the ProjectStatus enum in frontend/src/types/database.ts (after APPROVED, before ARCHIVED).",
+    "2. Create frontend/src/stores/finalizationStore.ts following the publishStore.ts pattern. State: finalizationStep (IDLE|CONFIRMING|FINALIZING|SUCCESS|ERROR), finalBomId (string|null), finalBomHash (string|null), finalizedAt (string|null), isLoading (boolean), error (string|null). Actions: startFinalization() sets step to CONFIRMING, confirmFinalization(projectId: string, finalizationKey: string) calls supabase.schema('perfecity').rpc('finalize_project', { p_project_id: projectId, p_user_id: userId from authStore, p_finalization_key: finalizationKey, p_computed_final_hash: computedHash }) where computedHash is generated client-side as a SHA-256 of (projectId + finalizationKey + timestamp), cancelFinalization() resets to IDLE, reset() returns to initial state. On success, store the returned final_bom_id UUID, update the project status in projectStore to FINALIZED.",
+    "3. Export the new store from frontend/src/stores/index.ts following the existing pattern.",
+    "4. Create frontend/src/components/Finalization/ directory with these files: index.ts (barrel exports), FinalizeButton.tsx (shown only when project status is VALIDATED and mode is CONSULTANT, styled like the Publish Template button but green-themed, calls startFinalization()), FinalizationConfirmDialog.tsx (modal overlay with irreversibility warning text like 'This action is irreversible. Once finalized, the project BOM cannot be modified.', two buttons: Cancel and Confirm Finalization, Confirm calls confirmFinalization with a crypto.randomUUID() as finalization_key), FinalizationSuccessPanel.tsx (shows the final_bom_hash, finalized_at timestamp, a success icon/badge, and a Close button that calls reset()).",
+    "5. Add lock controls: in the Toolbar component, when the currentProject status is FINALIZED, disable zone editing buttons (create zone, delete zone) and show a lock badge similar to the 'Immutable' badge in FinalBomTable.tsx. The FinalizeButton should also be hidden when status is FINALIZED.",
+    "6. Integrate the FinalizeButton into the Toolbar (next to the Publish Template button area but only visible in CONSULTANT mode when project status is VALIDATED). Add the FinalizationConfirmDialog and FinalizationSuccessPanel as overlay components rendered at the app level (similar to how PublishWorkflow renders as a fixed panel).",
+    "7. Write comprehensive tests: frontend/src/stores/__tests__/finalizationStore.test.ts covering: initial state, startFinalization transitions to CONFIRMING, confirmFinalization calls rpc and transitions to SUCCESS on success, confirmFinalization transitions to ERROR on failure, cancelFinalization resets to IDLE, reset returns initial state, idempotency (calling confirm twice with same key succeeds). frontend/src/components/Finalization/__tests__/Finalization.test.tsx covering: FinalizeButton renders only when project is VALIDATED and mode is CONSULTANT, FinalizeButton hidden when FINALIZED, FinalizationConfirmDialog shows warning text and buttons, clicking Confirm triggers confirmFinalization, clicking Cancel triggers cancelFinalization, FinalizationSuccessPanel shows hash and timestamp, lock controls appear when FINALIZED."
+  ],
+  "acceptance_criteria": [
+    "ProjectStatus enum in database.ts includes VALIDATED and FINALIZED values",
+    "finalizationStore.ts exports useFinalizationStore with correct state/actions",
+    "Store calls supabase.schema('perfecity').rpc('finalize_project', ...) with correct params",
+    "FinalizeButton renders only when project status is VALIDATED and canvas mode is CONSULTANT",
+    "FinalizationConfirmDialog shows irreversibility warning with Cancel/Confirm buttons",
+    "FinalizationSuccessPanel displays final_bom_hash and finalized_at timestamp",
+    "Toolbar controls are disabled/locked when project status is FINALIZED",
+    "All new tests pass: npx vitest run",
+    "TypeScript compiles without errors: npx tsc --noEmit",
+    "All 473+ existing tests continue to pass"
+  ],
+  "verification": [
+    "cd frontend && unset NODE_OPTIONS && npx vitest run",
+    "cd frontend && unset NODE_OPTIONS && npx tsc --noEmit"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}
