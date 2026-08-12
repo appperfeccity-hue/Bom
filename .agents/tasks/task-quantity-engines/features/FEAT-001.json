@@ -1,0 +1,36 @@
+{
+  "id": "FEAT-001",
+  "type": "feat",
+  "description": "Implement the Wall Panel, Light, and Furniture quantity resolution engines as pure TypeScript modules with comprehensive tests, plus a shared types file. Wire them into the bomStore for Actual BOM generation.",
+  "status": "in_progress",
+  "steps": [
+    "Create frontend/src/engines/types.ts with shared engine types: WallPanelInput (W, H, w, h, gh, gv, wasteFactor), WallPanelOutput (Ncol, Nrow, requiredQuantity, procurementQuantity, wasteQuantity, trimWidth, retainedWidth, trimHeight, retainedHeight), LightInput (edges with lengths, mountingType, mode, unitLength), LightOutput (totalLength, driverCount, wireLength, quantity), FurnitureInput (quantity, min, max, skuId), FurnitureOutput (quantity, omitted), HiddenComponentInput (triggerType, condition, quantity rule, parentQuantity, zoneCount, panelCount), HiddenComponentOutput (quantity, included), and an EngineError class.",
+    "Create frontend/src/engines/wallPanelEngine.ts implementing the wall panel calculation per spec section 82. Key algorithm: (1) For width axis: find smallest Ncol where (Ncol * w) + ((Ncol - 1) * gh) >= W. Apply symmetric trimming: trim = ((Ncol * w) + ((Ncol - 1) * gh) - W) / 2 per side. retained = w - trim. Validate retained >= MIN_RETAINED (50mm). Single-panel special case: final_panel_width = W, trim = w - W, retained = W. (2) Same logic for height axis with H, h, gv. (3) requiredQuantity = Ncol * Nrow. (4) procurementQuantity = CEILING(requiredQuantity * (1 + wasteFactor)). (5) wasteQuantity = procurementQuantity - requiredQuantity. Throw EngineError if retained < 50mm.",
+    "Create frontend/src/engines/lightEngine.ts implementing the light calculation per spec section 86. Mounting offsets: DIRECT=0, PROFILE=5, COVE=10. LED per driver: 5000mm. Wire extra: 2000mm. DISCRETE mode: quantity = CEILING(length / unitLength). LINEAR mode: quantity = length in mm. Driver count = CEILING(totalLength / 5000). Wire = totalLength + 2000.",
+    "Create frontend/src/engines/furnitureEngine.ts implementing the furniture calculation per spec section 87. Validate quantity is within [min, max]. If quantity = 0, return omitted=true (BOM line omitted). Otherwise return quantity and omitted=false.",
+    "Create frontend/src/engines/hiddenComponentEngine.ts implementing the hidden component calculation per spec section 88. Handle trigger types: ALWAYS (always included), CONDITION (included when field matches operator+value), DEPENDENCY (included when parent is present). Quantity rules: FIXED (returns fixed value), PER_ZONE (fixed * zoneCount), PER_PANEL (fixed * panelCount), DERIVED_FROM_PARENT (returns parentQuantity).",
+    "Create frontend/src/engines/index.ts that re-exports all engines and types.",
+    "Create frontend/src/engines/__tests__/wallPanelEngine.test.ts with all 13 golden test fixtures (PANEL-001 through PANEL-013) plus additional edge cases. Each fixture must match the expected outputs from the spec. PANEL-013 must throw EngineError.",
+    "Create frontend/src/engines/__tests__/lightEngine.test.ts testing DISCRETE and LINEAR modes, all mounting types, multi-edge calculations, driver count, and wire length.",
+    "Create frontend/src/engines/__tests__/furnitureEngine.test.ts testing quantity within range, quantity = 0 (omitted), quantity below min (error), quantity above max (error).",
+    "Create frontend/src/engines/__tests__/hiddenComponentEngine.test.ts testing ALWAYS, CONDITION, DEPENDENCY trigger types and all quantity rules (FIXED, PER_ZONE, PER_PANEL, DERIVED_FROM_PARENT).",
+    "Wire engines into bomStore.ts: add a generateActualBom method that takes zone/measurement/config inputs and calls the engines in order (wall panel -> light -> furniture -> hidden components) to produce ActualBomLine outputs. This is the calculation pipeline entry point."
+  ],
+  "acceptance_criteria": [
+    "All 13 golden test fixtures for wall panel engine pass exactly as specified",
+    "Light engine correctly calculates quantity, drivers, and wire for both DISCRETE and LINEAR modes",
+    "Furniture engine validates min/max bounds and handles quantity=0 omission",
+    "Hidden component engine handles all trigger types and quantity rules",
+    "All engine functions are pure (no side effects, no DB calls, no imports from lib/supabase)",
+    "TypeScript strict mode passes with no errors (tsc --noEmit)",
+    "All existing 349 tests continue to pass",
+    "New engine tests all pass",
+    "bomStore has a generateActualBom method that orchestrates the engine pipeline"
+  ],
+  "verification": [
+    "cd frontend && NODE_OPTIONS='' npx tsc --noEmit",
+    "cd frontend && NODE_OPTIONS='' npx vitest --run"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

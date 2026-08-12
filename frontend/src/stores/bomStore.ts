@@ -10,6 +10,16 @@ import type {
 } from '@/types/database';
 import { ReconciliationResultType } from '@/types/database';
 import { fromTable } from '@/lib/supabase';
+import { calculateWallPanels } from '@/engines/wallPanelEngine';
+import { calculateLights } from '@/engines/lightEngine';
+import { calculateFurniture } from '@/engines/furnitureEngine';
+import { calculateHiddenComponent } from '@/engines/hiddenComponentEngine';
+import type {
+  WallPanelInput,
+  LightInput,
+  FurnitureInput,
+  HiddenComponentInput,
+} from '@/engines/types';
 
 export interface BomState {
   masterBom: MasterBom | null;
@@ -32,9 +42,32 @@ export interface BomActions {
   fetchActualBom: (projectId: string) => Promise<void>;
   fetchFinalBom: (projectId: string) => Promise<void>;
   computeReconciliation: () => void;
+  generateActualBom: (input: GenerateActualBomInput) => GenerateActualBomOutput;
   openBomPanel: () => void;
   closeBomPanel: () => void;
   resetBom: () => void;
+}
+
+/** Input for the generateActualBom orchestration method */
+export interface GenerateActualBomInput {
+  wallPanels: WallPanelInput[];
+  lights: LightInput[];
+  furniture: FurnitureInput[];
+  hiddenComponents: HiddenComponentInput[];
+}
+
+/** A single result line from the BOM generation pipeline */
+export interface GeneratedBomLine {
+  productType: 'WALL_PANEL' | 'LIGHT' | 'FURNITURE' | 'HIDDEN_COMPONENT';
+  quantity: number;
+  omitted?: boolean;
+  included?: boolean;
+  details: Record<string, unknown>;
+}
+
+/** Output of the generateActualBom orchestration method */
+export interface GenerateActualBomOutput {
+  lines: GeneratedBomLine[];
 }
 
 export type BomStore = BomState & BomActions;
@@ -282,6 +315,68 @@ export const useBomStore = create<BomStore>((set, get) => ({
     }
 
     set({ reconciliation });
+  },
+
+  generateActualBom: (input: GenerateActualBomInput): GenerateActualBomOutput => {
+    const lines: GeneratedBomLine[] = [];
+
+    // 1. Wall panel engine
+    for (const wpInput of input.wallPanels) {
+      const result = calculateWallPanels(wpInput);
+      lines.push({
+        productType: 'WALL_PANEL',
+        quantity: result.procurementQuantity,
+        details: {
+          Ncol: result.Ncol,
+          Nrow: result.Nrow,
+          requiredQuantity: result.requiredQuantity,
+          procurementQuantity: result.procurementQuantity,
+          wasteQuantity: result.wasteQuantity,
+          trimWidth: result.trimWidth,
+          retainedWidth: result.retainedWidth,
+          trimHeight: result.trimHeight,
+          retainedHeight: result.retainedHeight,
+        },
+      });
+    }
+
+    // 2. Light engine
+    for (const lightInput of input.lights) {
+      const result = calculateLights(lightInput);
+      lines.push({
+        productType: 'LIGHT',
+        quantity: result.quantity,
+        details: {
+          totalLength: result.totalLength,
+          driverCount: result.driverCount,
+          wireLength: result.wireLength,
+        },
+      });
+    }
+
+    // 3. Furniture engine
+    for (const furnInput of input.furniture) {
+      const result = calculateFurniture(furnInput);
+      lines.push({
+        productType: 'FURNITURE',
+        quantity: result.quantity,
+        omitted: result.omitted,
+        details: {},
+      });
+    }
+
+    // 4. Hidden component engine
+    for (const hcInput of input.hiddenComponents) {
+      const result = calculateHiddenComponent(hcInput);
+      lines.push({
+        productType: 'HIDDEN_COMPONENT',
+        quantity: result.quantity,
+        included: result.included,
+        details: {},
+      });
+    }
+
+    return { lines };
   },
 
   openBomPanel: () => {

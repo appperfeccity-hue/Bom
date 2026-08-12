@@ -1,0 +1,23 @@
+{
+  "project_type": "React 18 + TypeScript (strict) + Vite SPA with Supabase backend",
+  "language": "TypeScript",
+  "build_system": "Vite + npm. Makefile in repo root wraps common targets.",
+  "test_framework": "vitest with jsdom environment, @testing-library/react for components, globals: true, setupFiles: ./src/test-setup.ts",
+  "build_command": "cd frontend && NODE_OPTIONS='' npx tsc --noEmit && NODE_OPTIONS='' npx vite build",
+  "test_command": "cd frontend && NODE_OPTIONS='' npx vitest --run",
+  "verification_instructions": "1. Run typecheck: cd frontend && NODE_OPTIONS='' npx tsc --noEmit. 2. Run tests: cd frontend && NODE_OPTIONS='' npx vitest --run. 3. Confirm all 349+ tests pass.",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "cd frontend && npm ci (already done, node_modules present)",
+  "environment_constraints": "NODE_OPTIONS env var must be cleared (NODE_OPTIONS='') when running node/npx commands to avoid proxy-bootstrap.js error. Network is COMMON_DEPENDENCIES so npm install works.",
+  "contribution_requirements": "TypeScript strict mode (noUnusedLocals, noUnusedParameters). Path alias @/ maps to src/. Tests colocated in __tests__ directories.",
+  "key_patterns": "Zustand stores in src/stores/. Types in src/types/database.ts. Tests use vi.mock for supabase. Vitest globals (describe, it, expect, beforeEach, vi) available without imports but are imported explicitly in tests.",
+  "relevant_files": [
+    "frontend/src/stores/bomStore.ts",
+    "frontend/src/types/database.ts",
+    "frontend/src/types/index.ts",
+    "frontend/vite.config.ts",
+    "frontend/tsconfig.json",
+    "frontend/src/stores/__tests__/bomStore.test.ts"
+  ],
+  "directory_structure": "frontend/src/stores/ - Zustand stores, frontend/src/types/ - TypeScript interfaces, frontend/src/lib/ - supabase client, frontend/src/pages/ - route pages, frontend/src/canvas/ - canvas components. Engines to be created at frontend/src/engines/."
+}
