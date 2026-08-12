@@ -2,7 +2,7 @@
   "id": "FEAT-003",
   "type": "feat",
   "description": "P1-B: Validation UX (#44 + #45). Red outlines on invalid zones (overlap, out-of-bounds, undersized). Error badges and messages in the ZonePropertiesPanel. Publish gate visual indicator.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "1. Create frontend/src/canvas/utils/useZoneValidation.ts hook: computes validation state for all zones. For each zone, check: (a) hasOverlap using hasOverlap() from zoneConstraints, (b) isOutOfBounds using !isWithinWallBoundary(), (c) isUndersized using !isValidZoneDimensions(). Return a Map<zoneId, { errors: string[] }> where errors is an array of error messages. Depends on zones from projectStore and currentTemplate for wall dimensions.",
     "2. Modify frontend/src/canvas/layers/ZonesLayer.tsx: import useZoneValidation. For zones that have validation errors, render a red stroke (#f44336) instead of the default blue. Use a thicker stroke (2/zoom) for invalid zones. This replaces the normal zone stroke when errors exist.",
@@ -24,5 +24,5 @@
     "cd /projects/sandbox/Bom/frontend && NODE_OPTIONS='' npx vitest --run"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All 793 tests pass. Build succeeds. The react-konva mock renders props as HTML attributes, but numeric-only props (like strokeWidth) get dropped by React DOM warnings - tests check string props (stroke color) instead. ValidationOverlayLayer is placed between SkuPlacementLayer and MeasurementsLayer in z-order. ValidationGateIndicator is rendered in PublishWorkflow header alongside StepIndicator."
 }
