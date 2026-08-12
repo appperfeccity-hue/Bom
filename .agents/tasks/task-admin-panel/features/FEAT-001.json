@@ -37,5 +37,5 @@
     "cd /projects/sandbox/Bom/frontend && unset NODE_OPTIONS && npx tsc --noEmit"
   ],
   "blocked_reason": null,
-  "findings": "All 344 tests pass (320 existing + 24 new). Build and typecheck clean. React act() warnings in stderr are non-fatal and common in existing test patterns in this project."
+  "findings": "All 349 tests pass (320 existing + 29 new admin tests including review fix tests). Build and typecheck clean. Review issues addressed: per-domain loading flags, asset-presence check for catalogue approval, state machine guard on rule-set transitions, delete confirmations via window.confirm(), friendly FK violation error messages, UUID in upload paths, and meaningful content_hash."
 }
