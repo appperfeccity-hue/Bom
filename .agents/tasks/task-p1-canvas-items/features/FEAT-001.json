@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "fix",
   "description": "Fix 5 follow-up issues from P0: (A) Clear history on template/project switch, (B) Batch arrow nudge history entries, (C) Clean subscriber on unmount, (D) Validate permission key naming, (E) Apply permission range before generic measurement range",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "A. In frontend/src/canvas/history/useHistory.ts: export resetHistory(). In frontend/src/canvas/CanvasContainer.tsx: call resetHistory() (imported directly) when currentTemplate changes (detect via template ID change in the existing useEffect that handles template changes, or add a new effect that calls resetHistory when currentTemplate.id changes).",
     "B. In frontend/src/canvas/interactions/useKeyboardShortcuts.ts: batch arrow nudge history entries. Currently every arrow key press calls history.pushState(zones) before the nudge. Add debounce/batching: skip the pushState if the last pushState was also an arrow nudge within 300ms. Use a module-level lastNudgeTime variable. Only push state if Date.now() - lastNudgeTime > 300. Update lastNudgeTime on each nudge.",
@@ -23,5 +23,5 @@
     "cd /projects/sandbox/Bom/frontend && NODE_OPTIONS='' npx vitest --run"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All 760 tests pass. Build succeeds. The existing test for canEditZone('zone-locked') was updated to use a UUID-based zone ID since non-UUID strings now bypass permission lookup. The nudge debounce uses Date.now() comparison so tests work without needing to mock timers (test execution is fast enough that consecutive calls are within 300ms)."
 }
