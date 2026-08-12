@@ -1,0 +1,28 @@
+{
+  "id": "FEAT-003",
+  "type": "feat",
+  "description": "P1-B: Validation UX (#44 + #45). Red outlines on invalid zones (overlap, out-of-bounds, undersized). Error badges and messages in the ZonePropertiesPanel. Publish gate visual indicator.",
+  "status": "in_progress",
+  "steps": [
+    "1. Create frontend/src/canvas/utils/useZoneValidation.ts hook: computes validation state for all zones. For each zone, check: (a) hasOverlap using hasOverlap() from zoneConstraints, (b) isOutOfBounds using !isWithinWallBoundary(), (c) isUndersized using !isValidZoneDimensions(). Return a Map<zoneId, { errors: string[] }> where errors is an array of error messages. Depends on zones from projectStore and currentTemplate for wall dimensions.",
+    "2. Modify frontend/src/canvas/layers/ZonesLayer.tsx: import useZoneValidation. For zones that have validation errors, render a red stroke (#f44336) instead of the default blue. Use a thicker stroke (2/zoom) for invalid zones. This replaces the normal zone stroke when errors exist.",
+    "3. Create frontend/src/canvas/layers/ValidationOverlayLayer.tsx: a new layer (can reuse ZONES layer visibility or be always-on) that renders error badge indicators. For each zone with errors, render a small red circle/badge at the top-right corner of the zone with an exclamation mark or error count. Use Konva Circle + Text. Position in screen coords using wallHeight transform.",
+    "4. Modify frontend/src/components/ZonePropertiesPanel.tsx: import useZoneValidation. When the selected zone has validation errors, display an error section at the top of the panel with red background showing each error message. Add data-testid='zone-validation-errors' for testing.",
+    "5. Create frontend/src/components/PublishWorkflow/ValidationGateIndicator.tsx: a small visual component that shows a red/green badge next to the Validate step in StepIndicator. When publishStore.validationResults has any failed gates, show red badge. Import and render in PublishWorkflow.tsx or StepIndicator.tsx. Add data-testid='publish-gate-indicator'.",
+    "6. Add tests: frontend/src/canvas/__tests__/useZoneValidation.test.ts testing overlap detection, out-of-bounds, undersized. frontend/src/canvas/__tests__/ZonesLayer.validation.test.tsx testing red stroke on invalid zones. Test in ZonePropertiesPanel that error messages appear for invalid zones."
+  ],
+  "acceptance_criteria": [
+    "Zones with overlap errors render with red (#f44336) stroke on the canvas",
+    "Zones that are out-of-bounds render with red stroke",
+    "Zones that are undersized (below 200x200mm) render with red stroke",
+    "ZonePropertiesPanel shows error messages when selected zone has validation issues",
+    "Publish workflow shows a visual gate indicator (red when validation fails, green when passes)",
+    "useZoneValidation hook correctly identifies all three error types",
+    "All tests pass"
+  ],
+  "verification": [
+    "cd /projects/sandbox/Bom/frontend && NODE_OPTIONS='' npx vitest --run"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

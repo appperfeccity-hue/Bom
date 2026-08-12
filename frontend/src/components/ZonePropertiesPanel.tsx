@@ -3,6 +3,7 @@ import { useCanvasStore } from '@/stores/canvasStore';
 import { useProjectStore } from '@/stores/projectStore';
 import { useSkuStore } from '@/stores/skuStore';
 import { useSkuRemove } from '@/canvas/interactions/useSkuRemove';
+import { useZoneValidation } from '@/canvas/utils/useZoneValidation';
 import { ZoneWidthStrategy, ZoneHeightStrategy } from '@/types/database';
 import type { TemplateZone } from '@/types/database';
 import { clampDimensions, constrainToWall, hasOverlap } from '@/canvas/utils/zoneConstraints';
@@ -19,6 +20,7 @@ export function ZonePropertiesPanel() {
   const currentTemplate = useProjectStore((s) => s.currentTemplate);
   const openBrowser = useSkuStore((s) => s.openBrowser);
   const { removeSku } = useSkuRemove();
+  const validationMap = useZoneValidation();
 
   const selectedZone = zones.find((z) => z.id === selection.selectedZoneId);
 
@@ -65,6 +67,7 @@ export function ZonePropertiesPanel() {
   if (!selectedZone) return null;
 
   const sku = zoneSku.get(selectedZone.id);
+  const zoneValidation = validationMap.get(selectedZone.id);
 
   return (
     <div
@@ -80,6 +83,31 @@ export function ZonePropertiesPanel() {
       <h3 style={{ margin: '0 0 16px', fontSize: '14px', fontWeight: 600 }}>
         Zone Properties
       </h3>
+
+      {/* Validation errors section */}
+      {zoneValidation && zoneValidation.errors.length > 0 && (
+        <div
+          data-testid="zone-validation-errors"
+          style={{
+            marginBottom: '16px',
+            padding: '10px 12px',
+            backgroundColor: '#fbe9e7',
+            borderRadius: '4px',
+            border: '1px solid #f44336',
+          }}
+        >
+          <div style={{ fontSize: '12px', fontWeight: 600, color: '#c62828', marginBottom: '6px' }}>
+            Validation Errors
+          </div>
+          <ul style={{ margin: 0, padding: '0 0 0 16px', listStyle: 'disc' }}>
+            {zoneValidation.errors.map((error, i) => (
+              <li key={i} style={{ fontSize: '12px', color: '#d32f2f', marginBottom: '4px' }}>
+                {error}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
         {/* Zone name */}

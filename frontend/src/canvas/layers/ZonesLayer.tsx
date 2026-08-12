@@ -3,6 +3,7 @@ import { useCanvasStore } from '@/stores/canvasStore';
 import { useProjectStore } from '@/stores/projectStore';
 import { CanvasMode } from '@/types/database';
 import { CanvasLayer } from '@/types/canvas';
+import { useZoneValidation } from '@/canvas/utils/useZoneValidation';
 import type { TemplateZone } from '@/types/database';
 
 interface ZonesLayerProps {
@@ -22,6 +23,7 @@ export function ZonesLayer({ wallHeight }: ZonesLayerProps) {
   const zones = useProjectStore((s) => s.zones);
   const zoneSku = useProjectStore((s) => s.zoneSku);
   const zoom = useCanvasStore((s) => s.viewport.zoom);
+  const validationMap = useZoneValidation();
 
   if (!visible) return null;
 
@@ -37,9 +39,17 @@ export function ZonesLayer({ wallHeight }: ZonesLayerProps) {
     <Layer>
       {zones.map((zone) => {
         const isSelected = selection.selectedZoneId === zone.id;
+        const hasErrors = validationMap.has(zone.id);
 
         // Convert from bottom-left origin to top-left (Konva)
         const screenY = wallHeight - zone.y_mm - zone.height_mm;
+
+        // Determine stroke color: red for invalid zones, blue for normal
+        const strokeColor = hasErrors
+          ? '#f44336'
+          : isSelected
+            ? '#1976d2'
+            : '#90caf9';
 
         return (
           <Rect
@@ -49,8 +59,8 @@ export function ZonesLayer({ wallHeight }: ZonesLayerProps) {
             width={zone.width_mm}
             height={zone.height_mm}
             fill={isSelected ? '#bbdefb' : '#e3f2fd'}
-            stroke={isSelected ? '#1976d2' : '#90caf9'}
-            strokeWidth={(isSelected ? 2 : 1) / zoom}
+            stroke={strokeColor}
+            strokeWidth={(isSelected || hasErrors ? 2 : 1) / zoom}
             onClick={() => handleZoneClick(zone)}
             onTap={() => handleZoneClick(zone)}
             listening={isDesigner}

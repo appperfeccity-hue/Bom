@@ -1,6 +1,7 @@
 import { usePublishStore, PublishStep } from '@/stores/publishStore';
 import { StepIndicator } from './StepIndicator';
 import { ValidationResultsPanel } from './ValidationResultsPanel';
+import { ValidationGateIndicator } from './ValidationGateIndicator';
 import { ApprovalStep } from './ApprovalStep';
 import { PublishConfirmation } from './PublishConfirmation';
 
@@ -135,7 +136,12 @@ export function PublishWorkflow() {
       </div>
 
       {/* Step Indicator */}
-      <StepIndicator currentStep={currentStep} />
+      <div style={{ display: 'flex', alignItems: 'center' }}>
+        <div style={{ flex: 1 }}>
+          <StepIndicator currentStep={currentStep} />
+        </div>
+        <ValidationGateIndicator />
+      </div>
 
       {/* Content */}
       <div style={{ flex: 1, overflow: 'auto' }}>

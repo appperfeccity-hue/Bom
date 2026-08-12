@@ -7,6 +7,7 @@ import { GridLayer } from './layers/GridLayer';
 import { WallOutlineLayer } from './layers/WallOutlineLayer';
 import { ZonesLayer } from './layers/ZonesLayer';
 import { SkuPlacementLayer } from './layers/SkuPlacementLayer';
+import { ValidationOverlayLayer } from './layers/ValidationOverlayLayer';
 import { SelectionLayer } from './layers/SelectionLayer';
 import { MeasurementsLayer } from './layers/MeasurementsLayer';
 import { useCanvasViewport } from './interactions/useCanvasViewport';
@@ -187,6 +188,7 @@ export function CanvasContainer({ mode }: CanvasContainerProps) {
         />
         <ZonesLayer wallHeight={wallHeight} />
         <SkuPlacementLayer wallHeight={wallHeight} />
+        <ValidationOverlayLayer wallHeight={wallHeight} />
         <MeasurementsLayer wallWidth={wallWidth} wallHeight={wallHeight} />
         <SelectionLayer wallHeight={wallHeight} />
 
