@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "feat",
   "description": "Implement finalizationStore and the complete finalization UI flow: FinalizeButton, FinalizationConfirmDialog, FinalizationSuccessPanel, and lock controls when FINALIZED. Includes adding VALIDATED/FINALIZED to ProjectStatus enum, creating the Zustand store that calls supabase.schema('perfecity').rpc('finalize_project', {...}), and all UI components.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "1. Add VALIDATED and FINALIZED values to the ProjectStatus enum in frontend/src/types/database.ts (after APPROVED, before ARCHIVED).",
     "2. Create frontend/src/stores/finalizationStore.ts following the publishStore.ts pattern. State: finalizationStep (IDLE|CONFIRMING|FINALIZING|SUCCESS|ERROR), finalBomId (string|null), finalBomHash (string|null), finalizedAt (string|null), isLoading (boolean), error (string|null). Actions: startFinalization() sets step to CONFIRMING, confirmFinalization(projectId: string, finalizationKey: string) calls supabase.schema('perfecity').rpc('finalize_project', { p_project_id: projectId, p_user_id: userId from authStore, p_finalization_key: finalizationKey, p_computed_final_hash: computedHash }) where computedHash is generated client-side as a SHA-256 of (projectId + finalizationKey + timestamp), cancelFinalization() resets to IDLE, reset() returns to initial state. On success, store the returned final_bom_id UUID, update the project status in projectStore to FINALIZED.",
@@ -29,5 +29,5 @@
     "cd frontend && unset NODE_OPTIONS && npx tsc --noEmit"
   ],
   "blocked_reason": null,
-  "findings": "All 508 tests pass (473+ existing + 35 new). TypeScript compiles cleanly. Build succeeds. crypto.subtle.digest mock required vi.stubGlobal in component tests for SHA-256 computation. The store uses supabase.schema('perfecity').rpc() pattern as specified. Component tests need useAuthStore setup for confirmFinalization to work correctly."
+  "findings": "All 508 tests pass (473+ existing + 35 new). TypeScript compiles cleanly. Build succeeds. crypto.subtle.digest mock required vi.stubGlobal in component tests for SHA-256 computation. The store uses supabase.schema('perfecity').rpc() pattern as specified. Component tests need useAuthStore setup for confirmFinalization to work correctly. Review fixes applied: (1) client timestamp documented as approximate, (2) double-submit guard added via step check, (3) store-level mutation guards in projectStore for all write actions, (4) RPC response validated as non-null string. Total tests now 517 (9 new guard/validation tests added)."
 }
