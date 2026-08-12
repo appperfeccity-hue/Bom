@@ -214,7 +214,7 @@ describe('TemplateListItem', () => {
     render(<TemplateListItem template={template} />);
 
     expect(screen.getByTestId('template-edit-btn')).toBeInTheDocument();
-    expect(screen.getByTestId('template-delete-btn')).toBeInTheDocument();
+    expect(screen.getByTestId('template-archive-btn')).toBeInTheDocument();
     expect(screen.queryByTestId('template-duplicate-btn')).not.toBeInTheDocument();
     expect(screen.queryByTestId('template-retire-btn')).not.toBeInTheDocument();
   });
@@ -273,6 +273,16 @@ describe('TemplateListItem', () => {
     expect(mockDuplicate).toHaveBeenCalledWith('tpl-dup');
   });
 
+  it('calls openRetireDialog when Archive is clicked on DRAFT', () => {
+    const mockRetireDialog = vi.fn();
+    useTemplateManagementStore.setState({ openRetireDialog: mockRetireDialog } as never);
+
+    const template = makeTemplate({ id: 'tpl-archive', status: TemplateStatus.DRAFT });
+    render(<TemplateListItem template={template} />);
+    fireEvent.click(screen.getByTestId('template-archive-btn'));
+    expect(mockRetireDialog).toHaveBeenCalledWith(template);
+  });
+
   it('calls openRetireDialog when Retire is clicked', () => {
     const mockRetireDialog = vi.fn();
     useTemplateManagementStore.setState({ openRetireDialog: mockRetireDialog } as never);
@@ -312,6 +322,30 @@ describe('CreateTemplateDialog', () => {
     // width and height remain empty
     const submitBtn = screen.getByTestId('create-template-submit-btn');
     expect(submitBtn).toBeDisabled();
+  });
+
+  it('Create button is disabled when width is zero or negative', () => {
+    render(<CreateTemplateDialog />);
+    fireEvent.change(screen.getByTestId('create-template-name'), { target: { value: 'Name' } });
+    fireEvent.change(screen.getByTestId('create-template-width'), { target: { value: '0' } });
+    fireEvent.change(screen.getByTestId('create-template-height'), { target: { value: '2700' } });
+    const submitBtn = screen.getByTestId('create-template-submit-btn');
+    expect(submitBtn).toBeDisabled();
+  });
+
+  it('Create button is disabled when height is negative', () => {
+    render(<CreateTemplateDialog />);
+    fireEvent.change(screen.getByTestId('create-template-name'), { target: { value: 'Name' } });
+    fireEvent.change(screen.getByTestId('create-template-width'), { target: { value: '3000' } });
+    fireEvent.change(screen.getByTestId('create-template-height'), { target: { value: '-100' } });
+    const submitBtn = screen.getByTestId('create-template-submit-btn');
+    expect(submitBtn).toBeDisabled();
+  });
+
+  it('shows dimension error message for invalid values', () => {
+    render(<CreateTemplateDialog />);
+    fireEvent.change(screen.getByTestId('create-template-width'), { target: { value: '-5' } });
+    expect(screen.getByTestId('create-template-dimension-error')).toBeInTheDocument();
   });
 
   it('Create button is enabled when required fields are filled', () => {

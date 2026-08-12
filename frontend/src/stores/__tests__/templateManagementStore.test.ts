@@ -10,7 +10,9 @@ import type { Template } from '@/types/database';
 vi.mock('@/lib/supabase', () => {
   const mockQueryBuilder = {
     select: vi.fn().mockReturnThis(),
-    eq: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnValue({
+      order: vi.fn().mockResolvedValue({ data: null, error: null }),
+    }),
     insert: vi.fn().mockResolvedValue({ data: null, error: null }),
     update: vi.fn().mockReturnThis(),
     single: vi.fn().mockResolvedValue({ data: null, error: null }),
@@ -87,7 +89,9 @@ describe('templateManagementStore', () => {
 
       mockedFromTable.mockReturnValue({
         select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockResolvedValue({ data: templates, error: null }),
+        eq: vi.fn().mockReturnValue({
+          order: vi.fn().mockResolvedValue({ data: templates, error: null }),
+        }),
         insert: vi.fn().mockResolvedValue({ data: null, error: null }),
         update: vi.fn().mockReturnThis(),
         single: vi.fn().mockResolvedValue({ data: null, error: null }),
@@ -110,7 +114,9 @@ describe('templateManagementStore', () => {
 
       mockedFromTable.mockReturnValue({
         select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockResolvedValue({ data: null, error: { message: 'DB error' } }),
+        eq: vi.fn().mockReturnValue({
+          order: vi.fn().mockResolvedValue({ data: null, error: { message: 'DB error' } }),
+        }),
         insert: vi.fn().mockResolvedValue({ data: null, error: null }),
         update: vi.fn().mockReturnThis(),
         single: vi.fn().mockResolvedValue({ data: null, error: null }),
@@ -147,7 +153,9 @@ describe('templateManagementStore', () => {
 
       mockedFromTable.mockReturnValue({
         select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnValue(pending),
+        eq: vi.fn().mockReturnValue({
+          order: vi.fn().mockReturnValue(pending),
+        }),
         insert: vi.fn().mockResolvedValue({ data: null, error: null }),
         update: vi.fn().mockReturnThis(),
         single: vi.fn().mockResolvedValue({ data: null, error: null }),
@@ -299,7 +307,9 @@ describe('templateManagementStore', () => {
         if (callCount === 1) {
           return {
             select: vi.fn().mockReturnThis(),
-            eq: vi.fn().mockResolvedValue({ data: [], error: null }),
+            eq: vi.fn().mockReturnValue({
+              order: vi.fn().mockResolvedValue({ data: [], error: null }),
+            }),
             insert: vi.fn().mockResolvedValue({ data: null, error: null }),
             update: vi.fn().mockReturnThis(),
             single: vi.fn().mockResolvedValue({ data: null, error: null }),
@@ -309,7 +319,9 @@ describe('templateManagementStore', () => {
         }
         return {
           select: vi.fn().mockReturnThis(),
-          eq: vi.fn().mockResolvedValue({ data: [], error: null }),
+          eq: vi.fn().mockReturnValue({
+            order: vi.fn().mockResolvedValue({ data: [], error: null }),
+          }),
           insert: vi.fn().mockResolvedValue({ data: null, error: null }),
           update: vi.fn().mockReturnThis(),
           single: vi.fn().mockResolvedValue({ data: null, error: null }),
@@ -341,7 +353,9 @@ describe('templateManagementStore', () => {
 
       mockedFromTable.mockReturnValue({
         select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockResolvedValue({ data: [], error: null }),
+        eq: vi.fn().mockReturnValue({
+          order: vi.fn().mockResolvedValue({ data: [], error: null }),
+        }),
         insert: vi.fn().mockResolvedValue({ data: null, error: { message: 'Insert failed' } }),
         update: vi.fn().mockReturnThis(),
         single: vi.fn().mockResolvedValue({ data: null, error: null }),
@@ -371,7 +385,9 @@ describe('templateManagementStore', () => {
       const mockEq = vi.fn().mockResolvedValue({ data: null, error: null });
       mockedFromTable.mockReturnValue({
         select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockResolvedValue({ data: [], error: null }),
+        eq: vi.fn().mockReturnValue({
+          order: vi.fn().mockResolvedValue({ data: [], error: null }),
+        }),
         insert: vi.fn().mockResolvedValue({ data: null, error: null }),
         update: vi.fn().mockReturnValue({ eq: mockEq }),
         single: vi.fn().mockResolvedValue({ data: null, error: null }),
@@ -399,7 +415,9 @@ describe('templateManagementStore', () => {
       const mockEq = vi.fn().mockResolvedValue({ data: null, error: { message: 'Update failed' } });
       mockedFromTable.mockReturnValue({
         select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockResolvedValue({ data: [], error: null }),
+        eq: vi.fn().mockReturnValue({
+          order: vi.fn().mockResolvedValue({ data: [], error: null }),
+        }),
         insert: vi.fn().mockResolvedValue({ data: null, error: null }),
         update: vi.fn().mockReturnValue({ eq: mockEq }),
         single: vi.fn().mockResolvedValue({ data: null, error: null }),
@@ -423,7 +441,9 @@ describe('templateManagementStore', () => {
       const insertMock = vi.fn().mockResolvedValue({ data: null, error: null });
       mockedFromTable.mockReturnValue({
         select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockResolvedValue({ data: [], error: null }),
+        eq: vi.fn().mockReturnValue({
+          order: vi.fn().mockResolvedValue({ data: [], error: null }),
+        }),
         insert: insertMock,
         update: vi.fn().mockReturnThis(),
         single: vi.fn().mockResolvedValue({ data: null, error: null }),
@@ -448,6 +468,36 @@ describe('templateManagementStore', () => {
       const state = useTemplateManagementStore.getState();
       expect(state.isLoading).toBe(false);
       expect(state.error).toBeNull();
+    });
+
+    it('strips existing (Copy) suffix to avoid compounding', async () => {
+      const { fromTable } = await import('@/lib/supabase');
+      const mockedFromTable = vi.mocked(fromTable);
+
+      const insertMock = vi.fn().mockResolvedValue({ data: null, error: null });
+      mockedFromTable.mockReturnValue({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnValue({
+          order: vi.fn().mockResolvedValue({ data: [], error: null }),
+        }),
+        insert: insertMock,
+        update: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({ data: null, error: null }),
+        in: vi.fn().mockReturnThis(),
+        order: vi.fn().mockReturnThis(),
+      } as unknown as ReturnType<typeof fromTable>);
+
+      useTemplateManagementStore.setState({
+        templates: [makeTemplate({ id: 'tpl-copy', name: 'Modern Wall (Copy)' })],
+      });
+
+      await useTemplateManagementStore.getState().duplicateAsNewDraft('tpl-copy');
+
+      expect(insertMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'Modern Wall (Copy)',
+        }),
+      );
     });
 
     it('sets error when template not found', async () => {
@@ -476,6 +526,23 @@ describe('templateManagementStore', () => {
       expect(mockLoadTemplate).toHaveBeenCalledWith('tpl-edit');
       expect(mockSetMode).toHaveBeenCalledWith(CanvasMode.DESIGNER);
       expect(useTemplateManagementStore.getState().isPanelVisible).toBe(false);
+    });
+
+    it('surfaces error when loadTemplate throws', async () => {
+      const mockLoadTemplate = vi.fn().mockRejectedValue(new Error('Network failure'));
+      useProjectStore.setState({ loadTemplate: mockLoadTemplate } as never);
+
+      const mockSetMode = vi.fn();
+      useCanvasStore.setState({ setMode: mockSetMode } as never);
+
+      useTemplateManagementStore.setState({ isPanelVisible: true });
+
+      await useTemplateManagementStore.getState().editTemplate('tpl-fail');
+
+      expect(mockLoadTemplate).toHaveBeenCalledWith('tpl-fail');
+      expect(mockSetMode).not.toHaveBeenCalled();
+      expect(useTemplateManagementStore.getState().isPanelVisible).toBe(true);
+      expect(useTemplateManagementStore.getState().error).toBe('Network failure');
     });
   });
 

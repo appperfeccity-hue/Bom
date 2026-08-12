@@ -106,7 +106,8 @@ export const useTemplateManagementStore = create<TemplateManagementStore>((set, 
 
       const { data, error } = await fromTable('template')
         .select('*')
-        .eq('created_by', userId);
+        .eq('created_by', userId)
+        .order('updated_at', { ascending: false });
       if (error) throw error;
 
       const templates = (data ?? []) as Template[];
@@ -198,9 +199,12 @@ export const useTemplateManagementStore = create<TemplateManagementStore>((set, 
       const template = get().templates.find((t) => t.id === id);
       if (!template) throw new Error('Template not found');
 
+      // Strip trailing " (Copy)" to avoid compounding (e.g. "Name (Copy) (Copy)")
+      const baseName = template.name.replace(/ \(Copy\)$/, '');
+
       const { error } = await fromTable('template')
         .insert({
-          name: `${template.name} (Copy)`,
+          name: `${baseName} (Copy)`,
           description: template.description,
           status: TemplateStatus.DRAFT,
           wall_geometry: template.wall_geometry,
@@ -219,9 +223,14 @@ export const useTemplateManagementStore = create<TemplateManagementStore>((set, 
   },
 
   editTemplate: async (id: string) => {
-    await useProjectStore.getState().loadTemplate(id);
-    useCanvasStore.getState().setMode(CanvasMode.DESIGNER);
-    set({ isPanelVisible: false });
+    set({ error: null });
+    try {
+      await useProjectStore.getState().loadTemplate(id);
+      useCanvasStore.getState().setMode(CanvasMode.DESIGNER);
+      set({ isPanelVisible: false });
+    } catch (err) {
+      set({ error: (err as Error).message });
+    }
   },
 
   openCreateDialog: () => set({ showCreateDialog: true }),

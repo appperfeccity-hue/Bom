@@ -55,18 +55,18 @@ export function TemplateListItem({ template }: TemplateListItemProps) {
               Edit
             </button>
             <button
-              data-testid="template-delete-btn"
+              data-testid="template-archive-btn"
               onClick={() => openRetireDialog(template)}
               style={{
                 padding: '4px 10px',
                 fontSize: '12px',
-                backgroundColor: '#ffebee',
-                border: '1px solid #ef9a9a',
+                backgroundColor: '#fff3e0',
+                border: '1px solid #ffcc80',
                 borderRadius: '4px',
                 cursor: 'pointer',
               }}
             >
-              Delete
+              Archive
             </button>
           </>
         )}

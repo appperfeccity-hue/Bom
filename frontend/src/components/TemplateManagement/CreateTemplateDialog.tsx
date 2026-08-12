@@ -16,7 +16,8 @@ export function CreateTemplateDialog() {
     AdaptationStrategy.SCALE,
   );
 
-  const isValid = name.trim() !== '' && baseWidthMm !== '' && baseHeightMm !== '';
+  const isValid = name.trim() !== '' && baseWidthMm !== '' && baseHeightMm !== '' &&
+    baseWidthMm > 0 && baseHeightMm > 0 && baseWidthMm <= 50000 && baseHeightMm <= 50000;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -98,6 +99,8 @@ export function CreateTemplateDialog() {
             <input
               data-testid="create-template-width"
               type="number"
+              min="1"
+              max="50000"
               value={baseWidthMm}
               onChange={(e) => setBaseWidthMm(e.target.value ? Number(e.target.value) : '')}
               style={{ padding: '6px 10px', border: '1px solid #ccc', borderRadius: '4px' }}
@@ -108,12 +111,20 @@ export function CreateTemplateDialog() {
             <input
               data-testid="create-template-height"
               type="number"
+              min="1"
+              max="50000"
               value={baseHeightMm}
               onChange={(e) => setBaseHeightMm(e.target.value ? Number(e.target.value) : '')}
               style={{ padding: '6px 10px', border: '1px solid #ccc', borderRadius: '4px' }}
             />
           </label>
         </div>
+        {((baseWidthMm !== '' && (baseWidthMm <= 0 || baseWidthMm > 50000)) ||
+          (baseHeightMm !== '' && (baseHeightMm <= 0 || baseHeightMm > 50000))) && (
+          <span data-testid="create-template-dimension-error" style={{ color: '#d32f2f', fontSize: '12px' }}>
+            Dimensions must be between 1 and 50,000 mm
+          </span>
+        )}
 
         <label style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '13px' }}>
           Adaptation Strategy
