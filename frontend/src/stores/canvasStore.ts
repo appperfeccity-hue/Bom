@@ -139,6 +139,7 @@ function performPaste(
 
   const PASTE_OFFSET = 100;
   const newZones: TemplateZone[] = [];
+  const clipboardIds = new Set(clipboard.map((z) => z.id));
 
   for (const zone of clipboard) {
     let offsetX = zone.x_mm + PASTE_OFFSET;
@@ -161,6 +162,16 @@ function performPaste(
       offsetY = re.y;
       box = { x: offsetX, y: offsetY, width: zone.width_mm, height: zone.height_mm };
       attempts++;
+    }
+
+    // Skip this zone if it still overlaps with non-source zones (dense canvas, no room).
+    // Overlap with only the source clipboard zones is acceptable (e.g., wall boundary forces
+    // the paste back to the source position).
+    if (hasOverlap(box, allZones)) {
+      const nonSourceZones = allZones.filter((z) => !clipboardIds.has(z.id));
+      if (hasOverlap(box, nonSourceZones)) {
+        continue;
+      }
     }
 
     const newZone: TemplateZone = {

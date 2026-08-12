@@ -37,7 +37,7 @@ export function SnapGuidesLayer({ wallWidth, wallHeight }: SnapGuidesLayerProps)
       {activeSnapLines.horizontal.map((y, i) => (
         <Line
           key={`snap-h-${i}`}
-          points={[0, y, wallWidth, y]}
+          points={[0, wallHeight - y, wallWidth, wallHeight - y]}
           stroke="#00bcd4"
           strokeWidth={1 / zoom}
           dash={[6 / zoom, 4 / zoom]}

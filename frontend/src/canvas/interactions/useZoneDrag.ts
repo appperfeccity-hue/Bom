@@ -79,6 +79,24 @@ export function useZoneDrag(history?: HistoryState) {
 
         x = zone.x_mm + constrainedDx;
         y = zone.y_mm + constrainedDy;
+
+        // Apply edge snapping to the group bounding box
+        const nonSelectedZones = allZones.filter((z) => !selectedIds.includes(z.id));
+        const candidates = getSnapCandidates(nonSelectedZones, wallWidth, wallHeight);
+        const constrainedGroupX = constrained.x;
+        const constrainedGroupY = constrained.y;
+        const snapResult = snapToEdges(constrainedGroupX, constrainedGroupY, groupW, groupH, candidates, SNAP_THRESHOLD);
+
+        // Compute the snap delta and apply it to the dragged zone position
+        const snapDx = snapResult.x - constrainedGroupX;
+        const snapDy = snapResult.y - constrainedGroupY;
+        x += snapDx;
+        y += snapDy;
+
+        // Update active snap lines for visual feedback
+        const activeVertical: number[] = snapResult.snappedVertical !== null ? [snapResult.snappedVertical] : [];
+        const activeHorizontal: number[] = snapResult.snappedHorizontal !== null ? [snapResult.snappedHorizontal] : [];
+        useCanvasStore.getState().setActiveSnapLines({ vertical: activeVertical, horizontal: activeHorizontal });
       } else {
         // Single zone: constrain within wall boundary
         const constrained = constrainToWall(x, y, zone.width_mm, zone.height_mm, wallWidth, wallHeight);

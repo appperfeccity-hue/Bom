@@ -64,9 +64,13 @@ export function Toolbar() {
   const handleDeleteZone = () => {
     const selectedIds = selection.selectedZoneIds;
     if (selectedIds.length > 0) {
+      // Push history before deletion so the action is undoable
+      history.pushState(zones);
       for (const id of selectedIds) {
         void removeZone(id);
       }
+      // Clear selection to avoid stale references to deleted zones
+      useCanvasStore.getState().clearSelection();
     }
   };
 

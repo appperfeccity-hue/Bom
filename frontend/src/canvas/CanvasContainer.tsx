@@ -165,22 +165,25 @@ export function CanvasContainer({ mode }: CanvasContainerProps) {
         { zoom: viewport.zoom, panX: 0, panY: 0 },
       );
       handleCreateMove(point.x, point.y);
+    } else {
+      // Only update marquee if not creating a zone
+      const point = screenToCanvas(
+        { x: e.evt.offsetX - viewport.panX, y: e.evt.offsetY - viewport.panY },
+        wallHeight,
+        { zoom: viewport.zoom, panX: 0, panY: 0 },
+      );
+      handleMarqueeMove(point.x, point.y);
     }
-    // Update marquee if active
-    const point = screenToCanvas(
-      { x: e.evt.offsetX - viewport.panX, y: e.evt.offsetY - viewport.panY },
-      wallHeight,
-      { zoom: viewport.zoom, panX: 0, panY: 0 },
-    );
-    handleMarqueeMove(point.x, point.y);
   };
 
   const handleStageMouseUp = () => {
     handleMouseUp();
     if (isCreating) {
       handleCreateEnd();
+    } else {
+      // Only finalize marquee if not creating a zone
+      handleMarqueeEnd();
     }
-    handleMarqueeEnd();
   };
 
   return (
