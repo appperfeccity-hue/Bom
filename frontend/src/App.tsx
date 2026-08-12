@@ -5,6 +5,7 @@ import { useSkuStore } from '@/stores/skuStore';
 import { useBomStore } from '@/stores/bomStore';
 import { usePublishStore } from '@/stores/publishStore';
 import { PublishStep } from '@/stores/publishStore';
+import { useProjectCreationStore, CreationStep } from '@/stores/projectCreationStore';
 import { CanvasMode } from '@/types/database';
 import { CanvasContainer } from '@/canvas/CanvasContainer';
 import { Toolbar } from '@/components/Toolbar';
@@ -13,6 +14,7 @@ import { MeasurementPanel } from '@/components/MeasurementPanel';
 import { SkuBrowser } from '@/components/SkuBrowser';
 import { BomPanel } from '@/components/BomPanel';
 import { PublishWorkflow } from '@/components/PublishWorkflow';
+import { ProjectCreationWizard } from '@/components/ProjectCreation';
 
 function App() {
   const mode = useCanvasStore((s) => s.mode);
@@ -23,6 +25,8 @@ function App() {
   const isBomPanelOpen = useBomStore((s) => s.isBomPanelOpen);
   const openBomPanel = useBomStore((s) => s.openBomPanel);
   const publishStep = usePublishStore((s) => s.currentStep);
+  const role = useAuthStore((s) => s.role);
+  const creationStep = useProjectCreationStore((s) => s.step);
 
   // Subscribe to Supabase auth state changes on mount
   useEffect(() => {
@@ -102,6 +106,23 @@ function App() {
           >
             BOM
           </button>
+          {role === 'CONSULTANT' && (
+            <button
+              onClick={() => useProjectCreationStore.setState({ step: CreationStep.BROWSE_TEMPLATES })}
+              style={{
+                padding: '4px 12px',
+                fontSize: '13px',
+                fontWeight: 500,
+                backgroundColor: '#e8f5e9',
+                border: '1px solid #ccc',
+                borderRadius: '4px',
+                cursor: 'pointer',
+              }}
+              data-testid="new-project-btn"
+            >
+              New Project
+            </button>
+          )}
         </div>
       </header>
 
@@ -128,6 +149,9 @@ function App() {
 
       {/* Publish Workflow overlay */}
       {publishStep !== PublishStep.IDLE && <PublishWorkflow />}
+
+      {/* Project Creation Wizard overlay */}
+      {creationStep !== CreationStep.IDLE && <ProjectCreationWizard />}
     </div>
   );
 }
