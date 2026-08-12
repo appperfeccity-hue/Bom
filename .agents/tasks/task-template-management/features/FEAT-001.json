@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "feat",
   "description": "Create templateManagementStore with list/filter/create/retire/duplicate actions, plus the TemplateManagement UI components (list view, create dialog, retire dialog, status badges) and a 'My Templates' button in the app header for DESIGNER role. Includes comprehensive tests for both store and components.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "Step 1 - Create the templateManagementStore at frontend/src/stores/templateManagementStore.ts following the pattern of projectCreationStore.ts. State: templates (Template[]), filteredTemplates (Template[]), filters (status, search, wallGeometry), isLoading, error, selectedTemplateForAction (for retire/duplicate confirm), showCreateDialog, showRetireDialog. Actions: fetchMyTemplates() - fetch all templates where created_by = current user (SELECT * from template where created_by = auth.uid()), applyFilters(), setStatusFilter(status | null), setSearchFilter(text), setWallGeometryFilter(geometry | null), createTemplate(data) - INSERT into template table with status DRAFT, retireTemplate(id) - UPDATE status to 'ARCHIVED' (using the existing TemplateStatus.ARCHIVED enum value), duplicateAsNewDraft(id) - SELECT template by id, then INSERT new copy with status DRAFT and name suffixed ' (Copy)', editTemplate(id) - load template into projectStore and switch to DESIGNER mode, openCreateDialog(), closeCreateDialog(), openRetireDialog(template), closeRetireDialog(), reset(). Use fromTable() helper for all DB queries. Use useAuthStore.getState().user?.id for the created_by filter.",
     "Step 2 - Create frontend/src/components/TemplateManagement/TemplateStatusBadge.tsx. A small component that renders a colored badge span based on template status: DRAFT=gray (#9e9e9e bg, white text), ACTIVE=green (#e8f5e9 bg, #2e7d32 text), ARCHIVED=orange/red (#fff3e0 bg, #e65100 text). Props: status: TemplateStatus. data-testid='template-status-badge'.",
@@ -35,5 +35,5 @@
     "cd /projects/sandbox/Bom/frontend && NODE_OPTIONS='' npx vitest run"
   ],
   "blocked_reason": null,
-  "findings": "All 285 tests pass (228 existing + 57 new). TypeScript strict check passes. The fromTable mock pattern needed insert/update methods added beyond the basic select/eq pattern. The TemplateFilters interface is exported from stores/index.ts as TemplateManagementFilters to avoid name collision with the component."
+  "findings": "All 291 tests pass (25 store + 38 component for template management, plus 228 existing). TypeScript strict check passes. Post-review fixes applied: (1) Renamed Delete to Archive button for DRAFT templates with data-testid template-archive-btn; (2) duplicateAsNewDraft strips trailing ' (Copy)' before re-appending to prevent compounding; (3) CreateTemplateDialog validates dimensions > 0 and <= 50000 with error message; (4) editTemplate wrapped in try/catch, surfaces error in store state; (5) fetchMyTemplates adds .order('updated_at', { ascending: false }) after .eq(). Mock chain updated: .eq() now returns { order: ... } in fetch tests."
 }
