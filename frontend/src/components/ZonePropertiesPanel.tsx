@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { useCanvasStore } from '@/stores/canvasStore';
 import { useProjectStore } from '@/stores/projectStore';
+import { useSkuStore } from '@/stores/skuStore';
 import { ZoneWidthStrategy, ZoneHeightStrategy } from '@/types/database';
 import type { TemplateZone } from '@/types/database';
 import { clampDimensions, constrainToWall, hasOverlap } from '@/canvas/utils/zoneConstraints';
@@ -15,6 +16,7 @@ export function ZonePropertiesPanel() {
   const zoneSku = useProjectStore((s) => s.zoneSku);
   const updateZone = useProjectStore((s) => s.updateZone);
   const currentTemplate = useProjectStore((s) => s.currentTemplate);
+  const openBrowser = useSkuStore((s) => s.openBrowser);
 
   const selectedZone = zones.find((z) => z.id === selection.selectedZoneId);
 
@@ -181,6 +183,7 @@ export function ZonePropertiesPanel() {
             <div style={{ fontSize: '13px', color: '#999' }}>No SKU assigned</div>
           )}
           <button
+            onClick={openBrowser}
             style={{ marginTop: '8px', fontSize: '12px', padding: '4px 8px' }}
             data-testid="assign-sku-btn"
           >

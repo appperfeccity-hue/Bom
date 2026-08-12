@@ -1,17 +1,20 @@
 import { useEffect } from 'react';
 import { useCanvasStore } from '@/stores/canvasStore';
 import { useAuthStore } from '@/stores/authStore';
+import { useSkuStore } from '@/stores/skuStore';
 import { CanvasMode } from '@/types/database';
 import { CanvasContainer } from '@/canvas/CanvasContainer';
 import { Toolbar } from '@/components/Toolbar';
 import { ZonePropertiesPanel } from '@/components/ZonePropertiesPanel';
 import { MeasurementPanel } from '@/components/MeasurementPanel';
+import { SkuBrowser } from '@/components/SkuBrowser';
 
 function App() {
   const mode = useCanvasStore((s) => s.mode);
   const setMode = useCanvasStore((s) => s.setMode);
   const selection = useCanvasStore((s) => s.selection);
   const subscribeToAuthChanges = useAuthStore((s) => s.subscribeToAuthChanges);
+  const isBrowserOpen = useSkuStore((s) => s.isBrowserOpen);
 
   // Subscribe to Supabase auth state changes on mount
   useEffect(() => {
@@ -93,6 +96,9 @@ function App() {
         {showZonePanel && <ZonePropertiesPanel />}
         {showMeasurementPanel && <MeasurementPanel />}
       </div>
+
+      {/* SKU Browser overlay */}
+      {isBrowserOpen && <SkuBrowser />}
     </div>
   );
 }

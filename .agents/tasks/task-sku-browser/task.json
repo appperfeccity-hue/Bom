@@ -1,0 +1,7 @@
+{
+  "task_id": "task-sku-browser",
+  "task_description": "Build SKU Browser / Catalogue UI: update types to match DB schema, create skuStore for browsing state, build SKU browser panel with search/filter/grid/detail/assign workflow, wire into canvas designer mode",
+  "status": "in_progress",
+  "feature_order": ["FEAT-001", "FEAT-002"],
+  "blocked_reason": null
+}

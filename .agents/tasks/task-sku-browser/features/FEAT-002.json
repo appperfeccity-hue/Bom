@@ -1,0 +1,38 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "Build SKU Browser panel component with search/filter UI, grid view with thumbnails, detail view, and assignment action wired into the canvas workflow",
+  "status": "in_progress",
+  "steps": [
+    "Create src/components/SkuBrowser/SkuBrowser.tsx as the main browser panel component. It should be a slide-over or modal panel that opens when isBrowserOpen is true in skuStore. Include a header with title 'SKU Browser' and a close button.",
+    "Create src/components/SkuBrowser/SkuFilterBar.tsx with filter controls: ProductType dropdown (WALL_PANEL/LIGHT/FURNITURE), Family dropdown (populated from skuStore.families), Category dropdown (populated from skuStore.categories, filtered by selected family), Material text input, Colour text input, SKU Status toggle (ACTIVE/INACTIVE/All), Catalogue Status toggle (READY/INCOMPLETE/All), and a search input for free-text search by sku_code or material. Include a 'Clear Filters' button.",
+    "Create src/components/SkuBrowser/SkuGrid.tsx that displays a grid of SKU cards. Each card shows: thumbnail image (from catalogue RENDER asset file_reference, with fallback placeholder), sku_code, material, colour, dimensions (width x height x thickness mm), and a catalogue status badge (green 'READY' or amber 'INCOMPLETE'). Cards that are not selectable (status != ACTIVE or catalogue != READY) should be visually dimmed.",
+    "Create src/components/SkuBrowser/SkuDetailPanel.tsx shown when a SKU is selected (selectedSkuId != null). Display all SKU properties: sku_code, product_type, material, colour, finish, dimensions, pattern_identity, gh_mm/gv_mm, quantity_mode, commercial_attributes, status. Also show catalogue status and compatibility info (if any sku_compatibility records exist for this SKU).",
+    "Add an 'Assign to Zone' button in SkuDetailPanel that: validates the SKU is selectable (ACTIVE + catalogue READY), calls projectStore.assignSku(selectedZoneId, selectedSkuId), and closes the browser on success. The button should be disabled if no zone is selected or if the SKU is not selectable.",
+    "Create src/components/SkuBrowser/index.ts barrel exporting all components.",
+    "Wire the 'Assign SKU' button in ZonePropertiesPanel.tsx to call skuStore.openBrowser() on click. The button should only be visible in DESIGNER mode (already is since ZonePropertiesPanel only renders in designer mode).",
+    "Add the SkuBrowser component to App.tsx, rendering it conditionally when skuStore.isBrowserOpen is true. Position it as an overlay/panel on the right side of the canvas.",
+    "Create src/components/SkuBrowser/__tests__/SkuBrowser.test.tsx with tests: renders when open, does not render when closed, displays filter bar, displays SKU grid with mock data, selecting a SKU shows detail panel, assign button calls assignSku and closes browser, catalogue status badges render correctly, non-selectable SKUs are dimmed.",
+    "Add pagination controls at the bottom of SkuGrid (Previous/Next buttons, page indicator) that call skuStore.setPage().",
+    "Ensure all interactive elements have data-testid attributes following the existing pattern (e.g., data-testid='sku-browser-panel', 'sku-filter-product-type', 'sku-card-{skuId}', 'sku-detail-assign-btn', 'sku-browser-close-btn')."
+  ],
+  "acceptance_criteria": [
+    "SKU Browser panel opens when 'Assign SKU' button is clicked in ZonePropertiesPanel",
+    "Filter bar allows filtering by product_type, family, category, material, colour, sku status, catalogue status",
+    "SKU grid displays cards with thumbnails, sku_code, dimensions, and status badges",
+    "Non-selectable SKUs (not ACTIVE or catalogue not READY) are visually dimmed",
+    "Selecting a SKU shows detail panel with all properties",
+    "Assign to Zone button calls projectStore.assignSku and closes browser",
+    "Assign button is disabled when SKU is not selectable",
+    "Pagination controls work correctly",
+    "All new components have data-testid attributes",
+    "npm run build passes with no type errors",
+    "npx vitest run passes all tests including new component tests"
+  ],
+  "verification": [
+    "cd /projects/sandbox/Bom/frontend && npm run build",
+    "cd /projects/sandbox/Bom/frontend && npx vitest run"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}
