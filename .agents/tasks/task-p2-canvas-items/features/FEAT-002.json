@@ -2,7 +2,7 @@
   "id": "FEAT-002",
   "type": "feat",
   "description": "P2-5 Copy/Paste/Duplicate (#40) and P2-1 BOM-Canvas bidirectional link (#46). Two related features bundled: (A) Ctrl+C/V/D zone duplication with 100mm offset, constraint enforcement, and history push. (B) Selecting a BOM line highlights its source zone on the canvas; selecting a canvas zone highlights its BOM lines in the BOM panel.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "1. Add clipboard state to canvasStore.ts: `clipboard: TemplateZone[] | null` (stores deep copies of selected zones for paste). Add actions: `copySelection()`, `pasteClipboard()`, `duplicateSelection()`.",
     "2. Implement copySelection: deep-copy all selectedZoneIds zones into clipboard.",
@@ -31,5 +31,5 @@
     "cd /projects/sandbox/Bom/frontend && unset NODE_OPTIONS && npx vitest run"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All 859 tests pass (814 original + 18 from FEAT-001 + 27 new). The canvasStore uses a performPaste helper function extracted outside the store to avoid circular self-reference issues. Overlap avoidance logic iterates paste offset in 100mm increments (up to 10 attempts). Pre-existing TS7006 errors throughout codebase (noImplicitAny in selector callbacks) are not addressed as they are project-wide."
 }
