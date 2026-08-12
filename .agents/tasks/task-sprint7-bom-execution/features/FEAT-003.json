@@ -2,7 +2,7 @@
   "id": "FEAT-003",
   "type": "feat",
   "description": "Build Designer configuration UIs: Promoted Alternatives, Consultant Permissions, and Hidden Components panels with dialogs",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "Create src/components/PromotedAlternatives/PromotedAlternativesPanel.tsx - Panel showing promoted alternative SKUs per zone. Lists zones with their promoted alternatives. Each alternative shows SKU code, product type, and a remove button. Includes 'Add Alternative' button that opens the dialog. Only visible in DESIGNER mode. Uses fromTable('template_zone_alternative') to fetch data. data-testid='promoted-alternatives-panel'.",
     "Create src/components/PromotedAlternatives/AddAlternativeDialog.tsx - Dialog to browse and select alternative SKUs for a zone. Shows a simple SKU list (from skuStore or direct query to sku_master). Has zone selector, SKU search/select, and confirm/cancel buttons. On confirm, inserts into template_zone_alternative table. data-testid='add-alternative-dialog'.",
@@ -33,5 +33,5 @@
     "cd frontend && unset NODE_OPTIONS && npx vitest --run"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All 643 tests pass (28 new + 615 existing). TypeScript strict mode passes. React act() warnings are informational only and consistent with existing test patterns in the project."
 }
