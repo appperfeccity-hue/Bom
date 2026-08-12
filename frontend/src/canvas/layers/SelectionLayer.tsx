@@ -4,6 +4,7 @@ import { useProjectStore } from '@/stores/projectStore';
 import { CanvasMode } from '@/types/database';
 import { CanvasLayer } from '@/types/canvas';
 import type { ZoneResizeHandle } from '@/types/canvas';
+import { useZoneResize } from '@/canvas/interactions/useZoneResize';
 
 /**
  * Renders selection UI for the currently selected zone.
@@ -29,6 +30,7 @@ export function SelectionLayer({ wallHeight }: SelectionLayerProps) {
   const selection = useCanvasStore((s) => s.selection);
   const zones = useProjectStore((s) => s.zones);
   const zoom = useCanvasStore((s) => s.viewport.zoom);
+  const { handleResizeStart } = useZoneResize();
 
   if (!visible || mode !== CanvasMode.DESIGNER || !selection.selectedZoneId) {
     return null;
@@ -82,6 +84,8 @@ export function SelectionLayer({ wallHeight }: SelectionLayerProps) {
           fill="#ffffff"
           stroke="#1976d2"
           strokeWidth={1 / zoom}
+          onMouseDown={() => handleResizeStart(selectedZone, hp.handle)}
+          onTouchStart={() => handleResizeStart(selectedZone, hp.handle)}
           data-handle={hp.handle}
         />
       ))}

@@ -12,6 +12,9 @@ import type {
   WallGeometry,
 } from '@/types/database';
 import { fromTable } from '@/lib/supabase';
+import { createDebouncedSave } from '@/lib/autosave';
+import type { SaveStatus } from '@/types/canvas';
+import { useCanvasStore } from '@/stores/canvasStore';
 
 export interface ProjectState {
   currentTemplate: Template | null;
@@ -55,6 +58,30 @@ const initialState: ProjectState = {
   isLoading: false,
   error: null,
 };
+
+/**
+ * Module-level autosave debouncer instance, created lazily.
+ * Wraps zone-persistence calls with debounce and save-status transitions.
+ */
+let autosaver: ReturnType<typeof createDebouncedSave> | null = null;
+let pendingZoneUpdate: (() => Promise<void>) | null = null;
+
+function getAutosaver(onStatusChange: (status: SaveStatus) => void): ReturnType<typeof createDebouncedSave> {
+  if (!autosaver) {
+    autosaver = createDebouncedSave(
+      async (version: number) => {
+        if (pendingZoneUpdate) {
+          await pendingZoneUpdate();
+          pendingZoneUpdate = null;
+        }
+        return { version: version + 1 };
+      },
+      onStatusChange,
+      2000,
+    );
+  }
+  return autosaver;
+}
 
 export const useProjectStore = create<ProjectStore>((set, get) => ({
   ...initialState,
@@ -141,7 +168,9 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       zones: prevZones.map((z) => (z.id === zone.id ? zone : z)),
     });
 
-    try {
+    // Schedule debounced persistence with save-status transitions
+    const saver = getAutosaver((status) => useCanvasStore.getState().setSaveStatus(status));
+    pendingZoneUpdate = async () => {
       const { error } = await fromTable('template_zone')
         .update({
           x_mm: zone.x_mm,
@@ -155,11 +184,13 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
           z_index: zone.z_index,
         })
         .eq('id', zone.id);
-      if (error) throw error;
-    } catch (err) {
-      // Rollback on failure
-      set({ zones: prevZones, error: (err as Error).message });
-    }
+      if (error) {
+        // Rollback on failure
+        set({ zones: prevZones, error: error.message });
+        throw error;
+      }
+    };
+    saver.debouncedSave(useCanvasStore.getState().version);
   },
 
   addZone: async (zone) => {

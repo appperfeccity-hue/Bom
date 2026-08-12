@@ -2,7 +2,7 @@ import { useCallback, useRef } from 'react';
 import { useCanvasStore } from '@/stores/canvasStore';
 import { useProjectStore } from '@/stores/projectStore';
 import { snapToGrid } from '@/lib/coordinates';
-import { clampDimensions, constrainToWall } from '@/canvas/utils/zoneConstraints';
+import { clampDimensions, constrainToWall, hasOverlap } from '@/canvas/utils/zoneConstraints';
 import { CanvasMode } from '@/types/database';
 import type { TemplateZone } from '@/types/database';
 import type { ZoneResizeHandle } from '@/types/canvas';
@@ -22,6 +22,7 @@ export function useZoneResize() {
   const setResizeHandle = useCanvasStore((s) => s.setResizeHandle);
   const updateZone = useProjectStore((s) => s.updateZone);
   const currentTemplate = useProjectStore((s) => s.currentTemplate);
+  const zones = useProjectStore((s) => s.zones);
 
   const resizeState = useRef<ResizeState | null>(null);
 
@@ -125,6 +126,15 @@ export function useZoneResize() {
     (zone: TemplateZone, finalBounds: { x: number; y: number; width: number; height: number }) => {
       if (!canResize) return;
 
+      // Check for overlap at the final bounds
+      const newBox = { x: finalBounds.x, y: finalBounds.y, width: finalBounds.width, height: finalBounds.height };
+      if (hasOverlap(newBox, zones, zone.id)) {
+        // Revert - do not apply the resize
+        resizeState.current = null;
+        setResizeHandle(null);
+        return;
+      }
+
       const updatedZone: TemplateZone = {
         ...zone,
         x_mm: finalBounds.x,
@@ -137,7 +147,7 @@ export function useZoneResize() {
       resizeState.current = null;
       setResizeHandle(null);
     },
-    [canResize, updateZone, setResizeHandle],
+    [canResize, updateZone, setResizeHandle, zones],
   );
 
   return {

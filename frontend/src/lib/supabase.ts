@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
 
 if (!supabaseUrl || !supabaseAnonKey) {
   console.warn(
@@ -13,10 +13,12 @@ if (!supabaseUrl || !supabaseAnonKey) {
 /**
  * Singleton Supabase client configured with Vite environment variables.
  * Uses the perfecity schema by default.
+ * If env vars are missing, the client is created with placeholder values
+ * and all queries will fail gracefully.
  */
 export const supabase = createClient(
-  supabaseUrl ?? '',
-  supabaseAnonKey ?? '',
+  supabaseUrl ?? 'http://localhost:54321',
+  supabaseAnonKey ?? 'placeholder-key',
   {
     db: {
       schema: 'perfecity',
@@ -29,7 +31,13 @@ export const supabase = createClient(
 );
 
 /**
+ * Whether the Supabase client is properly configured with valid env vars.
+ */
+export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
+
+/**
  * Helper to query a table in the perfecity schema.
+ * Returns the query builder. Callers should handle errors from results.
  */
 export function fromTable(table: string) {
   return supabase.from(table);

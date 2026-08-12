@@ -79,15 +79,23 @@ export function CanvasContainer({ mode }: CanvasContainerProps) {
     };
   }, [handleKeyDown, handleKeyUp]);
 
-  // Fit to viewport on initial load
+  // Fit to viewport on initial load and template change only (not on every resize)
+  const hasInitialized = useRef(false);
+  const lastTemplateId = useRef<string | null>(null);
+
   useEffect(() => {
     if (currentTemplate && stageSize.width > 0) {
-      fitToViewport(
-        currentTemplate.base_width_mm,
-        currentTemplate.base_height_mm,
-        stageSize.width,
-        stageSize.height,
-      );
+      const templateChanged = lastTemplateId.current !== currentTemplate.id;
+      if (!hasInitialized.current || templateChanged) {
+        hasInitialized.current = true;
+        lastTemplateId.current = currentTemplate.id;
+        fitToViewport(
+          currentTemplate.base_width_mm,
+          currentTemplate.base_height_mm,
+          stageSize.width,
+          stageSize.height,
+        );
+      }
     }
   }, [currentTemplate, stageSize, fitToViewport]);
 

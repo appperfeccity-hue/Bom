@@ -2,7 +2,7 @@ import { useCallback, useRef } from 'react';
 import { useCanvasStore } from '@/stores/canvasStore';
 import { useProjectStore } from '@/stores/projectStore';
 import { snapToGrid } from '@/lib/coordinates';
-import { constrainToWall } from '@/canvas/utils/zoneConstraints';
+import { constrainToWall, hasOverlap } from '@/canvas/utils/zoneConstraints';
 import { CanvasMode } from '@/types/database';
 import type { TemplateZone } from '@/types/database';
 
@@ -16,6 +16,7 @@ export function useZoneDrag() {
   const gridConfig = useCanvasStore((s) => s.gridConfig);
   const updateZone = useProjectStore((s) => s.updateZone);
   const currentTemplate = useProjectStore((s) => s.currentTemplate);
+  const zones = useProjectStore((s) => s.zones);
 
   const dragStartPos = useRef<{ x: number; y: number } | null>(null);
 
@@ -56,6 +57,22 @@ export function useZoneDrag() {
     (zone: TemplateZone, finalX: number, finalY: number) => {
       if (!canDrag) return;
 
+      // Check for overlap at the final position
+      const newBox = { x: finalX, y: finalY, width: zone.width_mm, height: zone.height_mm };
+      if (hasOverlap(newBox, zones, zone.id)) {
+        // Revert to start position (cancel the drag)
+        if (dragStartPos.current) {
+          const revertedZone: TemplateZone = {
+            ...zone,
+            x_mm: dragStartPos.current.x,
+            y_mm: dragStartPos.current.y,
+          };
+          void updateZone(revertedZone);
+        }
+        dragStartPos.current = null;
+        return;
+      }
+
       const updatedZone: TemplateZone = {
         ...zone,
         x_mm: finalX,
@@ -65,7 +82,7 @@ export function useZoneDrag() {
       void updateZone(updatedZone);
       dragStartPos.current = null;
     },
-    [canDrag, updateZone],
+    [canDrag, updateZone, zones],
   );
 
   return {

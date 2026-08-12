@@ -1,4 +1,6 @@
+import { useEffect } from 'react';
 import { useCanvasStore } from '@/stores/canvasStore';
+import { useAuthStore } from '@/stores/authStore';
 import { CanvasMode } from '@/types/database';
 import { CanvasContainer } from '@/canvas/CanvasContainer';
 import { Toolbar } from '@/components/Toolbar';
@@ -9,6 +11,13 @@ function App() {
   const mode = useCanvasStore((s) => s.mode);
   const setMode = useCanvasStore((s) => s.setMode);
   const selection = useCanvasStore((s) => s.selection);
+  const subscribeToAuthChanges = useAuthStore((s) => s.subscribeToAuthChanges);
+
+  // Subscribe to Supabase auth state changes on mount
+  useEffect(() => {
+    const unsubscribe = subscribeToAuthChanges();
+    return unsubscribe;
+  }, [subscribeToAuthChanges]);
 
   const isDesigner = mode === CanvasMode.DESIGNER;
   const showZonePanel = isDesigner && selection.selectedZoneId !== null;

@@ -35,12 +35,11 @@ export function ZonesLayer({ wallHeight }: ZonesLayerProps) {
 
   return (
     <Layer>
-      {zones.map((zone, index) => {
+      {zones.map((zone) => {
         const isSelected = selection.selectedZoneId === zone.id;
 
         // Convert from bottom-left origin to top-left (Konva)
         const screenY = wallHeight - zone.y_mm - zone.height_mm;
-        void index; // used in label section below
 
         return (
           <Rect

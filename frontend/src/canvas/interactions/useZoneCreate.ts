@@ -5,6 +5,7 @@ import { snapToGrid } from '@/lib/coordinates';
 import {
   canAddZone,
   constrainToWall,
+  hasOverlap,
   MIN_ZONE_WIDTH,
   MIN_ZONE_HEIGHT,
 } from '@/canvas/utils/zoneConstraints';
@@ -95,6 +96,20 @@ export function useZoneCreate() {
       wallWidth,
       wallHeight,
     );
+
+    // Check for overlap with existing zones
+    const newBox = {
+      x: constrained.x,
+      y: constrained.y,
+      width: createPreview.width,
+      height: createPreview.height,
+    };
+    if (hasOverlap(newBox, zones)) {
+      setIsCreating(false);
+      setCreatePreview(null);
+      startPos.current = null;
+      return;
+    }
 
     void addZone({
       template_id: currentTemplate.id,

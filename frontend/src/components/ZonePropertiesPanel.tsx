@@ -3,6 +3,7 @@ import { useCanvasStore } from '@/stores/canvasStore';
 import { useProjectStore } from '@/stores/projectStore';
 import { ZoneWidthStrategy, ZoneHeightStrategy } from '@/types/database';
 import type { TemplateZone } from '@/types/database';
+import { clampDimensions, constrainToWall, hasOverlap } from '@/canvas/utils/zoneConstraints';
 
 /**
  * Side panel for DESIGNER mode when a zone is selected.
@@ -13,16 +14,48 @@ export function ZonePropertiesPanel() {
   const zones = useProjectStore((s) => s.zones);
   const zoneSku = useProjectStore((s) => s.zoneSku);
   const updateZone = useProjectStore((s) => s.updateZone);
+  const currentTemplate = useProjectStore((s) => s.currentTemplate);
 
   const selectedZone = zones.find((z) => z.id === selection.selectedZoneId);
 
   const handleFieldChange = useCallback(
     (field: keyof TemplateZone, value: string | number) => {
-      if (!selectedZone) return;
+      if (!selectedZone || !currentTemplate) return;
+
       const updated = { ...selectedZone, [field]: value };
+
+      // Apply dimension clamping for spatial fields
+      if (field === 'width_mm' || field === 'height_mm') {
+        const clamped = clampDimensions(updated.width_mm, updated.height_mm);
+        updated.width_mm = clamped.width;
+        updated.height_mm = clamped.height;
+      }
+
+      // Apply wall boundary constraint for position/size fields
+      if (field === 'x_mm' || field === 'y_mm' || field === 'width_mm' || field === 'height_mm') {
+        const wallWidth = currentTemplate.base_width_mm;
+        const wallHeight = currentTemplate.base_height_mm;
+        const constrained = constrainToWall(
+          updated.x_mm,
+          updated.y_mm,
+          updated.width_mm,
+          updated.height_mm,
+          wallWidth,
+          wallHeight,
+        );
+        updated.x_mm = constrained.x;
+        updated.y_mm = constrained.y;
+
+        // Check for overlap with other zones
+        const box = { x: updated.x_mm, y: updated.y_mm, width: updated.width_mm, height: updated.height_mm };
+        if (hasOverlap(box, zones, selectedZone.id)) {
+          return; // Reject the change if it causes overlap
+        }
+      }
+
       void updateZone(updated);
     },
-    [selectedZone, updateZone],
+    [selectedZone, updateZone, currentTemplate, zones],
   );
 
   if (!selectedZone) return null;
