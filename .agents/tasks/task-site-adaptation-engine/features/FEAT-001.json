@@ -1,0 +1,29 @@
+{
+  "id": "FEAT-001",
+  "type": "feat",
+  "description": "Implement the Site Adaptation Engine (section 77) that transforms template zone geometry to match actual site dimensions, with 4 strategies (PROPORTIONAL, PRIORITY_ZONE, EQUAL_DISTRIBUTION, FIXED) and height adaptation modes.",
+  "status": "in_progress",
+  "steps": [
+    "Add Site Adaptation Engine types to frontend/src/engines/types.ts: SiteAdaptationStrategy enum ('PROPORTIONAL' | 'PRIORITY_ZONE' | 'EQUAL_DISTRIBUTION' | 'FIXED'), WidthStrategy enum ('LOCKED' | 'RESIZABLE' or similar), HeightMode enum ('DERIVED_FROM_WALL' | 'FIXED' | 'RESIZABLE'), SiteAdaptationZoneInput interface (zone_id: number, width_mm: number, width_strategy: string, min_width: number default 200, max_width: number default 3000, height_mm?: number, height_mode?: HeightMode), SiteAdaptationInput interface (template_wall_width: number, actual_wall_width: number, zones: SiteAdaptationZoneInput[], strategy: SiteAdaptationStrategy, priority_zone_id?: number, template_wall_height?: number, actual_wall_height?: number), SiteAdaptationZoneOutput interface (zone_id: number, adapted_width_mm: number, adapted_height_mm?: number), SiteAdaptationOutput interface (adapted_zones: SiteAdaptationZoneOutput[]) or error result.",
+    "Create frontend/src/engines/siteAdaptationEngine.ts implementing the adaptZonesToSite function. PROPORTIONAL strategy: compute ratio = actual_wall_width / template_wall_width, scale each zone width by ratio using ROUND_HALF_UP (Math.round), compute sum, distribute remainder (actual - sum) by incrementing/decrementing zones in zone_id ASC order. PRIORITY_ZONE strategy: compute delta = actual_wall_width - template_wall_width, apply entire delta to the zone matching priority_zone_id, leave others unchanged. EQUAL_DISTRIBUTION strategy: compute delta = actual_wall_width - template_wall_width, count resizable zones (width_strategy != 'LOCKED'), divide delta equally among them with ROUND_HALF_UP, distribute remainder by zone_id ASC among resizable zones. FIXED strategy: if Math.abs(actual_wall_width - template_wall_width) > 5, throw EngineError, otherwise return zones unchanged.",
+    "Implement height adaptation in the same function: DERIVED_FROM_WALL scales height by actual_wall_height/template_wall_height ratio, FIXED leaves height unchanged, RESIZABLE applies proportional scaling. Enforce constraints post-adaptation: width 200-3000mm, height 200-2700mm. Throw EngineError if any zone violates constraints after adaptation.",
+    "Implement input validation: throw EngineError for invalid inputs (missing required fields, empty zones array, non-positive dimensions, priority_zone_id required for PRIORITY_ZONE strategy, priority_zone_id must exist in zones array).",
+    "Update frontend/src/engines/index.ts to export adaptZonesToSite and all new types from the site adaptation engine.",
+    "Create frontend/src/engines/__tests__/siteAdaptationEngine.test.ts with comprehensive tests. Include: (a) PROPORTIONAL golden test from spec: template 3000mm, zones [1000,1000,1000], actual 3200mm -> ratio 1.0667 -> [1067,1067,1067]=3201 -> subtract 1 from first zone -> [1066,1067,1067]=3200. (b) PROPORTIONAL exact fit (no remainder). (c) PRIORITY_ZONE: delta absorbed by designated zone. (d) EQUAL_DISTRIBUTION: delta split among resizable zones only. (e) FIXED: passes when |delta| <= 5mm, fails when > 5mm. (f) Height adaptation tests for each mode. (g) Constraint violation tests (min/max width/height). (h) Input validation error cases. (i) Determinism test: same inputs produce identical output on repeated calls."
+  ],
+  "acceptance_criteria": [
+    "Running `cd frontend && npx vitest --run src/engines/__tests__/siteAdaptationEngine.test.ts` passes all tests",
+    "Running `cd frontend && npx tsc --noEmit` shows no TypeScript errors",
+    "The PROPORTIONAL remainder distribution example from the spec produces [1066, 1067, 1067] for template=3000, actual=3200, zones=[1000,1000,1000]",
+    "FIXED strategy throws EngineError when |actual - template| > 5mm",
+    "All zone constraints (width 200-3000, height 200-2700) are enforced post-adaptation",
+    "The function is deterministic: same inputs always produce the same output",
+    "Existing tests still pass: `cd frontend && npx vitest --run` shows no regressions"
+  ],
+  "verification": [
+    "cd /projects/sandbox/Bom && make typecheck",
+    "cd /projects/sandbox/Bom && make test"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

@@ -9,6 +9,7 @@ export { calculateWallPanels } from './wallPanelEngine';
 export { calculateLights } from './lightEngine';
 export { calculateFurniture } from './furnitureEngine';
 export { calculateHiddenComponent } from './hiddenComponentEngine';
+export { adaptZonesToSite } from './siteAdaptationEngine';
 export { EngineError } from './types';
 export type {
   WallPanelInput,
@@ -26,4 +27,10 @@ export type {
   TriggerType,
   ConditionOperator,
   QuantityRule,
+  SiteAdaptationStrategy,
+  HeightMode,
+  SiteAdaptationZoneInput,
+  SiteAdaptationInput,
+  SiteAdaptationZoneOutput,
+  SiteAdaptationOutput,
 } from './types';

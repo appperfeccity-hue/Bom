@@ -145,3 +145,65 @@ export interface HiddenComponentOutput {
   /** Whether this component is included */
   included: boolean;
 }
+
+// --- Site Adaptation Engine ---
+
+export type SiteAdaptationStrategy =
+  | 'PROPORTIONAL'
+  | 'PRIORITY_ZONE'
+  | 'EQUAL_DISTRIBUTION'
+  | 'FIXED';
+
+export type HeightMode = 'DERIVED_FROM_WALL' | 'FIXED' | 'RESIZABLE';
+
+export interface SiteAdaptationZoneInput {
+  /** Unique zone identifier */
+  zone_id: number;
+  /** Template zone width in mm */
+  width_mm: number;
+  /** Width strategy for this zone */
+  width_strategy: 'LOCKED' | 'RESIZABLE';
+  /** Minimum allowed width in mm (default 200) */
+  min_width?: number;
+  /** Maximum allowed width in mm (default 3000) */
+  max_width?: number;
+  /** Template zone height in mm */
+  height_mm?: number;
+  /** Height adaptation mode */
+  height_mode?: HeightMode;
+  /** Minimum allowed height in mm (default 200) */
+  min_height?: number;
+  /** Maximum allowed height in mm (default 2700) */
+  max_height?: number;
+}
+
+export interface SiteAdaptationInput {
+  /** Template wall width in mm */
+  template_wall_width: number;
+  /** Actual wall width in mm */
+  actual_wall_width: number;
+  /** Array of zones to adapt */
+  zones: SiteAdaptationZoneInput[];
+  /** Width adaptation strategy */
+  strategy: SiteAdaptationStrategy;
+  /** Zone ID to receive all delta (required for PRIORITY_ZONE strategy) */
+  priority_zone_id?: number;
+  /** Template wall height in mm */
+  template_wall_height?: number;
+  /** Actual wall height in mm */
+  actual_wall_height?: number;
+}
+
+export interface SiteAdaptationZoneOutput {
+  /** Zone identifier */
+  zone_id: number;
+  /** Adapted width in mm */
+  adapted_width_mm: number;
+  /** Adapted height in mm (present only if height adaptation was performed) */
+  adapted_height_mm?: number;
+}
+
+export interface SiteAdaptationOutput {
+  /** Array of adapted zones */
+  adapted_zones: SiteAdaptationZoneOutput[];
+}
