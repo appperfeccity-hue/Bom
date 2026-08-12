@@ -6,9 +6,10 @@ import { constrainToWall, hasOverlap } from '@/canvas/utils/zoneConstraints';
 import { CanvasMode } from '@/types/database';
 import type { TemplateZone } from '@/types/database';
 import type { HistoryState } from '@/canvas/history/useHistory';
+import { usePermissionEnforcement } from '@/canvas/permissions/usePermissionEnforcement';
 
 /**
- * Custom hook for zone drag interaction (DESIGNER mode only).
+ * Custom hook for zone drag interaction (DESIGNER mode only, or CONSULTANT with zone edit permission).
  * On drag: snaps to grid, constrains within wall boundary.
  * On drag end: updates projectStore.updateZone() for autosave.
  */
@@ -18,22 +19,29 @@ export function useZoneDrag(history?: HistoryState) {
   const updateZone = useProjectStore((s) => s.updateZone);
   const currentTemplate = useProjectStore((s) => s.currentTemplate);
   const zones = useProjectStore((s) => s.zones);
+  const { canEditZone } = usePermissionEnforcement();
 
   const dragStartPos = useRef<{ x: number; y: number } | null>(null);
 
-  const canDrag = mode === CanvasMode.DESIGNER;
+  const canDrag = mode === CanvasMode.DESIGNER || mode === CanvasMode.CONSULTANT;
 
   const handleDragStart = useCallback(
     (zone: TemplateZone, _e: unknown) => {
       if (!canDrag) return;
+      // In CONSULTANT mode, check if zone is editable via permissions
+      if (mode === CanvasMode.CONSULTANT && !canEditZone(zone.id)) return;
       dragStartPos.current = { x: zone.x_mm, y: zone.y_mm };
     },
-    [canDrag],
+    [canDrag, mode, canEditZone],
   );
 
   const handleDragMove = useCallback(
     (zone: TemplateZone, newX: number, newY: number): { x: number; y: number } => {
       if (!canDrag || !currentTemplate) {
+        return { x: zone.x_mm, y: zone.y_mm };
+      }
+      // In CONSULTANT mode, check zone-level permission
+      if (mode === CanvasMode.CONSULTANT && !canEditZone(zone.id)) {
         return { x: zone.x_mm, y: zone.y_mm };
       }
 
@@ -51,12 +59,14 @@ export function useZoneDrag(history?: HistoryState) {
 
       return { x, y };
     },
-    [canDrag, currentTemplate, gridConfig],
+    [canDrag, currentTemplate, gridConfig, mode, canEditZone],
   );
 
   const handleDragEnd = useCallback(
     (zone: TemplateZone, finalX: number, finalY: number) => {
       if (!canDrag) return;
+      // In CONSULTANT mode, check zone-level permission
+      if (mode === CanvasMode.CONSULTANT && !canEditZone(zone.id)) return;
 
       // Check for overlap at the final position
       const newBox = { x: finalX, y: finalY, width: zone.width_mm, height: zone.height_mm };

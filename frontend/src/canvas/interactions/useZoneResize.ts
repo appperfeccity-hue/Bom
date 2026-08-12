@@ -7,6 +7,7 @@ import { CanvasMode } from '@/types/database';
 import type { TemplateZone } from '@/types/database';
 import type { ZoneResizeHandle } from '@/types/canvas';
 import type { HistoryState } from '@/canvas/history/useHistory';
+import { usePermissionEnforcement } from '@/canvas/permissions/usePermissionEnforcement';
 
 interface ResizeState {
   handle: ZoneResizeHandle;
@@ -14,7 +15,7 @@ interface ResizeState {
 }
 
 /**
- * Custom hook for zone resize via 8-point handles (DESIGNER mode only).
+ * Custom hook for zone resize via 8-point handles (DESIGNER mode, or CONSULTANT with zone edit permission).
  * Enforces min 200x200mm, max 3000x2700mm, snaps to grid, constrains to wall.
  */
 export function useZoneResize(history?: HistoryState) {
@@ -24,14 +25,17 @@ export function useZoneResize(history?: HistoryState) {
   const updateZone = useProjectStore((s) => s.updateZone);
   const currentTemplate = useProjectStore((s) => s.currentTemplate);
   const zones = useProjectStore((s) => s.zones);
+  const { canEditZone } = usePermissionEnforcement();
 
   const resizeState = useRef<ResizeState | null>(null);
 
-  const canResize = mode === CanvasMode.DESIGNER;
+  const canResize = mode === CanvasMode.DESIGNER || mode === CanvasMode.CONSULTANT;
 
   const handleResizeStart = useCallback(
     (zone: TemplateZone, handle: ZoneResizeHandle) => {
       if (!canResize) return;
+      // In CONSULTANT mode, check if zone is editable via permissions
+      if (mode === CanvasMode.CONSULTANT && !canEditZone(zone.id)) return;
       resizeState.current = {
         handle,
         initialBounds: {
@@ -43,7 +47,7 @@ export function useZoneResize(history?: HistoryState) {
       };
       setResizeHandle(handle);
     },
-    [canResize, setResizeHandle],
+    [canResize, setResizeHandle, mode, canEditZone],
   );
 
   const handleResizeMove = useCallback(
@@ -53,6 +57,10 @@ export function useZoneResize(history?: HistoryState) {
       deltaY: number,
     ): { x: number; y: number; width: number; height: number } => {
       if (!canResize || !resizeState.current || !currentTemplate) {
+        return { x: zone.x_mm, y: zone.y_mm, width: zone.width_mm, height: zone.height_mm };
+      }
+      // In CONSULTANT mode, check zone-level permission
+      if (mode === CanvasMode.CONSULTANT && !canEditZone(zone.id)) {
         return { x: zone.x_mm, y: zone.y_mm, width: zone.width_mm, height: zone.height_mm };
       }
 
@@ -120,12 +128,14 @@ export function useZoneResize(history?: HistoryState) {
 
       return { x, y, width, height };
     },
-    [canResize, currentTemplate, gridConfig],
+    [canResize, currentTemplate, gridConfig, mode, canEditZone],
   );
 
   const handleResizeEnd = useCallback(
     (zone: TemplateZone, finalBounds: { x: number; y: number; width: number; height: number }) => {
       if (!canResize) return;
+      // In CONSULTANT mode, check zone-level permission
+      if (mode === CanvasMode.CONSULTANT && !canEditZone(zone.id)) return;
 
       // Check for overlap at the final bounds
       const newBox = { x: finalBounds.x, y: finalBounds.y, width: finalBounds.width, height: finalBounds.height };
@@ -153,7 +163,7 @@ export function useZoneResize(history?: HistoryState) {
       resizeState.current = null;
       setResizeHandle(null);
     },
-    [canResize, updateZone, setResizeHandle, zones, history],
+    [canResize, updateZone, setResizeHandle, zones, history, mode, canEditZone],
   );
 
   return {
