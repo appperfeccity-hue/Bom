@@ -13,6 +13,8 @@ export interface AuthState {
 
 export interface AuthActions {
   signIn: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string, role: 'DESIGNER' | 'CONSULTANT') => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
   signOut: () => Promise<void>;
   subscribeToAuthChanges: () => () => void;
 }
@@ -20,11 +22,13 @@ export interface AuthActions {
 export type AuthStore = AuthState & AuthActions;
 
 /**
- * Extract role from Supabase user JWT app_metadata.
+ * Extract role from Supabase user JWT metadata.
+ * Checks app_metadata first (set by server/hooks), then falls back to
+ * user_metadata (set during client-side signup).
  */
 function extractRole(user: User | null): UserRole | null {
   if (!user) return null;
-  const role = user.app_metadata?.role as UserRole | undefined;
+  const role = (user.app_metadata?.role ?? user.user_metadata?.role) as UserRole | undefined;
   if (role && ['ADMIN', 'DESIGNER', 'CONSULTANT'].includes(role)) {
     return role;
   }
@@ -63,6 +67,20 @@ export const useAuthStore = create<AuthStore>((set) => ({
       isAuthenticated: false,
       isLoading: false,
     });
+  },
+
+  signUp: async (email: string, password: string, role: 'DESIGNER' | 'CONSULTANT') => {
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { role } },
+    });
+    if (error) throw error;
+  },
+
+  resetPassword: async (email: string) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email);
+    if (error) throw error;
   },
 
   subscribeToAuthChanges: () => {

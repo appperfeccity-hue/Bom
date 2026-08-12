@@ -48,6 +48,7 @@ export function LoginPage() {
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Enter your password"
             required
+            minLength={6}
             data-testid="login-password-input"
           />
         </div>

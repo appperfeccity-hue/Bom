@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "feat",
   "description": "Install react-router-dom, create authentication pages (Login, Signup, ForgotPassword), auth layout with redirect logic, protected route wrapper, role-based routing, navigation component, and update App.tsx/main.tsx to use the router with auth guards. Add comprehensive tests.",
-  "status": "completed",
+  "status": "in_progress",
   "steps": [
     "Install react-router-dom and @types/react-router-dom (if needed) via npm: cd /projects/sandbox/Bom/frontend && NODE_OPTIONS='' npm install react-router-dom",
     "Create src/pages/LoginPage.tsx: email/password form that calls authStore.signIn(), shows loading state, displays error messages, has link to signup and forgot-password. Include data-testid attributes for testing.",

@@ -1,15 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-
-const mockSignUp = vi.hoisted(() => vi.fn());
+import { useAuthStore } from '@/stores/authStore';
 
 // Mock Supabase
 vi.mock('@/lib/supabase', () => ({
   supabase: {
     auth: {
-      signUp: mockSignUp,
       onAuthStateChange: vi.fn(() => ({ data: { subscription: { unsubscribe: vi.fn() } } })),
+      signUp: vi.fn(),
     },
   },
   fromTable: vi.fn(() => ({
@@ -32,7 +31,12 @@ function renderSignupPage() {
 
 describe('SignupPage', () => {
   beforeEach(() => {
-    mockSignUp.mockReset();
+    useAuthStore.setState({
+      user: null,
+      role: null,
+      isAuthenticated: false,
+      isLoading: false,
+    });
   });
 
   it('renders the signup form', () => {
@@ -55,8 +59,9 @@ describe('SignupPage', () => {
     expect(roleValues).not.toContain('ADMIN');
   });
 
-  it('calls supabase.auth.signUp with correct metadata on form submission', async () => {
-    mockSignUp.mockResolvedValue({ data: {}, error: null });
+  it('calls authStore.signUp with correct arguments on form submission', async () => {
+    const mockSignUp = vi.fn().mockResolvedValue(undefined);
+    useAuthStore.setState({ signUp: mockSignUp });
 
     renderSignupPage();
 
@@ -72,16 +77,13 @@ describe('SignupPage', () => {
     fireEvent.click(screen.getByTestId('signup-submit-btn'));
 
     await waitFor(() => {
-      expect(mockSignUp).toHaveBeenCalledWith({
-        email: 'new@example.com',
-        password: 'securepass',
-        options: { data: { role: 'CONSULTANT' } },
-      });
+      expect(mockSignUp).toHaveBeenCalledWith('new@example.com', 'securepass', 'CONSULTANT');
     });
   });
 
   it('displays error message on failed signup', async () => {
-    mockSignUp.mockResolvedValue({ data: null, error: new Error('Email already in use') });
+    const mockSignUp = vi.fn().mockRejectedValue(new Error('Email already in use'));
+    useAuthStore.setState({ signUp: mockSignUp });
 
     renderSignupPage();
 
@@ -89,7 +91,7 @@ describe('SignupPage', () => {
       target: { value: 'taken@example.com' },
     });
     fireEvent.change(screen.getByTestId('signup-password-input'), {
-      target: { value: 'password' },
+      target: { value: 'password123' },
     });
     fireEvent.click(screen.getByTestId('signup-submit-btn'));
 
@@ -100,7 +102,8 @@ describe('SignupPage', () => {
   });
 
   it('shows success message after successful signup', async () => {
-    mockSignUp.mockResolvedValue({ data: {}, error: null });
+    const mockSignUp = vi.fn().mockResolvedValue(undefined);
+    useAuthStore.setState({ signUp: mockSignUp });
 
     renderSignupPage();
 
@@ -121,5 +124,11 @@ describe('SignupPage', () => {
   it('has link back to login', () => {
     renderSignupPage();
     expect(screen.getByTestId('signup-login-link')).toBeInTheDocument();
+  });
+
+  it('password input has minLength of 6', () => {
+    renderSignupPage();
+    const passwordInput = screen.getByTestId('signup-password-input');
+    expect(passwordInput).toHaveAttribute('minLength', '6');
   });
 });

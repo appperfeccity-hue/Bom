@@ -1,20 +1,20 @@
 import { useState, FormEvent } from 'react';
 import { Link } from 'react-router-dom';
-import { supabase } from '@/lib/supabase';
+import { useAuthStore } from '@/stores/authStore';
 
 export function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const resetPassword = useAuthStore((s) => s.resetPassword);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
     setIsSubmitting(true);
     try {
-      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email);
-      if (resetError) throw resetError;
+      await resetPassword(email);
       setSuccess(true);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Password reset failed';

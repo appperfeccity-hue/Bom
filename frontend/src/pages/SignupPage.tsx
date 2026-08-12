@@ -1,6 +1,6 @@
 import { useState, FormEvent } from 'react';
 import { Link } from 'react-router-dom';
-import { supabase } from '@/lib/supabase';
+import { useAuthStore } from '@/stores/authStore';
 
 type SignupRole = 'DESIGNER' | 'CONSULTANT';
 
@@ -11,20 +11,14 @@ export function SignupPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const signUp = useAuthStore((s) => s.signUp);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
     setIsSubmitting(true);
     try {
-      const { error: signUpError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: { role },
-        },
-      });
-      if (signUpError) throw signUpError;
+      await signUp(email, password, role);
       setSuccess(true);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Signup failed';
@@ -73,6 +67,7 @@ export function SignupPage() {
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Enter your password"
             required
+            minLength={6}
             data-testid="signup-password-input"
           />
         </div>

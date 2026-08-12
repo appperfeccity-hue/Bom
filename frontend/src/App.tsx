@@ -1,6 +1,4 @@
-import { useEffect } from 'react';
 import { useCanvasStore } from '@/stores/canvasStore';
-import { useAuthStore } from '@/stores/authStore';
 import { useSkuStore } from '@/stores/skuStore';
 import { useBomStore } from '@/stores/bomStore';
 import { usePublishStore } from '@/stores/publishStore';
@@ -22,18 +20,11 @@ import { Navigation } from '@/components/Navigation';
 function App() {
   const mode = useCanvasStore((s) => s.mode);
   const selection = useCanvasStore((s) => s.selection);
-  const subscribeToAuthChanges = useAuthStore((s) => s.subscribeToAuthChanges);
   const isBrowserOpen = useSkuStore((s) => s.isBrowserOpen);
   const isBomPanelOpen = useBomStore((s) => s.isBomPanelOpen);
   const publishStep = usePublishStore((s) => s.currentStep);
   const creationStep = useProjectCreationStore((s) => s.step);
   const isPanelVisible = useTemplateManagementStore((s) => s.isPanelVisible);
-
-  // Subscribe to Supabase auth state changes on mount
-  useEffect(() => {
-    const unsubscribe = subscribeToAuthChanges();
-    return unsubscribe;
-  }, [subscribeToAuthChanges]);
 
   const isDesigner = mode === CanvasMode.DESIGNER;
   const showZonePanel = isDesigner && selection.selectedZoneId !== null;
