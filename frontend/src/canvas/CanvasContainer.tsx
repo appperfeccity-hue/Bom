@@ -14,6 +14,7 @@ import { TrimLayer } from './layers/TrimLayer';
 import { SelectionLayer } from './layers/SelectionLayer';
 import { MeasurementsLayer } from './layers/MeasurementsLayer';
 import { ZoneDimensionsLayer } from './layers/ZoneDimensionsLayer';
+import { SnapGuidesLayer } from './layers/SnapGuidesLayer';
 import { useCanvasViewport } from './interactions/useCanvasViewport';
 import { useZoneCreate } from './interactions/useZoneCreate';
 import { useKeyboardShortcuts } from './interactions/useKeyboardShortcuts';
@@ -49,6 +50,9 @@ export function CanvasContainer({ mode }: CanvasContainerProps) {
     handleMouseUp,
     handleKeyDown,
     handleKeyUp,
+    handleTouchStart,
+    handleTouchMove,
+    handleTouchEnd,
     fitToViewport,
   } = useCanvasViewport();
 
@@ -197,6 +201,9 @@ export function CanvasContainer({ mode }: CanvasContainerProps) {
         onMouseDown={handleStageMouseDown}
         onMouseMove={handleStageMouseMove}
         onMouseUp={handleStageMouseUp}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
         data-testid="canvas-stage"
       >
         <GridLayer wallWidth={wallWidth} wallHeight={wallHeight} />
@@ -215,6 +222,7 @@ export function CanvasContainer({ mode }: CanvasContainerProps) {
         <TrimLayer wallHeight={wallHeight} />
         <MeasurementsLayer wallWidth={wallWidth} wallHeight={wallHeight} />
         <ZoneDimensionsLayer wallHeight={wallHeight} />
+        <SnapGuidesLayer wallWidth={wallWidth} wallHeight={wallHeight} />
         <SelectionLayer wallHeight={wallHeight} />
 
         {/* Creation preview rectangle */}

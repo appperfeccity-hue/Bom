@@ -4,6 +4,7 @@ import { useProjectStore } from '@/stores/projectStore';
 import { snapToGrid } from '@/lib/coordinates';
 import { constrainToWall, hasOverlap } from '@/canvas/utils/zoneConstraints';
 import { doesZoneCrossCorner } from '@/canvas/utils/segmentConstraint';
+import { getSnapCandidates, snapToEdges, SNAP_THRESHOLD } from '@/canvas/utils/snapEngine';
 import { CanvasMode } from '@/types/database';
 import type { TemplateZone } from '@/types/database';
 import type { HistoryState } from '@/canvas/history/useHistory';
@@ -83,6 +84,19 @@ export function useZoneDrag(history?: HistoryState) {
         const constrained = constrainToWall(x, y, zone.width_mm, zone.height_mm, wallWidth, wallHeight);
         x = constrained.x;
         y = constrained.y;
+
+        // Apply edge snapping
+        const allZones = useProjectStore.getState().zones;
+        const otherZones = allZones.filter((z) => z.id !== zone.id);
+        const candidates = getSnapCandidates(otherZones, wallWidth, wallHeight);
+        const snapResult = snapToEdges(x, y, zone.width_mm, zone.height_mm, candidates, SNAP_THRESHOLD);
+        x = snapResult.x;
+        y = snapResult.y;
+
+        // Update active snap lines for visual feedback
+        const activeVertical: number[] = snapResult.snappedVertical !== null ? [snapResult.snappedVertical] : [];
+        const activeHorizontal: number[] = snapResult.snappedHorizontal !== null ? [snapResult.snappedHorizontal] : [];
+        useCanvasStore.getState().setActiveSnapLines({ vertical: activeVertical, horizontal: activeHorizontal });
       }
 
       return { x, y };
@@ -95,6 +109,9 @@ export function useZoneDrag(history?: HistoryState) {
       if (!canDrag) return;
       // In CONSULTANT mode, check zone-level permission
       if (mode === CanvasMode.CONSULTANT && !canEditZone(zone.id)) return;
+
+      // Clear snap lines on drag end
+      useCanvasStore.getState().clearActiveSnapLines();
 
       const selection = useCanvasStore.getState().selection;
       const selectedIds = selection.selectedZoneIds;

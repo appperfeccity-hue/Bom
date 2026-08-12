@@ -1,3 +1,4 @@
+import { useRef, useState, useEffect } from 'react';
 import { useCanvasStore } from '@/stores/canvasStore';
 import { useProjectStore } from '@/stores/projectStore';
 import { usePublishStore } from '@/stores/publishStore';
@@ -8,11 +9,16 @@ import { useHistory } from '@/canvas/history/useHistory';
 import { FinalizeButton } from '@/components/Finalization/FinalizeButton';
 import { GenerateActualBomButton } from '@/components/GenerateActualBom/GenerateActualBomButton';
 
+/** Breakpoint below which toolbar enters compact mode (icon-only, touch-friendly). */
+const COMPACT_BREAKPOINT = 640;
+
 /**
  * Top toolbar with mode indicator, zoom controls, grid snap toggle,
  * layer visibility dropdown, zone tools (DESIGNER), and save status.
  */
 export function Toolbar() {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isCompact, setIsCompact] = useState(false);
   const mode = useCanvasStore((s) => s.mode);
   const viewport = useCanvasStore((s) => s.viewport);
   const setZoom = useCanvasStore((s) => s.setZoom);
@@ -32,6 +38,24 @@ export function Toolbar() {
   const zoomPercent = Math.round(viewport.zoom * 100);
   const isDesigner = mode === CanvasMode.DESIGNER;
   const isFinalized = currentProject?.status === ProjectStatus.FINALIZED;
+
+  // Responsive breakpoint detection
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    if (typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setIsCompact(entry.contentRect.width < COMPACT_BREAKPOINT);
+      }
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  const buttonStyle = isCompact
+    ? { padding: '12px', fontSize: '16px', minWidth: '44px', minHeight: '44px' }
+    : {};
 
   const handleZoomIn = () => setZoom(viewport.zoom * 1.25);
   const handleZoomOut = () => setZoom(viewport.zoom / 1.25);
@@ -80,11 +104,12 @@ export function Toolbar() {
 
   return (
     <div
+      ref={containerRef}
       className="toolbar"
       style={{
         display: 'flex',
         alignItems: 'center',
-        gap: '12px',
+        gap: isCompact ? '8px' : '12px',
         padding: '8px 16px',
         borderBottom: '1px solid #e0e0e0',
         backgroundColor: '#fafafa',
@@ -109,17 +134,17 @@ export function Toolbar() {
 
       {/* Zoom controls */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-        <button onClick={handleZoomOut} title="Zoom Out" data-testid="zoom-out">
+        <button onClick={handleZoomOut} title="Zoom Out" data-testid="zoom-out" style={buttonStyle}>
           -
         </button>
         <span style={{ minWidth: '48px', textAlign: 'center', fontSize: '13px' }} data-testid="zoom-display">
           {zoomPercent}%
         </span>
-        <button onClick={handleZoomIn} title="Zoom In" data-testid="zoom-in">
+        <button onClick={handleZoomIn} title="Zoom In" data-testid="zoom-in" style={buttonStyle}>
           +
         </button>
-        <button onClick={handleFitToViewport} title="Fit to Viewport" data-testid="fit-viewport">
-          Fit
+        <button onClick={handleFitToViewport} title="Fit to Viewport" data-testid="fit-viewport" style={buttonStyle}>
+          {isCompact ? '\u2922' : 'Fit'}
         </button>
       </div>
 
@@ -131,7 +156,7 @@ export function Toolbar() {
           onChange={handleToggleSnap}
           data-testid="snap-toggle"
         />
-        Snap to Grid
+        {!isCompact && 'Snap to Grid'}
       </label>
 
       {/* Layer visibility dropdown */}
@@ -163,31 +188,35 @@ export function Toolbar() {
             disabled={!history.canUndo || isFinalized}
             title="Undo (Ctrl+Z)"
             data-testid="undo-btn"
+            style={buttonStyle}
           >
-            Undo
+            {isCompact ? '\u21A9' : 'Undo'}
           </button>
           <button
             onClick={handleRedo}
             disabled={!history.canRedo || isFinalized}
             title="Redo (Ctrl+Shift+Z)"
             data-testid="redo-btn"
+            style={buttonStyle}
           >
-            Redo
+            {isCompact ? '\u21AA' : 'Redo'}
           </button>
           <button
             disabled={!canAddZone(zones.length) || isFinalized}
             title={isFinalized ? 'Project is finalized' : canAddZone(zones.length) ? 'Click and drag on canvas to create zone' : 'Maximum 12 zones reached'}
             data-testid="create-zone-btn"
+            style={buttonStyle}
           >
-            + Zone
+            + {!isCompact && 'Zone'}
           </button>
           <button
             onClick={handleDeleteZone}
             disabled={selection.selectedZoneIds.length === 0 || isFinalized}
             title={isFinalized ? 'Project is finalized' : 'Delete selected zone'}
             data-testid="delete-zone-btn"
+            style={buttonStyle}
           >
-            Delete Zone
+            {isCompact ? '\u2716' : 'Delete Zone'}
           </button>
           {currentTemplate?.status === TemplateStatus.DRAFT && (
             <button
@@ -195,8 +224,8 @@ export function Toolbar() {
               title="Publish Template"
               data-testid="publish-template-btn"
               style={{
-                padding: '4px 12px',
-                fontSize: '13px',
+                padding: isCompact ? '12px' : '4px 12px',
+                fontSize: isCompact ? '16px' : '13px',
                 fontWeight: 600,
                 backgroundColor: '#7b1fa2',
                 color: '#ffffff',
@@ -205,7 +234,7 @@ export function Toolbar() {
                 cursor: 'pointer',
               }}
             >
-              Publish Template
+              {isCompact ? '\u2191' : 'Publish Template'}
             </button>
           )}
         </div>

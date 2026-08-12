@@ -11,6 +11,19 @@ interface ZonesLayerProps {
   wallHeight: number;
 }
 
+/** Extra hit stroke width for touch devices to make zones easier to tap. */
+const TOUCH_HIT_PADDING = 10;
+
+/** Detect if user has a coarse pointer (touch device). */
+function isTouchDevice(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    return window.matchMedia('(pointer: coarse)').matches;
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Renders all zones from projectStore as Konva Rects.
  * In DESIGNER mode: zones are interactive (clicks select, drag to move).
@@ -81,6 +94,7 @@ export function ZonesLayer({ wallHeight }: ZonesLayerProps) {
             fill={isHighlighted ? '#fff8e1' : isSelected ? '#bbdefb' : '#e3f2fd'}
             stroke={strokeColor}
             strokeWidth={(isHighlighted ? 3 : isSelected || hasErrors ? 2 : 1) / zoom}
+            hitStrokeWidth={isTouchDevice() ? TOUCH_HIT_PADDING / zoom : 0}
             onClick={(e) => handleZoneClick(zone, e)}
             onTap={(e) => handleZoneClick(zone, e)}
             listening={isDesigner}

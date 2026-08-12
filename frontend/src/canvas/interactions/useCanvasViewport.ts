@@ -6,6 +6,7 @@ import { useCanvasStore, clampZoom } from '@/stores/canvasStore';
  * Provides handlers for:
  * - Ctrl+scroll wheel zoom (centered on cursor)
  * - Middle-click or Space+left-click pan
+ * - Touch pinch-zoom and two-finger pan
  * - Fit-to-viewport calculation
  */
 export function useCanvasViewport() {
@@ -17,6 +18,10 @@ export function useCanvasViewport() {
   const isPanning = useRef(false);
   const lastPanPos = useRef({ x: 0, y: 0 });
   const spaceHeld = useRef(false);
+
+  // Touch state refs
+  const lastTouchDistance = useRef<number | null>(null);
+  const lastTouchCenter = useRef<{ x: number; y: number } | null>(null);
 
   /**
    * Handle wheel event for zoom (ctrl+scroll) or pan (scroll without ctrl).
@@ -129,6 +134,82 @@ export function useCanvasViewport() {
     [resetViewport, setZoom, pan],
   );
 
+  /**
+   * Handle touch start for pinch-zoom and two-finger pan.
+   */
+  const handleTouchStart = useCallback(
+    (e: { evt: TouchEvent }) => {
+      const evt = e.evt;
+      if (evt.touches.length === 2) {
+        evt.preventDefault();
+        const t1 = evt.touches[0];
+        const t2 = evt.touches[1];
+        const dx = t2.clientX - t1.clientX;
+        const dy = t2.clientY - t1.clientY;
+        lastTouchDistance.current = Math.sqrt(dx * dx + dy * dy);
+        lastTouchCenter.current = {
+          x: (t1.clientX + t2.clientX) / 2,
+          y: (t1.clientY + t2.clientY) / 2,
+        };
+      }
+    },
+    [],
+  );
+
+  /**
+   * Handle touch move for pinch-zoom and two-finger pan.
+   */
+  const handleTouchMove = useCallback(
+    (e: { evt: TouchEvent }) => {
+      const evt = e.evt;
+      if (evt.touches.length === 2) {
+        evt.preventDefault();
+        const t1 = evt.touches[0];
+        const t2 = evt.touches[1];
+        const dx = t2.clientX - t1.clientX;
+        const dy = t2.clientY - t1.clientY;
+        const newDistance = Math.sqrt(dx * dx + dy * dy);
+        const newCenter = {
+          x: (t1.clientX + t2.clientX) / 2,
+          y: (t1.clientY + t2.clientY) / 2,
+        };
+
+        // Pinch-zoom
+        if (lastTouchDistance.current !== null) {
+          const scale = newDistance / lastTouchDistance.current;
+          const currentViewport = useCanvasStore.getState().viewport;
+          const newZoom = clampZoom(currentViewport.zoom * scale);
+          setZoom(newZoom);
+        }
+
+        // Two-finger pan
+        if (lastTouchCenter.current !== null) {
+          const panDx = newCenter.x - lastTouchCenter.current.x;
+          const panDy = newCenter.y - lastTouchCenter.current.y;
+          pan(panDx, panDy);
+        }
+
+        lastTouchDistance.current = newDistance;
+        lastTouchCenter.current = newCenter;
+      }
+    },
+    [setZoom, pan],
+  );
+
+  /**
+   * Handle touch end to reset pinch/pan state.
+   */
+  const handleTouchEnd = useCallback(
+    (e: { evt: TouchEvent }) => {
+      const evt = e.evt;
+      if (evt.touches.length < 2) {
+        lastTouchDistance.current = null;
+        lastTouchCenter.current = null;
+      }
+    },
+    [],
+  );
+
   return {
     viewport,
     handleWheel,
@@ -137,6 +218,9 @@ export function useCanvasViewport() {
     handleMouseUp,
     handleKeyDown,
     handleKeyUp,
+    handleTouchStart,
+    handleTouchMove,
+    handleTouchEnd,
     fitToViewport,
     isPanning,
     spaceHeld,

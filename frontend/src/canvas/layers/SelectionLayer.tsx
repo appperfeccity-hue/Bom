@@ -18,6 +18,17 @@ interface SelectionLayerProps {
 }
 
 const HANDLE_SIZE = 8;
+const TOUCH_HANDLE_SIZE = 16;
+
+/** Detect if user has a coarse pointer (touch device). */
+function isTouchDevice(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    return window.matchMedia('(pointer: coarse)').matches;
+  } catch {
+    return false;
+  }
+}
 
 interface HandlePosition {
   handle: ZoneResizeHandle;
@@ -48,7 +59,8 @@ export function SelectionLayer({ wallHeight }: SelectionLayerProps) {
 
   const selectedZones = zones.filter((z) => selectedZoneIds.includes(z.id));
 
-  const handleSizeScaled = HANDLE_SIZE / zoom;
+  const effectiveHandleSize = isTouchDevice() ? TOUCH_HANDLE_SIZE : HANDLE_SIZE;
+  const handleSizeScaled = effectiveHandleSize / zoom;
   const halfHandle = handleSizeScaled / 2;
 
   // For single selection, show resize handles on the selected zone

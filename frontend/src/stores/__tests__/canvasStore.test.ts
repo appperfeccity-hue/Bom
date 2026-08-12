@@ -20,6 +20,7 @@ describe('canvasStore', () => {
         [CanvasLayer.TRIMS]: true,
         [CanvasLayer.MEASUREMENTS]: true,
         [CanvasLayer.ZONE_DIMENSIONS]: true,
+        [CanvasLayer.SNAP_GUIDES]: true,
         [CanvasLayer.SELECTION]: true,
         [CanvasLayer.GRID_OVERLAY]: true,
       },

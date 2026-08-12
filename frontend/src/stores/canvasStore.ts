@@ -13,6 +13,11 @@ import {
 } from '@/types/canvas';
 import { constrainToWall, hasOverlap } from '@/canvas/utils/zoneConstraints';
 
+export interface SnapLines {
+  vertical: number[];
+  horizontal: number[];
+}
+
 export interface CanvasState {
   mode: CanvasMode;
   viewport: ViewportState;
@@ -24,6 +29,7 @@ export interface CanvasState {
   clipboard: TemplateZone[] | null;
   highlightedZoneIds: string[];
   highlightedBomLineIds: string[];
+  activeSnapLines: SnapLines;
 }
 
 export interface CanvasActions {
@@ -56,6 +62,8 @@ export interface CanvasActions {
   ) => TemplateZone[];
   setHighlightedZoneIds: (ids: string[]) => void;
   setHighlightedBomLineIds: (ids: string[]) => void;
+  setActiveSnapLines: (lines: SnapLines) => void;
+  clearActiveSnapLines: () => void;
 }
 
 export type CanvasStore = CanvasState & CanvasActions;
@@ -83,6 +91,7 @@ function defaultLayerVisibility(): LayerVisibility {
     [CanvasLayer.TRIMS]: true,
     [CanvasLayer.MEASUREMENTS]: true,
     [CanvasLayer.ZONE_DIMENSIONS]: true,
+    [CanvasLayer.SNAP_GUIDES]: true,
     [CanvasLayer.SELECTION]: true,
     [CanvasLayer.GRID_OVERLAY]: true,
   };
@@ -111,6 +120,7 @@ const initialState: CanvasState = {
   clipboard: null,
   highlightedZoneIds: [],
   highlightedBomLineIds: [],
+  activeSnapLines: { vertical: [], horizontal: [] },
 };
 
 /** Shared paste logic used by both pasteClipboard and duplicateSelection. */
@@ -338,4 +348,8 @@ export const useCanvasStore = create<CanvasStore>((set) => ({
   setHighlightedZoneIds: (ids: string[]) => set({ highlightedZoneIds: ids }),
 
   setHighlightedBomLineIds: (ids: string[]) => set({ highlightedBomLineIds: ids }),
+
+  setActiveSnapLines: (lines: SnapLines) => set({ activeSnapLines: lines }),
+
+  clearActiveSnapLines: () => set({ activeSnapLines: { vertical: [], horizontal: [] } }),
 }));
