@@ -1,0 +1,41 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "Add CI/CD pipeline, environment configuration, production build optimizations, Docker support, and deployment documentation",
+  "status": "in_progress",
+  "steps": [
+    "Create frontend/.env.example with VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY documented with comments explaining each variable",
+    "Update frontend/vite.config.ts with production optimizations: manual chunk splitting (react vendor chunk, supabase chunk, konva/react-konva chunk), asset file name hashing pattern for cache busting",
+    "Create .github/workflows/ci.yml: trigger on push to main and pull_request; jobs for lint (eslint if config exists, skip gracefully otherwise), typecheck (tsc --noEmit), test (vitest --run), and build (vite build); use Node.js 22; cache node_modules with actions/cache or setup-node caching; upload build artifacts",
+    "Create .github/workflows/deploy.yml: trigger on push to main after CI passes (workflow_run or needs); build frontend for production; deploy to GitHub Pages using actions/deploy-pages and actions/upload-pages-artifact",
+    "Create frontend/Dockerfile: multi-stage build with node:22-alpine for build stage, nginx:alpine for serve stage; copy dist/ to nginx html; include nginx config for SPA routing (fallback to index.html)",
+    "Create frontend/nginx.conf for the Docker container: gzip, cache-control headers for hashed assets, SPA fallback",
+    "Create docker-compose.yml at repo root for local development: frontend service building from frontend/Dockerfile, port mapping 8080:80, env_file pointing to frontend/.env",
+    "Create Makefile at repo root with targets: install, dev, build, test, typecheck, lint, docker-build, docker-run, clean",
+    "Update README.md: add sections for Environment Setup (env vars), Local Development (make targets), CI/CD (workflow descriptions), Docker (build and run commands), and Deployment (GitHub Pages)"
+  ],
+  "acceptance_criteria": [
+    "frontend/.env.example exists with documented VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY",
+    "frontend/vite.config.ts has manual chunks and output config for production",
+    ".github/workflows/ci.yml exists and is valid YAML with lint, typecheck, test, build jobs",
+    ".github/workflows/deploy.yml exists and is valid YAML for GitHub Pages deployment",
+    "frontend/Dockerfile builds successfully: docker build -t bom-frontend ./frontend",
+    "frontend/nginx.conf provides SPA routing support",
+    "docker-compose.yml at root references the frontend Dockerfile",
+    "Makefile at root provides install, dev, build, test, typecheck, lint, docker-build, docker-run, clean targets",
+    "README.md includes deployment, CI/CD, Docker, and environment setup sections",
+    "Existing 320 tests still pass after vite.config.ts changes",
+    "tsc --noEmit still passes after changes",
+    "npm run build still succeeds with the new vite config"
+  ],
+  "verification": [
+    "cd frontend && npx tsc --noEmit",
+    "cd frontend && npm run test -- --run",
+    "cd frontend && npm run build",
+    "docker build -t bom-frontend ./frontend",
+    "cat .github/workflows/ci.yml | python3 -c 'import sys,yaml; yaml.safe_load(sys.stdin.read()); print(\"Valid YAML\")'",
+    "cat .github/workflows/deploy.yml | python3 -c 'import sys,yaml; yaml.safe_load(sys.stdin.read()); print(\"Valid YAML\")'"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

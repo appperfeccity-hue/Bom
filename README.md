@@ -93,6 +93,89 @@ The database is deployed on Supabase project `fbiemsbykrmrbqcsobvh` (ap-northeas
 - Waste factor selected by Designer; Consultant cannot view/modify
 - No manual BOM override
 
+## Environment Setup
+
+The frontend requires the following environment variables. Copy the example file and fill in your values:
+
+```bash
+cp frontend/.env.example frontend/.env
+```
+
+| Variable | Description |
+|----------|-------------|
+| `VITE_SUPABASE_URL` | Your Supabase project URL (found in Project Settings > API) |
+| `VITE_SUPABASE_ANON_KEY` | Public anonymous key for the Supabase project |
+
+These variables are embedded at build time via Vite's `import.meta.env` mechanism.
+
+## Local Development
+
+A Makefile at the repository root provides common development targets:
+
+```bash
+make install     # Install frontend dependencies
+make dev         # Start Vite dev server
+make build       # Production build (typecheck + vite build)
+make test        # Run vitest in single-run mode
+make typecheck   # Run tsc --noEmit
+make lint        # Run ESLint
+make clean       # Remove dist/ and node_modules/
+```
+
+## CI/CD
+
+GitHub Actions workflows are located in `.github/workflows/`:
+
+### CI (`ci.yml`)
+
+Triggered on push to `main` and on pull requests targeting `main`. Runs the following jobs:
+
+1. **Lint** - Runs ESLint if a config file is present, skips gracefully otherwise
+2. **Type Check** - Runs `tsc --noEmit` for full type validation
+3. **Test** - Runs the full vitest suite in single-run mode
+4. **Build** - Produces a production build (depends on lint, typecheck, and test passing); uploads artifacts
+
+### Deploy (`deploy.yml`)
+
+Triggered via `workflow_run` after the CI workflow completes successfully on `main`. Builds the frontend and deploys to GitHub Pages using the official `actions/deploy-pages` action.
+
+## Docker
+
+The frontend includes a multi-stage Dockerfile (build with Node.js 22, serve with nginx):
+
+```bash
+# Build the Docker image
+make docker-build
+# or: docker build -t bom-frontend ./frontend
+
+# Run the container
+make docker-run
+# or: docker run --rm -p 8080:80 --env-file ./frontend/.env bom-frontend
+```
+
+A `docker-compose.yml` is also available for local development:
+
+```bash
+docker compose up
+```
+
+The app will be available at `http://localhost:8080`.
+
+## Deployment
+
+### GitHub Pages
+
+The application is automatically deployed to GitHub Pages when changes are merged to `main` and CI passes. Configure the following repository variables in GitHub Settings > Secrets and variables > Actions > Variables:
+
+- `VITE_SUPABASE_URL` - The Supabase project URL
+- `VITE_SUPABASE_ANON_KEY` - The Supabase anonymous key
+
+Ensure GitHub Pages is enabled in your repository settings with "Source" set to "GitHub Actions".
+
+### Self-Hosted (Docker)
+
+For self-hosted deployments, build the Docker image and deploy to your container platform of choice. The nginx configuration handles SPA routing (all non-file requests fall back to `index.html`) and includes gzip compression and cache-control headers for hashed assets.
+
 ## Documentation
 
 - [Deployment Runbook](docs/deployment_runbook.md)
