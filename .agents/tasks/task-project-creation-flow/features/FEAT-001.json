@@ -1,0 +1,35 @@
+{
+  "id": "FEAT-001",
+  "type": "feat",
+  "description": "Project creation Zustand store, snapshot builder utility, and Design Library / Template Gallery components with full creation wizard flow integrated into App.tsx",
+  "status": "completed",
+  "steps": [
+    "Step 1 - Create the project creation store at src/stores/projectCreationStore.ts following the pattern in src/stores/publishStore.ts. The store manages the multi-step creation wizard. State: step (enum: BROWSE_TEMPLATES, PROJECT_DETAILS, CREATING, CREATED, ERROR), availableTemplates (Template[]), selectedTemplate (Template | null), customerReference (string), siteReference (string), createdProjectId (string | null), isLoading (boolean), error (string | null). Actions: fetchAvailableTemplates() - queries 'template' table where status='ACTIVE' (design library), selectTemplate(template), setCustomerReference(val), setSiteReference(val), createProject() - builds snapshot, calls supabase.rpc('create_project', {...}), navigates to project, reset(). Export a CreationStep enum and the store types (State/Actions/Store pattern).",
+    "Step 2 - Create the snapshot builder utility at src/lib/snapshotBuilder.ts. This module exports buildSnapshotData(template, zones, lighting, furniture, trims, zoneSku) that assembles the complete frozen JSONB snapshot per Section 70 of the spec. It should include: wall_geometry, base_dimensions, zones with their frozen primary_sku data, alternatives (empty initially), lighting, furniture, trims, hidden_components (empty array), calculation_parameters (empty object). Also export computeSnapshotHash(snapshotData) that produces a SHA-256 hex digest of the canonical JSON (keys sorted). Use the Web Crypto API (crypto.subtle.digest) for hashing.",
+    "Step 3 - Create the TemplateCard component at src/components/ProjectCreation/TemplateCard.tsx. It displays a template card with: name, description, wall_geometry badge, base dimensions (width x height mm), status badge. Include a 'Select' button. Use inline styles consistent with existing components. Add data-testid='template-card' and data-testid='template-select-btn'.",
+    "Step 4 - Create the DesignLibrary (template gallery) component at src/components/ProjectCreation/DesignLibrary.tsx. It renders a grid of TemplateCard components from projectCreationStore.availableTemplates. Calls fetchAvailableTemplates() on mount via useEffect. Shows loading spinner when isLoading, error message on error, 'No templates available' when empty. Add data-testid='design-library'.",
+    "Step 5 - Create the ProjectDetailsForm component at src/components/ProjectCreation/ProjectDetailsForm.tsx. It has two input fields: customerReference and siteReference (both required). A 'Create Project' submit button and a 'Back' button to go back to template selection. Inputs update the store via setCustomerReference/setSiteReference. Submit calls createProject(). Show loading state during creation. Add data-testid='project-details-form', data-testid='customer-ref-input', data-testid='site-ref-input', data-testid='create-project-btn'.",
+    "Step 6 - Create the ProjectCreationWizard container component at src/components/ProjectCreation/ProjectCreationWizard.tsx. It reads currentStep from the store and renders: BROWSE_TEMPLATES -> DesignLibrary, PROJECT_DETAILS -> ProjectDetailsForm, CREATING -> loading spinner with 'Creating project...', CREATED -> success message then auto-navigates (calls projectStore.loadProject with createdProjectId and sets canvas mode to CONSULTANT), ERROR -> error message with retry button. Wrap in a modal/overlay similar to the PublishWorkflow component. Add data-testid='project-creation-wizard'.",
+    "Step 7 - Create barrel export at src/components/ProjectCreation/index.ts exporting ProjectCreationWizard, DesignLibrary, TemplateCard, ProjectDetailsForm.",
+    "Step 8 - Wire the createProject() action in the store: 1) Load full template data (zones, lighting, furniture, trims, zone SKUs) from Supabase, 2) Call buildSnapshotData() to assemble the frozen blob, 3) Call computeSnapshotHash(), 4) Get current user id from useAuthStore, 5) Generate idempotency key as `${userId}-${templateId}-${Date.now()}`, 6) Call supabase.rpc('create_project', { p_template_id, p_user_id, p_idempotency_key, p_snapshot_data, p_snapshot_hash, p_rule_set_id: null }), 7) On success store the returned project_id, set step to CREATED. On error set step to ERROR with message.",
+    "Step 9 - Integrate into App.tsx: Import useProjectCreationStore and ProjectCreationWizard. Add a 'New Project' button in the header that is only visible when authStore.role === 'CONSULTANT'. The button sets the store step to BROWSE_TEMPLATES. Render <ProjectCreationWizard /> when step !== IDLE (add an IDLE step to the enum as the default/hidden state). Add data-testid='new-project-btn'.",
+    "Step 10 - Update src/stores/index.ts to export the new store and its types (useProjectCreationStore, CreationStep, ProjectCreationState, ProjectCreationActions, ProjectCreationStore)."
+  ],
+  "acceptance_criteria": [
+    "A new Zustand store at src/stores/projectCreationStore.ts manages the wizard flow state",
+    "A snapshot builder utility at src/lib/snapshotBuilder.ts assembles frozen snapshot JSON and computes SHA-256 hash",
+    "TemplateCard, DesignLibrary, ProjectDetailsForm, and ProjectCreationWizard components exist under src/components/ProjectCreation/",
+    "The 'New Project' button appears in App.tsx header only for CONSULTANT role users",
+    "ProjectCreationWizard renders as an overlay when activated, showing the multi-step flow",
+    "createProject() action calls supabase.rpc('create_project') with proper parameters including snapshot data and hash",
+    "After successful creation, the project is loaded via projectStore.loadProject and canvas mode switches to CONSULTANT",
+    "TypeScript compiles without errors (tsc --noEmit passes)",
+    "All existing 175 tests continue to pass"
+  ],
+  "verification": [
+    "cd /projects/sandbox/Bom/frontend && unset NODE_OPTIONS && npx tsc --noEmit",
+    "cd /projects/sandbox/Bom/frontend && unset NODE_OPTIONS && npx vitest run"
+  ],
+  "blocked_reason": null,
+  "findings": "All 175 existing tests pass. TypeScript compiles cleanly. The store uses supabase.rpc for create_project and imports supabase directly from @/lib/supabase. The computeSnapshotHash uses crypto.subtle.digest (Web Crypto API). The wizard overlay follows the same pattern as PublishWorkflow (fixed right panel at z-index 1001). The New Project button is conditionally rendered based on authStore.role === 'CONSULTANT'."
+}

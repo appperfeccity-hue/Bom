@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "feat",
   "description": "Create publishStore (Zustand store) managing the 4-step template publishing workflow: Validate -> Generate Master BOM -> Approve Master BOM -> Publish. Includes client-side validation logic, RPC calls to Supabase for BOM generation and approval, and error handling for DB trigger rejections.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "Create src/stores/publishStore.ts as a new Zustand store following the State+Actions pattern from bomStore.ts. Define PublishState with: currentStep (enum: IDLE, VALIDATING, VALIDATION_RESULTS, GENERATING_BOM, BOM_GENERATED, APPROVING_BOM, BOM_APPROVED, PUBLISHING, PUBLISHED, ERROR), validationResults (array of {gate: string, passed: boolean, message: string}), generatedBom (MasterBom | null), generatedBomLines (MasterBomLine[]), isLoading, error.",
     "Implement runValidation(templateId: string) action that performs client-side pre-checks by reading projectStore state: (1) All zones have a primary SKU assigned (check zoneSku map keys against zones array), (2) All assigned SKUs are ACTIVE with catalogue READY (query via fromTable), (3) No zone overlaps (use hasOverlap from canvas/utils/zoneConstraints), (4) Zone constraints satisfied (use isWithinWallBoundary, isValidZoneDimensions from zoneConstraints.ts, checking against currentTemplate base_width_mm/base_height_mm), (5) Metadata complete (template name non-empty, description exists). Return validation results array and set currentStep to VALIDATION_RESULTS.",
@@ -27,5 +27,5 @@
     "Run: cd /projects/sandbox/Bom/frontend && unset NODE_OPTIONS && npx vitest run"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "TypeScript compiles cleanly (tsc --noEmit). All 145 existing tests continue to pass. Store follows the State+Actions+Store type pattern from bomStore.ts. The canPublish selector is exported as a standalone function rather than a method on the store, matching the pattern used for selectors in Zustand."
 }

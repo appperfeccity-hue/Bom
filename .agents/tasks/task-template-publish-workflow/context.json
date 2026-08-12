@@ -1,0 +1,31 @@
+{
+  "project_type": "React 18 + TypeScript SPA with Konva canvas, Zustand state management, Supabase backend",
+  "language": "TypeScript (strict)",
+  "build_system": "Vite with tsc for type-checking",
+  "test_framework": "Vitest with @testing-library/react, jsdom environment, setup in src/test-setup.ts",
+  "build_command": "cd /projects/sandbox/Bom/frontend && unset NODE_OPTIONS && npx tsc -b && npx vite build",
+  "test_command": "cd /projects/sandbox/Bom/frontend && unset NODE_OPTIONS && npx vitest run",
+  "verification_instructions": "1. Run typecheck: cd /projects/sandbox/Bom/frontend && unset NODE_OPTIONS && npx tsc --noEmit. 2. Run tests: cd /projects/sandbox/Bom/frontend && unset NODE_OPTIONS && npx vitest run. 3. Run build: cd /projects/sandbox/Bom/frontend && unset NODE_OPTIONS && npx tsc -b && npx vite build",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "cd /projects/sandbox/Bom/frontend && npm install (already done, node_modules exists)",
+  "environment_constraints": "COMMON_DEPENDENCIES network mode. Must unset NODE_OPTIONS before running any node/npm commands due to proxy-bootstrap module issue. No Docker needed. Supabase client configured but env vars not set (tests mock supabase).",
+  "contribution_requirements": "All tests must pass. TypeScript strict mode. Use existing patterns for stores, components, and tests.",
+  "key_patterns": "Zustand stores in src/stores/ with State+Actions pattern exported as types. Components use data-testid attributes for testing. Supabase calls via fromTable() helper from @/lib/supabase. Tests mock @/lib/supabase with vi.mock. Path alias @/ maps to src/. CanvasMode.DESIGNER used for designer-only features. BomPanel pattern (side panel overlay) is a good model for the publish workflow panel.",
+  "relevant_files": [
+    "src/stores/bomStore.ts",
+    "src/stores/projectStore.ts",
+    "src/stores/authStore.ts",
+    "src/stores/canvasStore.ts",
+    "src/stores/index.ts",
+    "src/stores/__tests__/bomStore.test.ts",
+    "src/components/Toolbar.tsx",
+    "src/components/BomPanel/BomPanel.tsx",
+    "src/components/BomPanel/__tests__/BomPanel.test.tsx",
+    "src/types/database.ts",
+    "src/types/canvas.ts",
+    "src/lib/supabase.ts",
+    "src/canvas/utils/zoneConstraints.ts",
+    "src/App.tsx"
+  ],
+  "directory_structure": "frontend/src/stores/ - Zustand stores; frontend/src/components/ - UI components (some with __tests__/ subdirs); frontend/src/canvas/ - Konva canvas code with utils/; frontend/src/types/ - TypeScript interfaces and enums; frontend/src/lib/ - utilities like supabase client; frontend/src/hooks/ - empty hooks directory"
+}

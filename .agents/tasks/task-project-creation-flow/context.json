@@ -1,0 +1,30 @@
+{
+  "project_type": "React 18 SPA with Supabase backend (perfecity schema)",
+  "language": "TypeScript (strict mode)",
+  "build_system": "Vite + tsc, path alias @/ -> src/",
+  "test_framework": "Vitest with @testing-library/react, jsdom, setup in src/test-setup.ts. Store tests mock @/lib/supabase. Component tests use render/screen/fireEvent from @testing-library/react.",
+  "build_command": "cd /projects/sandbox/Bom/frontend && unset NODE_OPTIONS && npx tsc --noEmit && npx vite build",
+  "test_command": "cd /projects/sandbox/Bom/frontend && unset NODE_OPTIONS && npx vitest run",
+  "verification_instructions": "1. Run typecheck: tsc --noEmit. 2. Run tests: vitest run. 3. All 175+ tests should pass. New tests must also pass.",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "cd /projects/sandbox/Bom/frontend && npm install (dependencies already installed)",
+  "environment_constraints": "COMMON_DEPENDENCIES network mode. NODE_OPTIONS must be unset before running vitest/tsc. No Docker needed. Supabase client uses env vars (not available at test time, mocked in tests).",
+  "contribution_requirements": "TypeScript strict mode, no unused locals/params. Tests mock @/lib/supabase module. Components follow existing patterns: barrel exports via index.ts, __tests__/ subdirectories.",
+  "key_patterns": "Zustand stores with separate State/Actions/Store types. fromTable() helper for Supabase queries. supabase.rpc() for RPC calls. Components use inline styles (no CSS framework). Store tests use vi.mock('@/lib/supabase') at top level. Component multi-file dirs use index.ts barrel. data-testid attributes for test selectors.",
+  "relevant_files": [
+    "src/stores/projectStore.ts",
+    "src/stores/authStore.ts",
+    "src/stores/publishStore.ts",
+    "src/stores/index.ts",
+    "src/types/database.ts",
+    "src/lib/supabase.ts",
+    "src/App.tsx",
+    "src/components/Toolbar.tsx",
+    "src/components/SkuBrowser/index.ts",
+    "src/components/BomPanel/index.ts",
+    "src/stores/__tests__/publishStore.test.ts",
+    "src/stores/__tests__/skuStore.test.ts",
+    "src/components/BomPanel/__tests__/BomPanel.test.tsx"
+  ],
+  "directory_structure": "frontend/src/ contains: App.tsx (root), canvas/ (Konva layers), components/ (UI panels), hooks/ (empty), lib/ (supabase, autosave, coordinates), stores/ (Zustand: auth, project, canvas, sku, bom, publish), types/ (database.ts, canvas.ts, index.ts)"
+}

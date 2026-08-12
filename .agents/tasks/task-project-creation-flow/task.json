@@ -1,0 +1,14 @@
+{
+  "task_id": "task-project-creation-flow",
+  "task_description": "Implement the project creation flow: Design Library template gallery for consultants, multi-step creation wizard (browse templates, enter details, create project), snapshot builder utility, and integration with existing projectStore for post-creation navigation. Includes Zustand store, components, and comprehensive tests.",
+  "status": "completed",
+  "feature_order": ["FEAT-001", "FEAT-002"],
+  "blocked_reason": null,
+  "verification": {
+    "build": "pass",
+    "tests": "pass",
+    "test_quality": "pass",
+    "docker_build": "skipped",
+    "summary": "tsc --noEmit passes cleanly. All 228 tests pass (175 existing + 53 new). Review fixes applied: hash uses recursive sort-keys, idempotency key is stable across retries, queries run in parallel, post-creation failures are distinguished from creation failures, customer/site references stored in snapshot_data.project_metadata."
+  }
+}

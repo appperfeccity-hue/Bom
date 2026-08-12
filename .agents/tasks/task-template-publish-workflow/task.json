@@ -1,0 +1,14 @@
+{
+  "task_id": "task-template-publish-workflow",
+  "task_description": "Implement the Template Publishing Workflow with 4-step wizard: Validate template -> Generate Master BOM -> Approve Master BOM -> Publish (set ACTIVE). Includes publishStore, UI components (wizard panel, validation results, approval step, publish confirmation), Toolbar integration, and comprehensive tests.",
+  "status": "completed",
+  "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003"],
+  "blocked_reason": null,
+  "verification": {
+    "build": "pass",
+    "tests": "pass",
+    "test_quality": "pass",
+    "docker_build": "skipped",
+    "summary": "172 tests pass (145 existing + 27 new). TypeScript strict compilation clean. Vite production build succeeds. Tests exercise real store logic, validation gates, Supabase interactions, and UI rendering."
+  }
+}

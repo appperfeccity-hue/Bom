@@ -1,0 +1,35 @@
+{
+  "project_type": "React 18 + TypeScript (strict) + Vite SPA with Supabase backend",
+  "language": "TypeScript",
+  "build_system": "Vite with tsc for type checking. Path alias @/ -> src/",
+  "test_framework": "Vitest with jsdom environment, @testing-library/react, setupFiles: ./src/test-setup.ts",
+  "build_command": "cd /projects/sandbox/Bom/frontend && unset NODE_OPTIONS && npx tsc --noEmit",
+  "test_command": "cd /projects/sandbox/Bom/frontend && unset NODE_OPTIONS && npx vitest run",
+  "verification_instructions": "1. Run typecheck: npx tsc --noEmit. 2. Run tests: npx vitest run. Both must pass with zero errors.",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "node_modules already installed. Use 'unset NODE_OPTIONS' before running any node commands.",
+  "environment_constraints": "COMMON_DEPENDENCIES network. Must unset NODE_OPTIONS before running node/vitest/tsc due to sandbox proxy bootstrap issue. No Supabase connection at runtime (tests mock supabase).",
+  "contribution_requirements": "TypeScript strict mode (noUnusedLocals, noUnusedParameters). All new stores/components need tests. Follow existing patterns for supabase mocking.",
+  "key_patterns": {
+    "stores": "Zustand create<Store>((set, get) => ({...})) pattern. Separate State and Actions interfaces. Export as useXStore hook.",
+    "supabase_access": "Use fromTable('table_name') helper from @/lib/supabase. Mock with vi.mock('@/lib/supabase').",
+    "types": "Database interfaces in src/types/database.ts. Enums with string values. camelCase interface fields matching snake_case DB columns.",
+    "components": "Functional components with inline styles. data-testid attributes for testing. Conditional rendering based on canvas mode.",
+    "testing": "vi.mock for supabase, useStore.setState for state setup, @testing-library/react for component tests, direct store method calls for store tests."
+  },
+  "relevant_files": [
+    "frontend/src/types/database.ts",
+    "frontend/src/stores/skuStore.ts",
+    "frontend/src/stores/authStore.ts",
+    "frontend/src/stores/canvasStore.ts",
+    "frontend/src/stores/projectStore.ts",
+    "frontend/src/stores/__tests__/skuStore.test.ts",
+    "frontend/src/components/SkuBrowser/SkuBrowser.tsx",
+    "frontend/src/components/SkuBrowser/__tests__/SkuBrowser.test.tsx",
+    "frontend/src/components/Toolbar.tsx",
+    "frontend/src/lib/supabase.ts",
+    "frontend/src/App.tsx",
+    "baseline/v1.1.5_baseline.sql"
+  ],
+  "directory_structure": "frontend/src/: App.tsx, main.tsx, test-setup.ts. Subdirs: canvas/, components/ (Toolbar, SkuBrowser/, ZonePropertiesPanel, MeasurementPanel), hooks/, lib/ (supabase.ts), stores/ (authStore, canvasStore, projectStore, skuStore), types/ (database.ts, canvas.ts, index.ts)"
+}
