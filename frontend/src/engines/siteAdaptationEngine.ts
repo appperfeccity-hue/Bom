@@ -96,6 +96,35 @@ function validateInput(input: SiteAdaptationInput): void {
       );
     }
   }
+
+  // Validate zone_id uniqueness
+  const zoneIds = input.zones.map((z) => z.zone_id);
+  const uniqueIds = new Set(zoneIds);
+  if (uniqueIds.size !== zoneIds.length) {
+    const duplicates = zoneIds.filter((id, idx) => zoneIds.indexOf(id) !== idx);
+    throw new EngineError(
+      `Duplicate zone_id(s) found: ${[...new Set(duplicates)].join(', ')}`,
+    );
+  }
+
+  // Validate that sum of zone widths matches template_wall_width within 1mm tolerance
+  const zoneWidthSum = input.zones.reduce((sum, z) => sum + z.width_mm, 0);
+  if (Math.abs(zoneWidthSum - input.template_wall_width) > 1) {
+    throw new EngineError(
+      `Sum of zone widths (${zoneWidthSum}mm) does not match template_wall_width (${input.template_wall_width}mm). Difference: ${Math.abs(zoneWidthSum - input.template_wall_width)}mm exceeds 1mm tolerance`,
+    );
+  }
+
+  // Validate that wall height fields are either both present or both absent
+  const hasTemplateHeight =
+    input.template_wall_height !== undefined && input.template_wall_height !== null;
+  const hasActualHeight =
+    input.actual_wall_height !== undefined && input.actual_wall_height !== null;
+  if (hasTemplateHeight !== hasActualHeight) {
+    throw new EngineError(
+      'Both template_wall_height and actual_wall_height must be provided for height adaptation, or neither',
+    );
+  }
 }
 
 /**
@@ -103,6 +132,12 @@ function validateInput(input: SiteAdaptationInput): void {
  * ratio = actual_wall_width / template_wall_width
  * Scale each zone by ratio using Math.round (ROUND_HALF_UP).
  * Distribute remainder by zone_id ASC order.
+ *
+ * NOTE: Per spec (section 77), PROPORTIONAL strategy scales ALL zones by the
+ * actual/template ratio regardless of width_strategy. LOCKED zones are NOT
+ * excluded from proportional scaling - this is intentional and differs from
+ * EQUAL_DISTRIBUTION which does honor LOCKED. The rationale is that proportional
+ * scaling maintains relative zone proportions across the entire wall.
  */
 function applyProportional(
   zones: SiteAdaptationZoneInput[],
@@ -319,7 +354,8 @@ export function adaptZonesToSite(input: SiteAdaptationInput): SiteAdaptationOutp
   // Apply height adaptation
   const adaptedHeights = new Map<number, number>();
 
-  if (input.template_wall_height && input.actual_wall_height) {
+  if (input.template_wall_height !== undefined && input.template_wall_height !== null &&
+      input.actual_wall_height !== undefined && input.actual_wall_height !== null) {
     const heightRatio = input.actual_wall_height / input.template_wall_height;
 
     for (const zone of zones) {

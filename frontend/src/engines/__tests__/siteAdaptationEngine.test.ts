@@ -166,8 +166,8 @@ describe('siteAdaptationEngine', () => {
 
     it('keeps all zones unchanged when delta is zero', () => {
       const input: SiteAdaptationInput = {
-        template_wall_width: 3000,
-        actual_wall_width: 3000,
+        template_wall_width: 2000,
+        actual_wall_width: 2000,
         zones: [
           { zone_id: 1, width_mm: 1000, width_strategy: 'RESIZABLE' },
           { zone_id: 2, width_mm: 1000, width_strategy: 'RESIZABLE' },
@@ -232,8 +232,8 @@ describe('siteAdaptationEngine', () => {
 
     it('distributes remainder by zone_id ASC among resizable zones', () => {
       const input: SiteAdaptationInput = {
-        template_wall_width: 3000,
-        actual_wall_width: 3200,
+        template_wall_width: 3500,
+        actual_wall_width: 3700,
         zones: [
           { zone_id: 1, width_mm: 1000, width_strategy: 'LOCKED' },
           { zone_id: 2, width_mm: 1000, width_strategy: 'RESIZABLE' },
@@ -783,6 +783,130 @@ describe('siteAdaptationEngine', () => {
         0,
       );
       expect(sum).toBe(5003);
+    });
+  });
+
+  describe('Review fixes validation', () => {
+    it('throws EngineError for duplicate zone_ids', () => {
+      const input: SiteAdaptationInput = {
+        template_wall_width: 3000,
+        actual_wall_width: 3200,
+        zones: [
+          { zone_id: 1, width_mm: 1000, width_strategy: 'RESIZABLE' },
+          { zone_id: 1, width_mm: 1000, width_strategy: 'RESIZABLE' },
+          { zone_id: 2, width_mm: 1000, width_strategy: 'RESIZABLE' },
+        ],
+        strategy: 'PROPORTIONAL',
+      };
+
+      expect(() => adaptZonesToSite(input)).toThrow(EngineError);
+      expect(() => adaptZonesToSite(input)).toThrow('Duplicate zone_id');
+    });
+
+    it('throws EngineError when only template_wall_height is provided', () => {
+      const input: SiteAdaptationInput = {
+        template_wall_width: 3000,
+        actual_wall_width: 3000,
+        template_wall_height: 2400,
+        zones: [
+          { zone_id: 1, width_mm: 1500, width_strategy: 'RESIZABLE' },
+          { zone_id: 2, width_mm: 1500, width_strategy: 'RESIZABLE' },
+        ],
+        strategy: 'PROPORTIONAL',
+      };
+
+      expect(() => adaptZonesToSite(input)).toThrow(EngineError);
+      expect(() => adaptZonesToSite(input)).toThrow(
+        'Both template_wall_height and actual_wall_height must be provided',
+      );
+    });
+
+    it('throws EngineError when only actual_wall_height is provided', () => {
+      const input: SiteAdaptationInput = {
+        template_wall_width: 3000,
+        actual_wall_width: 3000,
+        actual_wall_height: 2600,
+        zones: [
+          { zone_id: 1, width_mm: 1500, width_strategy: 'RESIZABLE' },
+          { zone_id: 2, width_mm: 1500, width_strategy: 'RESIZABLE' },
+        ],
+        strategy: 'PROPORTIONAL',
+      };
+
+      expect(() => adaptZonesToSite(input)).toThrow(EngineError);
+      expect(() => adaptZonesToSite(input)).toThrow(
+        'Both template_wall_height and actual_wall_height must be provided',
+      );
+    });
+
+    it('throws EngineError when zone widths sum does not match template_wall_width', () => {
+      const input: SiteAdaptationInput = {
+        template_wall_width: 3000,
+        actual_wall_width: 3200,
+        zones: [
+          { zone_id: 1, width_mm: 1000, width_strategy: 'RESIZABLE' },
+          { zone_id: 2, width_mm: 1000, width_strategy: 'RESIZABLE' },
+          { zone_id: 3, width_mm: 500, width_strategy: 'RESIZABLE' },
+        ],
+        strategy: 'PROPORTIONAL',
+      };
+
+      // sum = 2500, template_wall_width = 3000, diff = 500 > 1mm
+      expect(() => adaptZonesToSite(input)).toThrow(EngineError);
+      expect(() => adaptZonesToSite(input)).toThrow(
+        'Sum of zone widths',
+      );
+    });
+
+    it('allows zone width sum within 1mm tolerance of template_wall_width', () => {
+      const input: SiteAdaptationInput = {
+        template_wall_width: 3000,
+        actual_wall_width: 3200,
+        zones: [
+          { zone_id: 1, width_mm: 1000, width_strategy: 'RESIZABLE' },
+          { zone_id: 2, width_mm: 1000, width_strategy: 'RESIZABLE' },
+          { zone_id: 3, width_mm: 999, width_strategy: 'RESIZABLE' },
+        ],
+        strategy: 'PROPORTIONAL',
+      };
+
+      // sum = 2999, template_wall_width = 3000, diff = 1 <= tolerance
+      const result = adaptZonesToSite(input);
+      expect(result.adapted_zones).toHaveLength(3);
+    });
+
+    it('height adaptation works correctly when wall heights are zero', () => {
+      const input: SiteAdaptationInput = {
+        template_wall_width: 3000,
+        actual_wall_width: 3000,
+        template_wall_height: 0,
+        actual_wall_height: 0,
+        zones: [
+          {
+            zone_id: 1,
+            width_mm: 1500,
+            width_strategy: 'RESIZABLE',
+            height_mm: 1000,
+            height_mode: 'FIXED',
+          },
+          {
+            zone_id: 2,
+            width_mm: 1500,
+            width_strategy: 'RESIZABLE',
+            height_mm: 1000,
+            height_mode: 'FIXED',
+          },
+        ],
+        strategy: 'PROPORTIONAL',
+      };
+
+      // With truthy check this would silently skip height adaptation
+      // With explicit null/undefined check, zero heights are treated as present
+      const result = adaptZonesToSite(input);
+      expect(result.adapted_zones).toEqual([
+        { zone_id: 1, adapted_width_mm: 1500, adapted_height_mm: 1000 },
+        { zone_id: 2, adapted_width_mm: 1500, adapted_height_mm: 1000 },
+      ]);
     });
   });
 });
