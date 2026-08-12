@@ -2,7 +2,7 @@
   "id": "FEAT-002",
   "type": "feat",
   "description": "P1-A: SKU visual render on zones (#16) and Remove SKU (#18). Render catalogue RENDER assets (PNG/JPEG) on zones via Konva Image with signed URL loading and fallback to sku_code text. Add removeSku action to projectStore with history push and permission check.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "1. Create frontend/src/canvas/layers/SkuPlacementLayer.tsx: A new layer controlled by CanvasLayer.SKU_PLACEMENT visibility. For each zone that has a zoneSku entry, render the SKU's render asset as a Konva Image scaled to fit the zone bounds. Use supabase.storage.from('catalogue-assets').createSignedUrl(fileRef, 3600) to get a time-limited signed URL. Cache loaded images in a React ref/Map keyed by file_reference to avoid re-fetching. On load failure or missing asset, fall back to rendering sku_code as Konva Text centered in the zone. Convert coordinates using wallHeight (screenY = wallHeight - zone.y_mm - zone.height_mm). Layer is read-only (listening={false}).",
     "2. To get the render asset file_reference for each zone's SKU, add a new derived state or selector. The skuStore already has thumbnailUrl in SkuWithCatalogue. For the canvas layer, create a utility hook frontend/src/canvas/utils/useSkuRenderUrls.ts that: takes the zoneSku Map, fetches the catalogue_asset.file_reference for RENDER type for each SKU (via fromTable query or from existing SkuWithCatalogue data), then calls supabase.storage.from('catalogue-assets').createSignedUrl() for each. Return a Map<zoneId, signedUrl>. Use useEffect + state to handle async loading. Cache results and refresh when zoneSku changes.",
@@ -26,5 +26,5 @@
     "cd /projects/sandbox/Bom/frontend && NODE_OPTIONS='' npx vitest --run"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All 769 tests pass (9 new added). Build succeeds. The SkuPlacementLayer mock pattern requires mocking useSkuRenderUrls separately in tests for controlled behavior. The react-konva mock needs Image component added. The fromTable mock in tests needs to support chained .in().eq().eq() for catalogue_asset queries. Used module-level mutable flag pattern for controlling mock behavior in different test cases (mockDeleteShouldFail)."
 }
