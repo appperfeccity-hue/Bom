@@ -6,6 +6,7 @@ import { CanvasMode } from '@/types/database';
 import { GridLayer } from './layers/GridLayer';
 import { WallOutlineLayer } from './layers/WallOutlineLayer';
 import { ZonesLayer } from './layers/ZonesLayer';
+import { SkuPlacementLayer } from './layers/SkuPlacementLayer';
 import { SelectionLayer } from './layers/SelectionLayer';
 import { MeasurementsLayer } from './layers/MeasurementsLayer';
 import { useCanvasViewport } from './interactions/useCanvasViewport';
@@ -185,6 +186,7 @@ export function CanvasContainer({ mode }: CanvasContainerProps) {
           segmentBWidth={measurements?.segment_b_width_mm ?? undefined}
         />
         <ZonesLayer wallHeight={wallHeight} />
+        <SkuPlacementLayer wallHeight={wallHeight} />
         <MeasurementsLayer wallWidth={wallWidth} wallHeight={wallHeight} />
         <SelectionLayer wallHeight={wallHeight} />
 

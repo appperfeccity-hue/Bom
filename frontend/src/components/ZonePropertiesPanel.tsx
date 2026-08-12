@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import { useCanvasStore } from '@/stores/canvasStore';
 import { useProjectStore } from '@/stores/projectStore';
 import { useSkuStore } from '@/stores/skuStore';
+import { useSkuRemove } from '@/canvas/interactions/useSkuRemove';
 import { ZoneWidthStrategy, ZoneHeightStrategy } from '@/types/database';
 import type { TemplateZone } from '@/types/database';
 import { clampDimensions, constrainToWall, hasOverlap } from '@/canvas/utils/zoneConstraints';
@@ -17,6 +18,7 @@ export function ZonePropertiesPanel() {
   const updateZone = useProjectStore((s) => s.updateZone);
   const currentTemplate = useProjectStore((s) => s.currentTemplate);
   const openBrowser = useSkuStore((s) => s.openBrowser);
+  const { removeSku } = useSkuRemove();
 
   const selectedZone = zones.find((z) => z.id === selection.selectedZoneId);
 
@@ -189,6 +191,15 @@ export function ZonePropertiesPanel() {
           >
             Assign SKU
           </button>
+          {sku && (
+            <button
+              onClick={() => removeSku(selectedZone.id)}
+              style={{ marginTop: '4px', marginLeft: '8px', fontSize: '12px', padding: '4px 8px', color: '#d32f2f' }}
+              data-testid="remove-sku-btn"
+            >
+              Remove SKU
+            </button>
+          )}
         </div>
       </div>
     </div>

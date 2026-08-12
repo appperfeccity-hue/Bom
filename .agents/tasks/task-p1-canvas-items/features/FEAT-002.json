@@ -1,0 +1,30 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "P1-A: SKU visual render on zones (#16) and Remove SKU (#18). Render catalogue RENDER assets (PNG/JPEG) on zones via Konva Image with signed URL loading and fallback to sku_code text. Add removeSku action to projectStore with history push and permission check.",
+  "status": "in_progress",
+  "steps": [
+    "1. Create frontend/src/canvas/layers/SkuPlacementLayer.tsx: A new layer controlled by CanvasLayer.SKU_PLACEMENT visibility. For each zone that has a zoneSku entry, render the SKU's render asset as a Konva Image scaled to fit the zone bounds. Use supabase.storage.from('catalogue-assets').createSignedUrl(fileRef, 3600) to get a time-limited signed URL. Cache loaded images in a React ref/Map keyed by file_reference to avoid re-fetching. On load failure or missing asset, fall back to rendering sku_code as Konva Text centered in the zone. Convert coordinates using wallHeight (screenY = wallHeight - zone.y_mm - zone.height_mm). Layer is read-only (listening={false}).",
+    "2. To get the render asset file_reference for each zone's SKU, add a new derived state or selector. The skuStore already has thumbnailUrl in SkuWithCatalogue. For the canvas layer, create a utility hook frontend/src/canvas/utils/useSkuRenderUrls.ts that: takes the zoneSku Map, fetches the catalogue_asset.file_reference for RENDER type for each SKU (via fromTable query or from existing SkuWithCatalogue data), then calls supabase.storage.from('catalogue-assets').createSignedUrl() for each. Return a Map<zoneId, signedUrl>. Use useEffect + state to handle async loading. Cache results and refresh when zoneSku changes.",
+    "3. Add SkuPlacementLayer to frontend/src/canvas/CanvasContainer.tsx between ZonesLayer and the new LightingLayer (z-order: Grid > WallOutline > Zones > SkuPlacement > Lighting > Furniture > Trims > Measurements > Selection). Import and render <SkuPlacementLayer wallHeight={wallHeight} />.",
+    "4. Add removeSku action to frontend/src/stores/projectStore.ts: removeSku(zoneId: string) that: checks project not FINALIZED, removes the zoneSku entry from the Map, deletes the template_zone_sku row via fromTable('template_zone_sku').delete().eq('zone_id', zoneId). Does NOT push history itself (caller is responsible).",
+    "5. Create frontend/src/canvas/interactions/useSkuRemove.ts hook: takes history from useHistory, checks canEditZone permission (from usePermissionEnforcement), pushes current zones state to history, then calls projectStore.removeSku(zoneId). Exported as { removeSku: (zoneId: string) => void }.",
+    "6. Add a 'Remove SKU' button to frontend/src/components/ZonePropertiesPanel.tsx in the SKU section (only shown when a SKU is assigned). On click, call the removeSku hook/action with permission check and history push.",
+    "7. Add tests in frontend/src/canvas/__tests__/SkuPlacementLayer.test.tsx: mock supabase storage, test that layer renders Image for zones with SKU, falls back to Text when no asset, respects layerVisibility toggle. Add tests for removeSku in a new test file frontend/src/stores/__tests__/projectStore.removeSku.test.ts."
+  ],
+  "acceptance_criteria": [
+    "SkuPlacementLayer renders Konva Image elements for zones with assigned SKUs that have RENDER assets",
+    "When a RENDER asset is unavailable or fails to load, the sku_code text is displayed as fallback",
+    "Signed URLs are generated via supabase.storage.from('catalogue-assets').createSignedUrl()",
+    "SkuPlacementLayer respects CanvasLayer.SKU_PLACEMENT visibility toggle",
+    "removeSku action removes the zone-SKU mapping from state and deletes the DB row",
+    "Remove SKU button in ZonePropertiesPanel is gated by permission check",
+    "History is pushed before SKU removal so undo restores the previous state",
+    "All tests pass including new tests for the layer and removal"
+  ],
+  "verification": [
+    "cd /projects/sandbox/Bom/frontend && NODE_OPTIONS='' npx vitest --run"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

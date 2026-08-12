@@ -38,6 +38,7 @@ export interface ProjectActions {
   addZone: (zone: Omit<TemplateZone, 'id' | 'created_at' | 'updated_at'>) => Promise<void>;
   removeZone: (id: string) => Promise<void>;
   assignSku: (zoneId: string, skuId: string) => Promise<void>;
+  removeSku: (zoneId: string) => Promise<void>;
   updateMeasurements: (measurements: Partial<ProjectMeasurement>) => Promise<void>;
   reset: () => void;
 }
@@ -256,6 +257,24 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       set({ zoneSku: newSkuMap });
     } catch (err) {
       set({ error: (err as Error).message });
+    }
+  },
+
+  removeSku: async (zoneId: string) => {
+    // Guard: prevent mutations on a finalized project
+    if (get().currentProject?.status === 'FINALIZED') return;
+
+    const prevSkuMap = get().zoneSku;
+    const newSkuMap = new Map(prevSkuMap);
+    newSkuMap.delete(zoneId);
+    set({ zoneSku: newSkuMap });
+
+    try {
+      const { error } = await fromTable('template_zone_sku').delete().eq('zone_id', zoneId);
+      if (error) throw error;
+    } catch (err) {
+      // Rollback on failure
+      set({ zoneSku: prevSkuMap, error: (err as Error).message });
     }
   },
 
