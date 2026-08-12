@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "feat",
   "description": "Undo/Redo history stack for zone operations and keyboard shortcuts (Delete, Escape, Arrow nudge). Implements a history hook that captures zone state snapshots, Ctrl+Z/Ctrl+Shift+Z shortcuts, toolbar buttons, plus Delete/Escape/Arrow key handlers with full constraint enforcement.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "Create src/canvas/history/useHistory.ts - A custom hook that manages an undo/redo stack of TemplateZone[] snapshots. It should: (1) expose pushState(zones) to record a snapshot, (2) expose undo() that reverts zones to previous snapshot and returns the reverted state, (3) expose redo() that moves forward in the stack, (4) expose canUndo/canRedo booleans, (5) maintain a max stack size (e.g., 50 entries). The hook should NOT directly mutate projectStore - it returns the state to apply.",
     "Create src/canvas/interactions/useKeyboardShortcuts.ts - A custom hook for CanvasContainer that handles all keydown events: (1) Ctrl+Z calls undo, (2) Ctrl+Shift+Z calls redo, (3) Delete/Backspace calls removeZone(selectedZoneId) if Designer mode + zone selected, (4) Escape calls clearSelection(), (5) Arrow keys nudge selected zone by gridConfig.size (if snap enabled) or 1mm (if snap disabled) with constrainToWall and hasOverlap checks. The hook should integrate with useHistory to push snapshots before zone mutations. Returns a handleKeyDown callback for window event listener.",
@@ -27,5 +27,5 @@
     "cd /projects/sandbox/Bom/frontend && unset NODE_OPTIONS && npx vite build"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All 736 tests pass (20 new tests added). Build succeeds. Module-level singleton pattern used for history to share state between CanvasContainer and Toolbar without prop drilling. useSyncExternalStore caused test hangs in jsdom, replaced with useState subscriber pattern. History hooks passed as optional param to useZoneDrag/useZoneResize/useZoneCreate for backward compatibility."
 }
