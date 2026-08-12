@@ -2,7 +2,7 @@
   "id": "FEAT-004",
   "type": "fix",
   "description": "Address review issues: implement missing geometry validations, fix snapshot ID, add integration tests, add dialog error handling, fix catch block, fix reconciliation traceability, make aspect ratio configurable",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "Implement 9 missing geometry validation rules in validateGeometry (panel/gap-level checks, total dimension checks)",
     "Fix GenerateActualBomButton to use actual snapshot ID from projectStore.currentSnapshot",
@@ -28,5 +28,5 @@
     "cd frontend && unset NODE_OPTIONS && npx vitest --run"
   ],
   "blocked_reason": null,
-  "findings": null
+  "findings": "All 673 tests pass (643 original + 24 pipeline integration + 5 store integration + 1 new button test). TypeScript strict mode clean. The site adaptation engine requires zone widths to sum to template_wall_width, and zone positions are not updated after adaptation (only widths change). GeometryZone interface extended with optional panelWidth, panelHeight, gapHorizontal, gapVertical fields. WallDimensions extended with maxZoneDimension, minGap, maxGap, minPanelDimension, maxPanelDimension, minRetainedWidth, checkTotalDimensions."
 }
