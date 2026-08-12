@@ -2,7 +2,7 @@
   "id": "FEAT-002",
   "type": "feat",
   "description": "Consultant permission enforcement on measurement fields and zone interactions, plus consultant alternative SKU selection panel. In Consultant mode with a loaded project snapshot, permissions from snapshot_data control which fields are editable. A new panel allows consultants to select from promoted alternative SKUs for a selected zone.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "Create src/canvas/permissions/usePermissionEnforcement.ts - A hook that: (1) reads currentSnapshot from projectStore, (2) extracts permissions array from snapshot_data.permissions (each with parameter_key, parameter_type, edit_mode: LOCKED|RESTRICTED|FREE, min_value, max_value, allowed_values), (3) exposes getFieldPermission(parameterKey) returning the permission config, (4) exposes isFieldLocked(parameterKey) boolean, (5) exposes validateField(parameterKey, value) returning {valid, error?} that checks min/max for RESTRICTED numeric fields and allowed_values for RESTRICTED selection fields, (6) exposes canEditZone(zoneId) based on zone-level permissions. Only active in CONSULTANT mode with a loaded snapshot.",
     "Update src/components/MeasurementPanel.tsx to use permission enforcement - Import and call usePermissionEnforcement(). For each field (wall_width_mm, wall_height_mm, segment_a_width_mm, segment_b_width_mm): (1) if LOCKED, set the input to disabled with a lock icon (Unicode lock char or CSS), (2) if RESTRICTED, apply min_value/max_value from permission as input constraints and show validation error on blur, (3) if FREE or no permission found, leave as-is. Add data-testid='field-locked-{fieldname}' indicators.",
@@ -26,5 +26,5 @@
     "cd /projects/sandbox/Bom/frontend && unset NODE_OPTIONS && npx vite build"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All 755 tests pass (19 new tests added). Build succeeds. usePermissionEnforcement uses useMemo/useCallback for performance. useZoneDrag and useZoneResize canDrag/canResize changed from DESIGNER-only to include CONSULTANT mode, with per-zone permission check in handleDragStart/handleResizeStart/Move/End. ConsultantAlternativesPanel filters alternatives by selected zone and ACTIVE status."
 }
