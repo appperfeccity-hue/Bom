@@ -174,25 +174,132 @@ export interface ProjectConfiguration {
   version: number;
 }
 
+// --- SKU & Catalogue Enums ---
+
+export enum ProductType {
+  WALL_PANEL = 'WALL_PANEL',
+  LIGHT = 'LIGHT',
+  FURNITURE = 'FURNITURE',
+}
+
+export enum SkuStatus {
+  ACTIVE = 'ACTIVE',
+  INACTIVE = 'INACTIVE',
+}
+
+export enum CatalogueStatus {
+  INCOMPLETE = 'INCOMPLETE',
+  READY = 'READY',
+}
+
+export enum AssetType {
+  GEOMETRY = 'GEOMETRY',
+  PATTERN = 'PATTERN',
+  RENDER = 'RENDER',
+}
+
+export enum AssetStatus {
+  UPLOADING = 'UPLOADING',
+  VALIDATING = 'VALIDATING',
+  VALID = 'VALID',
+  INVALID = 'INVALID',
+}
+
+export enum CompatibilityRelationship {
+  REQUIRES = 'REQUIRES',
+  COMPATIBLE_WITH = 'COMPATIBLE_WITH',
+  ALTERNATIVE_TO = 'ALTERNATIVE_TO',
+}
+
+export enum Directionality {
+  UNIDIRECTIONAL = 'UNIDIRECTIONAL',
+  BIDIRECTIONAL = 'BIDIRECTIONAL',
+}
+
+export enum QuantityMode {
+  DISCRETE = 'DISCRETE',
+  LINEAR = 'LINEAR',
+}
+
+// --- SKU & Catalogue Interfaces ---
+
 export interface SkuMaster {
-  id: string;
+  sku_id: string;
   sku_code: string;
-  name: string;
-  brand: string;
-  category: string;
-  width_mm: number;
-  height_mm: number;
-  depth_mm: number;
-  image_url: string | null;
-  metadata: Record<string, unknown>;
+  product_type: ProductType;
+  family_id: string;
+  category_id: string;
+  width_mm: number | null;
+  height_mm: number | null;
+  thickness_mm: number | null;
+  depth_mm: number | null;
+  unit_length_mm: number | null;
+  material: string;
+  colour: string;
+  finish: string;
+  pattern_identity: string | null;
+  gh_mm: number;
+  gv_mm: number;
+  quantity_mode: QuantityMode | null;
+  commercial_attributes: Record<string, unknown>;
+  status: SkuStatus;
+  created_by: string;
   created_at: string;
   updated_at: string;
 }
 
 export interface CatalogueEntry {
-  id: string;
+  catalogue_entry_id: string;
   sku_id: string;
-  catalogue_id: string;
-  position: number;
+  status: CatalogueStatus;
   created_at: string;
+  updated_at: string;
+}
+
+export interface CatalogueAsset {
+  asset_id: string;
+  catalogue_entry_id: string;
+  asset_type: AssetType;
+  version: number;
+  content_hash: string;
+  file_reference: string;
+  status: AssetStatus;
+  created_at: string;
+  is_current: boolean;
+}
+
+export interface FamilyMaster {
+  family_id: string;
+  name: string;
+  created_by: string;
+  created_at: string;
+}
+
+export interface CategoryMaster {
+  category_id: string;
+  family_id: string;
+  name: string;
+  created_by: string;
+  created_at: string;
+}
+
+export interface SkuCompatibility {
+  compatibility_id: string;
+  source_sku_id: string;
+  target_sku_id: string;
+  relationship_type: CompatibilityRelationship;
+  directionality: Directionality;
+  is_mandatory: boolean;
+  status: SkuStatus;
+  created_at: string;
+}
+
+/**
+ * Joined type: SKU with its catalogue entry and RENDER asset thumbnail URL.
+ * Used for SKU browser display.
+ */
+export interface SkuWithCatalogue {
+  sku: SkuMaster;
+  catalogueEntry: CatalogueEntry | null;
+  thumbnailUrl: string | null;
 }

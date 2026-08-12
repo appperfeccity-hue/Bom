@@ -175,7 +175,7 @@ export function ZonePropertiesPanel() {
             <div style={{ fontSize: '13px' }}>
               <strong>{sku.sku_code}</strong>
               <br />
-              {sku.name}
+              {sku.material} {sku.colour}
             </div>
           ) : (
             <div style={{ fontSize: '13px', color: '#999' }}>No SKU assigned</div>

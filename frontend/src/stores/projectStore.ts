@@ -235,7 +235,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       // Fetch the SKU data
       const { data: sku, error: sErr } = await fromTable('sku_master')
         .select('*')
-        .eq('id', skuId)
+        .eq('sku_id', skuId)
         .single();
       if (sErr) throw sErr;
 

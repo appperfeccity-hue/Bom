@@ -6,3 +6,6 @@ export type { ProjectState, ProjectActions, ProjectStore } from './projectStore'
 
 export { useCanvasStore, clampZoom, MIN_ZOOM, MAX_ZOOM } from './canvasStore';
 export type { CanvasState, CanvasActions, CanvasStore } from './canvasStore';
+
+export { useSkuStore } from './skuStore';
+export type { SkuState, SkuActions, SkuStore, SkuFilters } from './skuStore';
