@@ -155,7 +155,7 @@ export function FamilyCategoryPage() {
                       </button>
                       <button
                         data-testid={`delete-family-${family.family_id}`}
-                        onClick={(e) => { e.stopPropagation(); deleteFamily(family.family_id); }}
+                        onClick={(e) => { e.stopPropagation(); if (window.confirm(`Delete family "${family.name}"? This cannot be undone.`)) { deleteFamily(family.family_id); } }}
                         style={{ cursor: 'pointer', padding: '4px 8px', backgroundColor: '#dc2626', color: '#fff', border: 'none', borderRadius: '4px' }}
                       >
                         Delete
@@ -240,7 +240,7 @@ export function FamilyCategoryPage() {
                         </button>
                         <button
                           data-testid={`delete-category-${category.category_id}`}
-                          onClick={() => deleteCategory(category.category_id)}
+                          onClick={() => { if (window.confirm(`Delete category "${category.name}"? This cannot be undone.`)) { deleteCategory(category.category_id); } }}
                           style={{ cursor: 'pointer', padding: '4px 8px', backgroundColor: '#dc2626', color: '#fff', border: 'none', borderRadius: '4px' }}
                         >
                           Delete

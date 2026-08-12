@@ -188,7 +188,7 @@ export function SkuCompatibilityPage() {
                 </button>
                 <button
                   data-testid={`delete-rule-${rule.compatibility_id}`}
-                  onClick={() => deleteCompatibilityRule(rule.compatibility_id)}
+                  onClick={() => { if (window.confirm('Delete this compatibility rule? This cannot be undone.')) { deleteCompatibilityRule(rule.compatibility_id); } }}
                   style={{ cursor: 'pointer', padding: '4px 8px', backgroundColor: '#dc2626', color: '#fff', border: 'none', borderRadius: '4px' }}
                 >
                   Delete

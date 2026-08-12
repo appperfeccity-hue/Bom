@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { useAdminStore } from '../adminStore';
+import { RuleSetStatus } from '@/types/database';
 
 // Mock the supabase module
 vi.mock('@/lib/supabase', () => {
@@ -9,6 +10,7 @@ vi.mock('@/lib/supabase', () => {
     update: vi.fn().mockReturnThis(),
     delete: vi.fn().mockReturnThis(),
     eq: vi.fn().mockReturnThis(),
+    in: vi.fn().mockReturnThis(),
     order: vi.fn().mockResolvedValue({ data: [], error: null }),
   };
   return {
@@ -36,6 +38,15 @@ describe('adminStore', () => {
       catalogueEntries: [],
       catalogueAssets: [],
       ruleSets: [],
+      isLoadingFamilies: false,
+      isLoadingCategories: false,
+      isLoadingDesignFamilies: false,
+      isLoadingDesignSubfamilies: false,
+      isLoadingSkus: false,
+      isLoadingCompatibility: false,
+      isLoadingCatalogue: false,
+      isLoadingAssets: false,
+      isLoadingRuleSets: false,
       isLoading: false,
       error: null,
     });
@@ -54,6 +65,8 @@ describe('adminStore', () => {
       expect(state.catalogueAssets).toEqual([]);
       expect(state.ruleSets).toEqual([]);
       expect(state.isLoading).toBe(false);
+      expect(state.isLoadingFamilies).toBe(false);
+      expect(state.isLoadingSkus).toBe(false);
       expect(state.error).toBeNull();
     });
   });
@@ -79,6 +92,7 @@ describe('adminStore', () => {
 
       await useAdminStore.getState().fetchFamilies();
       expect(useAdminStore.getState().isLoading).toBe(false);
+      expect(useAdminStore.getState().isLoadingFamilies).toBe(false);
       expect(useAdminStore.getState().families).toHaveLength(1);
       expect(useAdminStore.getState().families[0].name).toBe('Test');
     });
@@ -96,6 +110,7 @@ describe('adminStore', () => {
       await useAdminStore.getState().fetchFamilies();
       expect(useAdminStore.getState().error).toBe('Network error');
       expect(useAdminStore.getState().isLoading).toBe(false);
+      expect(useAdminStore.getState().isLoadingFamilies).toBe(false);
     });
   });
 
@@ -115,6 +130,7 @@ describe('adminStore', () => {
 
       await useAdminStore.getState().createFamily('New Family');
       expect(useAdminStore.getState().isLoading).toBe(false);
+      expect(useAdminStore.getState().isLoadingFamilies).toBe(false);
     });
   });
 
@@ -135,6 +151,7 @@ describe('adminStore', () => {
       await useAdminStore.getState().fetchSkus();
       expect(useAdminStore.getState().skus).toHaveLength(1);
       expect(useAdminStore.getState().isLoading).toBe(false);
+      expect(useAdminStore.getState().isLoadingSkus).toBe(false);
     });
   });
 
@@ -216,9 +233,14 @@ describe('adminStore', () => {
   });
 
   describe('transitionRuleSetStatus', () => {
-    it('should update status via fromTable', async () => {
+    it('should update status via fromTable for valid transition', async () => {
       const { fromTable } = await import('@/lib/supabase');
       const mockedFromTable = vi.mocked(fromTable);
+
+      // Pre-populate store with a DRAFT rule set
+      useAdminStore.setState({
+        ruleSets: [{ rule_set_id: 'rs-1', rule_set_code: 'RS-001', version: 1, status: RuleSetStatus.DRAFT, constants: {}, created_by: 'u1', effective_from: null, effective_to: null, created_at: '2024-01-01' }],
+      });
 
       const mockUpdate = vi.fn().mockReturnThis();
       const mockEq = vi.fn().mockResolvedValue({ error: null });
@@ -236,6 +258,69 @@ describe('adminStore', () => {
       await useAdminStore.getState().transitionRuleSetStatus('rs-1', 'ACTIVE');
       expect(mockUpdate).toHaveBeenCalledWith({ status: 'ACTIVE' });
     });
+
+    it('should reject invalid state transitions', async () => {
+      // Pre-populate store with a DRAFT rule set
+      useAdminStore.setState({
+        ruleSets: [{ rule_set_id: 'rs-1', rule_set_code: 'RS-001', version: 1, status: RuleSetStatus.DRAFT, constants: {}, created_by: 'u1', effective_from: null, effective_to: null, created_at: '2024-01-01' }],
+      });
+
+      await useAdminStore.getState().transitionRuleSetStatus('rs-1', 'SUPERSEDED');
+      expect(useAdminStore.getState().error).toContain('Invalid status transition');
+    });
+
+    it('should reject backward transitions', async () => {
+      useAdminStore.setState({
+        ruleSets: [{ rule_set_id: 'rs-1', rule_set_code: 'RS-001', version: 1, status: RuleSetStatus.ACTIVE, constants: {}, created_by: 'u1', effective_from: null, effective_to: null, created_at: '2024-01-01' }],
+      });
+
+      await useAdminStore.getState().transitionRuleSetStatus('rs-1', 'DRAFT');
+      expect(useAdminStore.getState().error).toContain('Invalid status transition');
+    });
+  });
+
+  describe('approveCatalogueEntry', () => {
+    it('should reject approval when required assets are missing', async () => {
+      const { fromTable } = await import('@/lib/supabase');
+      const mockedFromTable = vi.mocked(fromTable);
+
+      // Mock the asset check query to return only GEOMETRY
+      const mockAssetChain = {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        in: vi.fn().mockResolvedValue({
+          data: [{ asset_type: 'GEOMETRY' }],
+          error: null,
+        }),
+      };
+      mockedFromTable.mockReturnValueOnce(mockAssetChain as unknown as ReturnType<typeof fromTable>);
+
+      await useAdminStore.getState().approveCatalogueEntry('entry-1');
+      expect(useAdminStore.getState().error).toContain('Cannot approve: missing required assets');
+      expect(useAdminStore.getState().error).toContain('PATTERN');
+      expect(useAdminStore.getState().error).toContain('RENDER');
+    });
+  });
+
+  describe('per-domain loading flags', () => {
+    it('should only set domain-specific loading flag', async () => {
+      const { fromTable } = await import('@/lib/supabase');
+      const mockedFromTable = vi.mocked(fromTable);
+
+      // Set up a delayed resolve for families to simulate concurrent calls
+      const mockFamilyChain = {
+        select: vi.fn().mockReturnThis(),
+        order: vi.fn().mockResolvedValue({ data: [], error: null }),
+      };
+      mockedFromTable.mockReturnValue(mockFamilyChain as unknown as ReturnType<typeof fromTable>);
+
+      await useAdminStore.getState().fetchFamilies();
+      // After families completes, isLoadingFamilies should be false
+      expect(useAdminStore.getState().isLoadingFamilies).toBe(false);
+      // Other domain flags should still be false
+      expect(useAdminStore.getState().isLoadingSkus).toBe(false);
+      expect(useAdminStore.getState().isLoadingCategories).toBe(false);
+    });
   });
 
   describe('error handling', () => {
@@ -251,6 +336,24 @@ describe('adminStore', () => {
 
       await useAdminStore.getState().fetchFamilies();
       expect(useAdminStore.getState().error).toBe('Permission denied');
+    });
+
+    it('should show friendly message for FK violation on delete', async () => {
+      const { fromTable } = await import('@/lib/supabase');
+      const mockedFromTable = vi.mocked(fromTable);
+
+      const mockChain = {
+        delete: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockResolvedValue({
+          error: { message: 'update or delete on table "family_master" violates foreign key constraint "category_master_family_id_fkey"' },
+        }),
+      };
+      mockedFromTable.mockReturnValue(mockChain as unknown as ReturnType<typeof fromTable>);
+
+      await useAdminStore.getState().deleteFamily('fam-1');
+      expect(useAdminStore.getState().error).toBe(
+        'Cannot delete this record because it is referenced by other records. Remove or reassign the dependent records first.'
+      );
     });
   });
 });

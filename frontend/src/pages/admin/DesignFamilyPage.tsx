@@ -153,7 +153,7 @@ export function DesignFamilyPage() {
                       </button>
                       <button
                         data-testid={`delete-df-${df.design_family_id}`}
-                        onClick={(e) => { e.stopPropagation(); deleteDesignFamily(df.design_family_id); }}
+                        onClick={(e) => { e.stopPropagation(); if (window.confirm(`Delete design family "${df.name}"? This cannot be undone.`)) { deleteDesignFamily(df.design_family_id); } }}
                         style={{ cursor: 'pointer', padding: '4px 8px', backgroundColor: '#dc2626', color: '#fff', border: 'none', borderRadius: '4px' }}
                       >
                         Delete
@@ -236,7 +236,7 @@ export function DesignFamilyPage() {
                         </button>
                         <button
                           data-testid={`delete-sub-${sub.design_subfamily_id}`}
-                          onClick={() => deleteDesignSubfamily(sub.design_subfamily_id)}
+                          onClick={() => { if (window.confirm(`Delete subfamily "${sub.name}"? This cannot be undone.`)) { deleteDesignSubfamily(sub.design_subfamily_id); } }}
                           style={{ cursor: 'pointer', padding: '4px 8px', backgroundColor: '#dc2626', color: '#fff', border: 'none', borderRadius: '4px' }}
                         >
                           Delete
