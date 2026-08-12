@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import { useCanvasStore } from '@/stores/canvasStore';
 import { useAuthStore } from '@/stores/authStore';
 import { useBomStore } from '@/stores/bomStore';
@@ -6,6 +7,7 @@ import { useTemplateManagementStore } from '@/stores/templateManagementStore';
 import { CanvasMode } from '@/types/database';
 
 export function Navigation() {
+  const navigate = useNavigate();
   const mode = useCanvasStore((s) => s.mode);
   const setMode = useCanvasStore((s) => s.setMode);
   const role = useAuthStore((s) => s.role);
@@ -32,6 +34,21 @@ export function Navigation() {
       }}
     >
       <h1 style={{ margin: 0, fontSize: '18px', fontWeight: 700 }}>Perfeccity Canvas</h1>
+      <button
+        onClick={() => navigate('/')}
+        data-testid="dashboard-link"
+        style={{
+          padding: '4px 12px',
+          fontSize: '13px',
+          fontWeight: 500,
+          backgroundColor: '#e0f7fa',
+          border: '1px solid #ccc',
+          borderRadius: '4px',
+          cursor: 'pointer',
+        }}
+      >
+        Dashboard
+      </button>
       <div style={{ display: 'flex', gap: '8px', flex: 1 }}>
         <button
           onClick={() => setMode(CanvasMode.DESIGNER)}
