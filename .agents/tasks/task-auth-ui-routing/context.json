@@ -1,0 +1,27 @@
+{
+  "project_type": "React 18 SPA with Vite + TypeScript (strict) + Zustand state management + Supabase backend",
+  "language": "TypeScript (strict mode, no unused locals/params)",
+  "build_system": "Vite with npm; path alias @/ -> src/",
+  "test_framework": "Vitest with @testing-library/react, jsdom environment, globals enabled, setup in src/test-setup.ts",
+  "build_command": "cd /projects/sandbox/Bom/frontend && NODE_OPTIONS='' npm run build",
+  "test_command": "cd /projects/sandbox/Bom/frontend && NODE_OPTIONS='' npx vitest run",
+  "verification_instructions": "1. Run build: NODE_OPTIONS='' npm run build. 2. Run tests: NODE_OPTIONS='' npx vitest run. 3. Typecheck: NODE_OPTIONS='' npx tsc --noEmit",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "cd /projects/sandbox/Bom/frontend && NODE_OPTIONS='' npm install",
+  "environment_constraints": "COMMON_DEPENDENCIES network - npm registry available. NODE_OPTIONS must be cleared (NODE_OPTIONS='') before running node commands due to sandbox preload module issue.",
+  "contribution_requirements": "TypeScript strict mode. All imports use @/ alias. Components follow pattern: ComponentDir/{ComponentName.tsx, index.ts, __tests__/}. Stores in src/stores/ with Zustand create(). Supabase mocked in tests via vi.mock('@/lib/supabase').",
+  "key_patterns": "Components export from index.ts barrel files. Tests in __tests__ subdirectories. Stores use zustand create() with typed state+actions interfaces. Supabase auth via authStore which has signIn/signOut/subscribeToAuthChanges. Role extracted from JWT app_metadata.role. CanvasMode enum (DESIGNER/CONSULTANT) drives UI mode.",
+  "relevant_files": [
+    "frontend/src/App.tsx",
+    "frontend/src/main.tsx",
+    "frontend/src/stores/authStore.ts",
+    "frontend/src/lib/supabase.ts",
+    "frontend/src/types/database.ts",
+    "frontend/src/test-setup.ts",
+    "frontend/vite.config.ts",
+    "frontend/tsconfig.json",
+    "frontend/package.json",
+    "frontend/src/components/PublishWorkflow/__tests__/PublishWorkflow.test.tsx"
+  ],
+  "directory_structure": "frontend/src/ contains: App.tsx (root component), main.tsx (entry), canvas/ (Konva canvas), components/ (UI panels), hooks/, lib/ (supabase client), stores/ (zustand), types/ (database.ts)"
+}

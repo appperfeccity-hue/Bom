@@ -1,0 +1,45 @@
+{
+  "id": "FEAT-001",
+  "type": "feat",
+  "description": "Install react-router-dom, create authentication pages (Login, Signup, ForgotPassword), auth layout with redirect logic, protected route wrapper, role-based routing, navigation component, and update App.tsx/main.tsx to use the router with auth guards. Add comprehensive tests.",
+  "status": "in_progress",
+  "steps": [
+    "Install react-router-dom and @types/react-router-dom (if needed) via npm: cd /projects/sandbox/Bom/frontend && NODE_OPTIONS='' npm install react-router-dom",
+    "Create src/pages/LoginPage.tsx: email/password form that calls authStore.signIn(), shows loading state, displays error messages, has link to signup and forgot-password. Include data-testid attributes for testing.",
+    "Create src/pages/SignupPage.tsx: email/password form with role selection dropdown (DESIGNER/CONSULTANT - no ADMIN self-registration). Calls supabase.auth.signUp() with role in app_metadata. Shows loading/error states. Link back to login.",
+    "Create src/pages/ForgotPasswordPage.tsx: email input form that calls supabase.auth.resetPasswordForEmail(). Shows success message after submission. Link back to login.",
+    "Create src/pages/index.ts barrel export for all pages.",
+    "Create src/components/AuthLayout.tsx: a route layout component that checks auth state. If authenticated, redirects to the main app (/). Renders an <Outlet /> for nested auth routes (login, signup, forgot-password). Includes minimal branding/styling.",
+    "Create src/components/ProtectedRoute.tsx: checks useAuthStore isAuthenticated and isLoading. While loading, shows a spinner/loading indicator. If not authenticated (and not loading), redirects to /login. Otherwise renders <Outlet />.",
+    "Create src/components/Navigation.tsx: role-aware navigation component (header or sidebar). Shows: app title, role indicator, mode toggle (Designer/Consultant buttons from current App.tsx header), BOM button, role-specific buttons (My Templates for DESIGNER, New Project for CONSULTANT), and Logout button that calls authStore.signOut().",
+    "Create src/components/Navigation/index.ts barrel export.",
+    "Refactor src/App.tsx: Remove the inline header with mode buttons (move to Navigation). Keep canvas and panel logic. Integrate Navigation component at the top. App becomes the authenticated main view rendered inside ProtectedRoute.",
+    "Update src/main.tsx: Create BrowserRouter with route structure: (1) AuthLayout wrapping /login, /signup, /forgot-password routes, (2) ProtectedRoute wrapping / (index) route that renders App, (3) Catch-all redirect to /login for unknown paths.",
+    "Add a loading/splash screen state: when authStore.isLoading is true on initial mount, show a centered loading spinner before rendering routes.",
+    "Create src/pages/__tests__/LoginPage.test.tsx: Test rendering, form submission with valid credentials (mock signIn), error display on failed login, navigation links present, loading state during submission.",
+    "Create src/pages/__tests__/SignupPage.test.tsx: Test rendering, role selection options (DESIGNER/CONSULTANT only), form submission calling supabase.auth.signUp with correct metadata, error display, navigation back to login.",
+    "Create src/pages/__tests__/AuthRouting.test.tsx: Test that unauthenticated users are redirected to /login, authenticated users can access /, authenticated users accessing /login are redirected to /, role is properly available after auth.",
+    "Ensure all existing tests still pass by not breaking any existing component interfaces. The App component still renders all existing panels/overlays."
+  ],
+  "acceptance_criteria": [
+    "react-router-dom is listed in package.json dependencies",
+    "LoginPage renders a form with email and password inputs and a submit button",
+    "SignupPage renders a form with email, password, and role selection (DESIGNER/CONSULTANT only)",
+    "ForgotPasswordPage renders an email input and submit button for password reset",
+    "Unauthenticated users are redirected to /login",
+    "Authenticated users see the main App with canvas and Navigation",
+    "Navigation shows role-specific buttons (My Templates for DESIGNER, New Project for CONSULTANT)",
+    "Logout button calls signOut and redirects to /login",
+    "Loading state shown during auth initialization (isLoading=true)",
+    "All 291 existing tests still pass",
+    "New tests pass covering login, signup, and routing logic",
+    "TypeScript builds without errors (tsc --noEmit passes)"
+  ],
+  "verification": [
+    "cd /projects/sandbox/Bom/frontend && NODE_OPTIONS='' npm run build",
+    "cd /projects/sandbox/Bom/frontend && NODE_OPTIONS='' npx vitest run",
+    "cd /projects/sandbox/Bom/frontend && NODE_OPTIONS='' npx tsc --noEmit"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

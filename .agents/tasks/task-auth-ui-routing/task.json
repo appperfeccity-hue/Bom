@@ -1,0 +1,7 @@
+{
+  "task_id": "task-auth-ui-routing",
+  "task_description": "Authentication UI with Login/Signup pages and role-based routing using react-router-dom. Includes auth guards, role-aware navigation, loading states, and comprehensive tests.",
+  "status": "in_progress",
+  "feature_order": ["FEAT-001"],
+  "blocked_reason": null
+}
