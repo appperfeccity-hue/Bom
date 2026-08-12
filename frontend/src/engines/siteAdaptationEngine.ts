@@ -125,6 +125,18 @@ function validateInput(input: SiteAdaptationInput): void {
       'Both template_wall_height and actual_wall_height must be provided for height adaptation, or neither',
     );
   }
+
+  // Validate wall height values are positive when provided
+  if (hasTemplateHeight && input.template_wall_height! <= 0) {
+    throw new EngineError(
+      `template_wall_height must be positive when provided, got ${input.template_wall_height}`,
+    );
+  }
+  if (hasActualHeight && input.actual_wall_height! <= 0) {
+    throw new EngineError(
+      `actual_wall_height must be positive when provided, got ${input.actual_wall_height}`,
+    );
+  }
 }
 
 /**

@@ -875,7 +875,7 @@ describe('siteAdaptationEngine', () => {
       expect(result.adapted_zones).toHaveLength(3);
     });
 
-    it('height adaptation works correctly when wall heights are zero', () => {
+    it('throws EngineError when wall heights are zero', () => {
       const input: SiteAdaptationInput = {
         template_wall_width: 3000,
         actual_wall_width: 3000,
@@ -900,13 +900,9 @@ describe('siteAdaptationEngine', () => {
         strategy: 'PROPORTIONAL',
       };
 
-      // With truthy check this would silently skip height adaptation
-      // With explicit null/undefined check, zero heights are treated as present
-      const result = adaptZonesToSite(input);
-      expect(result.adapted_zones).toEqual([
-        { zone_id: 1, adapted_width_mm: 1500, adapted_height_mm: 1000 },
-        { zone_id: 2, adapted_width_mm: 1500, adapted_height_mm: 1000 },
-      ]);
+      // Zero wall heights are rejected as non-positive
+      expect(() => adaptZonesToSite(input)).toThrow(EngineError);
+      expect(() => adaptZonesToSite(input)).toThrow('template_wall_height must be positive');
     });
   });
 });
