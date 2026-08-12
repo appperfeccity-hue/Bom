@@ -83,7 +83,7 @@ describe('ZonesLayer - validation styling', () => {
     useCanvasStore.setState({
       mode: CanvasMode.DESIGNER,
       viewport: { zoom: 1.0, panX: 0, panY: 0 },
-      selection: { selectedZoneId: null, resizeHandle: null },
+      selection: { selectedZoneId: null, selectedZoneIds: [], resizeHandle: null, marqueeRect: null },
       layerVisibility: {
         [CanvasLayer.GRID]: true,
         [CanvasLayer.WALL_OUTLINE]: true,

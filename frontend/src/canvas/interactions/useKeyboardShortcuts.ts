@@ -27,9 +27,9 @@ export function resetNudgeTimer() {
  * Handles:
  * - Ctrl+Z: Undo
  * - Ctrl+Shift+Z: Redo
- * - Delete/Backspace: Remove selected zone (Designer mode only)
+ * - Delete/Backspace: Remove selected zone(s) (Designer mode only)
  * - Escape: Clear selection
- * - Arrow keys: Nudge selected zone by grid size (snap) or 1mm (no snap)
+ * - Arrow keys: Nudge selected zone(s) by grid size (snap) or 1mm (no snap)
  *
  * Returns a handleKeyDown callback for window event listener.
  */
@@ -63,15 +63,20 @@ export function useKeyboardShortcuts({ history }: UseKeyboardShortcutsOptions) {
         return;
       }
 
-      // Delete / Backspace: Remove selected zone (Designer mode only)
+      // Delete / Backspace: Remove selected zone(s) (Designer mode only)
       if (e.key === 'Delete' || e.key === 'Backspace') {
         if (mode !== CanvasMode.DESIGNER) return;
-        if (!selection.selectedZoneId) return;
+        const selectedIds = selection.selectedZoneIds;
+        if (selectedIds.length === 0) return;
         e.preventDefault();
 
-        // Push current state to history before deleting
+        // Push current state to history before deleting (single push for batch)
         history.pushState(zones);
-        void useProjectStore.getState().removeZone(selection.selectedZoneId);
+
+        // Remove all selected zones
+        for (const id of selectedIds) {
+          void useProjectStore.getState().removeZone(id);
+        }
         clearSelection();
         return;
       }
@@ -83,16 +88,17 @@ export function useKeyboardShortcuts({ history }: UseKeyboardShortcutsOptions) {
         return;
       }
 
-      // Arrow keys: Nudge selected zone
+      // Arrow keys: Nudge selected zone(s)
       if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
         if (mode !== CanvasMode.DESIGNER) return;
-        if (!selection.selectedZoneId) return;
+        const selectedIds = selection.selectedZoneIds;
+        if (selectedIds.length === 0) return;
         if (!currentTemplate) return;
         e.preventDefault();
 
         const nudgeAmount = gridConfig.snapEnabled ? gridConfig.size : 1;
-        const zone = zones.find((z) => z.id === selection.selectedZoneId);
-        if (!zone) return;
+        const selectedZones = zones.filter((z) => selectedIds.includes(z.id));
+        if (selectedZones.length === 0) return;
 
         let dx = 0;
         let dy = 0;
@@ -112,31 +118,45 @@ export function useKeyboardShortcuts({ history }: UseKeyboardShortcutsOptions) {
             break;
         }
 
-        const newX = zone.x_mm + dx;
-        const newY = zone.y_mm + dy;
-
         const wallWidth = currentTemplate.base_width_mm;
         const wallHeight = currentTemplate.base_height_mm;
 
-        // Constrain to wall boundary
+        // Compute group bounding box to constrain as a unit
+        const groupMinX = Math.min(...selectedZones.map((z) => z.x_mm));
+        const groupMinY = Math.min(...selectedZones.map((z) => z.y_mm));
+        const groupMaxX = Math.max(...selectedZones.map((z) => z.x_mm + z.width_mm));
+        const groupMaxY = Math.max(...selectedZones.map((z) => z.y_mm + z.height_mm));
+
+        const groupW = groupMaxX - groupMinX;
+        const groupH = groupMaxY - groupMinY;
+
+        // Constrain group to wall boundary
         const constrained = constrainToWall(
-          newX,
-          newY,
-          zone.width_mm,
-          zone.height_mm,
+          groupMinX + dx,
+          groupMinY + dy,
+          groupW,
+          groupH,
           wallWidth,
           wallHeight,
         );
 
-        // Check for overlap with other zones
-        const newBox = {
-          x: constrained.x,
-          y: constrained.y,
-          width: zone.width_mm,
-          height: zone.height_mm,
-        };
-        if (hasOverlap(newBox, zones, zone.id)) {
-          return; // Cannot nudge - would overlap
+        const actualDx = constrained.x - groupMinX;
+        const actualDy = constrained.y - groupMinY;
+
+        if (actualDx === 0 && actualDy === 0) return;
+
+        // Check for overlap: each moved zone against non-selected zones
+        const nonSelectedZones = zones.filter((z) => !selectedIds.includes(z.id));
+        for (const zone of selectedZones) {
+          const newBox = {
+            x: zone.x_mm + actualDx,
+            y: zone.y_mm + actualDy,
+            width: zone.width_mm,
+            height: zone.height_mm,
+          };
+          if (hasOverlap(newBox, nonSelectedZones)) {
+            return; // Cannot nudge - would overlap
+          }
         }
 
         // Push current state to history before nudging (batched: skip if last nudge was within debounce window)
@@ -146,12 +166,15 @@ export function useKeyboardShortcuts({ history }: UseKeyboardShortcutsOptions) {
         }
         lastNudgeTime = now;
 
-        const updatedZone: TemplateZone = {
-          ...zone,
-          x_mm: constrained.x,
-          y_mm: constrained.y,
-        };
-        void useProjectStore.getState().updateZone(updatedZone);
+        // Move all selected zones
+        for (const zone of selectedZones) {
+          const updatedZone: TemplateZone = {
+            ...zone,
+            x_mm: zone.x_mm + actualDx,
+            y_mm: zone.y_mm + actualDy,
+          };
+          void useProjectStore.getState().updateZone(updatedZone);
+        }
         return;
       }
     },

@@ -66,7 +66,7 @@ describe('ConsultantAlternativesPanel', () => {
   beforeEach(() => {
     useCanvasStore.setState({
       mode: CanvasMode.DESIGNER,
-      selection: { selectedZoneId: null, resizeHandle: null },
+      selection: { selectedZoneId: null, selectedZoneIds: [], resizeHandle: null, marqueeRect: null },
     });
     useProjectStore.setState({
       currentSnapshot: null,
@@ -78,7 +78,7 @@ describe('ConsultantAlternativesPanel', () => {
     useCanvasStore.setState({ mode: CanvasMode.DESIGNER });
     useProjectStore.setState({ currentSnapshot: mockSnapshotWithAlternatives });
     useCanvasStore.setState({
-      selection: { selectedZoneId: 'zone-1', resizeHandle: null },
+      selection: { selectedZoneId: 'zone-1', selectedZoneIds: ['zone-1'], resizeHandle: null, marqueeRect: null },
     });
 
     const { container } = render(<ConsultantAlternativesPanel />);
@@ -89,7 +89,7 @@ describe('ConsultantAlternativesPanel', () => {
     useCanvasStore.setState({ mode: CanvasMode.CONSULTANT });
     useProjectStore.setState({ currentSnapshot: mockSnapshotWithAlternatives });
     useCanvasStore.setState({
-      selection: { selectedZoneId: 'zone-no-alternatives', resizeHandle: null },
+      selection: { selectedZoneId: 'zone-no-alternatives', selectedZoneIds: ['zone-no-alternatives'], resizeHandle: null, marqueeRect: null },
     });
 
     const { container } = render(<ConsultantAlternativesPanel />);
@@ -100,7 +100,7 @@ describe('ConsultantAlternativesPanel', () => {
     useCanvasStore.setState({ mode: CanvasMode.CONSULTANT });
     useProjectStore.setState({ currentSnapshot: mockSnapshotWithAlternatives });
     useCanvasStore.setState({
-      selection: { selectedZoneId: null, resizeHandle: null },
+      selection: { selectedZoneId: null, selectedZoneIds: [], resizeHandle: null, marqueeRect: null },
     });
 
     const { container } = render(<ConsultantAlternativesPanel />);
@@ -110,7 +110,7 @@ describe('ConsultantAlternativesPanel', () => {
   it('shows alternatives when zone has promoted alternatives', () => {
     useCanvasStore.setState({
       mode: CanvasMode.CONSULTANT,
-      selection: { selectedZoneId: 'zone-1', resizeHandle: null },
+      selection: { selectedZoneId: 'zone-1', selectedZoneIds: ['zone-1'], resizeHandle: null, marqueeRect: null },
     });
     useProjectStore.setState({ currentSnapshot: mockSnapshotWithAlternatives });
 
@@ -128,7 +128,7 @@ describe('ConsultantAlternativesPanel', () => {
   it('does not show inactive alternatives', () => {
     useCanvasStore.setState({
       mode: CanvasMode.CONSULTANT,
-      selection: { selectedZoneId: 'zone-1', resizeHandle: null },
+      selection: { selectedZoneId: 'zone-1', selectedZoneIds: ['zone-1'], resizeHandle: null, marqueeRect: null },
     });
     useProjectStore.setState({ currentSnapshot: mockSnapshotWithAlternatives });
 
@@ -140,7 +140,7 @@ describe('ConsultantAlternativesPanel', () => {
   it('selecting an alternative calls assignSku', async () => {
     useCanvasStore.setState({
       mode: CanvasMode.CONSULTANT,
-      selection: { selectedZoneId: 'zone-1', resizeHandle: null },
+      selection: { selectedZoneId: 'zone-1', selectedZoneIds: ['zone-1'], resizeHandle: null, marqueeRect: null },
     });
     useProjectStore.setState({ currentSnapshot: mockSnapshotWithAlternatives });
 
@@ -159,7 +159,7 @@ describe('ConsultantAlternativesPanel', () => {
   it('cannot select arbitrary SKU not in alternatives list', () => {
     useCanvasStore.setState({
       mode: CanvasMode.CONSULTANT,
-      selection: { selectedZoneId: 'zone-1', resizeHandle: null },
+      selection: { selectedZoneId: 'zone-1', selectedZoneIds: ['zone-1'], resizeHandle: null, marqueeRect: null },
     });
     useProjectStore.setState({ currentSnapshot: mockSnapshotWithAlternatives });
 
@@ -174,7 +174,7 @@ describe('ConsultantAlternativesPanel', () => {
   it('highlights currently selected SKU', () => {
     useCanvasStore.setState({
       mode: CanvasMode.CONSULTANT,
-      selection: { selectedZoneId: 'zone-1', resizeHandle: null },
+      selection: { selectedZoneId: 'zone-1', selectedZoneIds: ['zone-1'], resizeHandle: null, marqueeRect: null },
     });
 
     const mockSku: SkuMaster = {

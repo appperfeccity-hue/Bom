@@ -12,6 +12,7 @@ import { usePermissionEnforcement } from '@/canvas/permissions/usePermissionEnfo
  * Custom hook for zone drag interaction (DESIGNER mode only, or CONSULTANT with zone edit permission).
  * On drag: snaps to grid, constrains within wall boundary.
  * On drag end: updates projectStore.updateZone() for autosave.
+ * When dragging a zone that is part of a multi-selection, moves all selected zones by the same delta.
  */
 export function useZoneDrag(history?: HistoryState) {
   const mode = useCanvasStore((s) => s.mode);
@@ -47,15 +48,41 @@ export function useZoneDrag(history?: HistoryState) {
 
       const wallWidth = currentTemplate.base_width_mm;
       const wallHeight = currentTemplate.base_height_mm;
+      const selection = useCanvasStore.getState().selection;
+      const selectedIds = selection.selectedZoneIds;
+      const isMultiDrag = selectedIds.length > 1 && selectedIds.includes(zone.id);
 
       // Snap to grid if enabled
       let x = gridConfig.snapEnabled ? snapToGrid(newX, gridConfig.size) : Math.round(newX);
       let y = gridConfig.snapEnabled ? snapToGrid(newY, gridConfig.size) : Math.round(newY);
 
-      // Constrain within wall boundary
-      const constrained = constrainToWall(x, y, zone.width_mm, zone.height_mm, wallWidth, wallHeight);
-      x = constrained.x;
-      y = constrained.y;
+      if (isMultiDrag) {
+        // For multi-drag, constrain the group bounding box
+        const allZones = useProjectStore.getState().zones;
+        const selectedZones = allZones.filter((z) => selectedIds.includes(z.id));
+        const dx = x - zone.x_mm;
+        const dy = y - zone.y_mm;
+
+        const groupMinX = Math.min(...selectedZones.map((z) => z.x_mm + dx));
+        const groupMinY = Math.min(...selectedZones.map((z) => z.y_mm + dy));
+        const groupMaxX = Math.max(...selectedZones.map((z) => z.x_mm + z.width_mm + dx));
+        const groupMaxY = Math.max(...selectedZones.map((z) => z.y_mm + z.height_mm + dy));
+
+        const groupW = groupMaxX - groupMinX;
+        const groupH = groupMaxY - groupMinY;
+
+        const constrained = constrainToWall(groupMinX, groupMinY, groupW, groupH, wallWidth, wallHeight);
+        const constrainedDx = constrained.x - (groupMinX - dx);
+        const constrainedDy = constrained.y - (groupMinY - dy);
+
+        x = zone.x_mm + constrainedDx;
+        y = zone.y_mm + constrainedDy;
+      } else {
+        // Single zone: constrain within wall boundary
+        const constrained = constrainToWall(x, y, zone.width_mm, zone.height_mm, wallWidth, wallHeight);
+        x = constrained.x;
+        y = constrained.y;
+      }
 
       return { x, y };
     },
@@ -68,37 +95,90 @@ export function useZoneDrag(history?: HistoryState) {
       // In CONSULTANT mode, check zone-level permission
       if (mode === CanvasMode.CONSULTANT && !canEditZone(zone.id)) return;
 
-      // Check for overlap at the final position
-      const newBox = { x: finalX, y: finalY, width: zone.width_mm, height: zone.height_mm };
-      if (hasOverlap(newBox, zones, zone.id)) {
-        // Revert to start position (cancel the drag)
-        if (dragStartPos.current) {
-          const revertedZone: TemplateZone = {
-            ...zone,
-            x_mm: dragStartPos.current.x,
-            y_mm: dragStartPos.current.y,
+      const selection = useCanvasStore.getState().selection;
+      const selectedIds = selection.selectedZoneIds;
+      const isMultiDrag = selectedIds.length > 1 && selectedIds.includes(zone.id);
+
+      if (isMultiDrag) {
+        // Batch move all selected zones by the same delta
+        const dx = finalX - zone.x_mm;
+        const dy = finalY - zone.y_mm;
+
+        if (dx === 0 && dy === 0) {
+          dragStartPos.current = null;
+          return;
+        }
+
+        const allZones = useProjectStore.getState().zones;
+        const selectedZones = allZones.filter((z) => selectedIds.includes(z.id));
+        const nonSelectedZones = allZones.filter((z) => !selectedIds.includes(z.id));
+
+        // Check for overlap of each moved zone against non-selected zones
+        for (const sz of selectedZones) {
+          const newBox = { x: sz.x_mm + dx, y: sz.y_mm + dy, width: sz.width_mm, height: sz.height_mm };
+          if (hasOverlap(newBox, nonSelectedZones)) {
+            // Revert to start position (cancel the drag)
+            if (dragStartPos.current) {
+              const revertedZone: TemplateZone = {
+                ...zone,
+                x_mm: dragStartPos.current.x,
+                y_mm: dragStartPos.current.y,
+              };
+              void updateZone(revertedZone);
+            }
+            dragStartPos.current = null;
+            return;
+          }
+        }
+
+        // Push current state to history before applying drag
+        if (history) {
+          history.pushState(allZones);
+        }
+
+        // Move all selected zones
+        for (const sz of selectedZones) {
+          const updatedZone: TemplateZone = {
+            ...sz,
+            x_mm: sz.x_mm + dx,
+            y_mm: sz.y_mm + dy,
           };
-          void updateZone(revertedZone);
+          void updateZone(updatedZone);
         }
         dragStartPos.current = null;
-        return;
+      } else {
+        // Single zone drag
+        const newBox = { x: finalX, y: finalY, width: zone.width_mm, height: zone.height_mm };
+        if (hasOverlap(newBox, zones, zone.id)) {
+          // Revert to start position (cancel the drag)
+          if (dragStartPos.current) {
+            const revertedZone: TemplateZone = {
+              ...zone,
+              x_mm: dragStartPos.current.x,
+              y_mm: dragStartPos.current.y,
+            };
+            void updateZone(revertedZone);
+          }
+          dragStartPos.current = null;
+          return;
+        }
+
+        // Push current state to history before applying drag
+        if (history) {
+          history.pushState(zones);
+        }
+
+        const updatedZone: TemplateZone = {
+          ...zone,
+          x_mm: finalX,
+          y_mm: finalY,
+        };
+
+        void updateZone(updatedZone);
+        dragStartPos.current = null;
       }
-
-      // Push current state to history before applying drag
-      if (history) {
-        history.pushState(zones);
-      }
-
-      const updatedZone: TemplateZone = {
-        ...zone,
-        x_mm: finalX,
-        y_mm: finalY,
-      };
-
-      void updateZone(updatedZone);
-      dragStartPos.current = null;
     },
-    [canDrag, updateZone, zones, history],
+    [canDrag, updateZone, zones, history, mode, canEditZone],
   );
 
   return {

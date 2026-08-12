@@ -56,7 +56,7 @@ describe('useKeyboardShortcuts', () => {
     useCanvasStore.setState({
       mode: CanvasMode.DESIGNER,
       viewport: { zoom: 1.0, panX: 0, panY: 0 },
-      selection: { selectedZoneId: null, resizeHandle: null },
+      selection: { selectedZoneId: null, selectedZoneIds: [], resizeHandle: null, marqueeRect: null },
       gridConfig: { size: 100, snapEnabled: true },
     });
     useProjectStore.setState({
@@ -84,7 +84,7 @@ describe('useKeyboardShortcuts', () => {
     useProjectStore.setState({ zones: [zone] });
     useCanvasStore.setState({
       mode: CanvasMode.DESIGNER,
-      selection: { selectedZoneId: 'z1', resizeHandle: null },
+      selection: { selectedZoneId: 'z1', selectedZoneIds: ['z1'], resizeHandle: null, marqueeRect: null },
     });
 
     const { result } = renderHook(() => {
@@ -107,7 +107,7 @@ describe('useKeyboardShortcuts', () => {
     useProjectStore.setState({ zones: [zone] });
     useCanvasStore.setState({
       mode: CanvasMode.CONSULTANT,
-      selection: { selectedZoneId: 'z1', resizeHandle: null },
+      selection: { selectedZoneId: 'z1', selectedZoneIds: ['z1'], resizeHandle: null, marqueeRect: null },
     });
 
     const { result } = renderHook(() => {
@@ -125,7 +125,7 @@ describe('useKeyboardShortcuts', () => {
 
   it('Escape clears selection', () => {
     useCanvasStore.setState({
-      selection: { selectedZoneId: 'z1', resizeHandle: null },
+      selection: { selectedZoneId: 'z1', selectedZoneIds: ['z1'], resizeHandle: null, marqueeRect: null },
     });
 
     const { result } = renderHook(() => {
@@ -145,7 +145,7 @@ describe('useKeyboardShortcuts', () => {
     useProjectStore.setState({ zones: [zone] });
     useCanvasStore.setState({
       mode: CanvasMode.DESIGNER,
-      selection: { selectedZoneId: 'z1', resizeHandle: null },
+      selection: { selectedZoneId: 'z1', selectedZoneIds: ['z1'], resizeHandle: null, marqueeRect: null },
       gridConfig: { size: 100, snapEnabled: true },
     });
 
@@ -168,7 +168,7 @@ describe('useKeyboardShortcuts', () => {
     useProjectStore.setState({ zones: [zone] });
     useCanvasStore.setState({
       mode: CanvasMode.DESIGNER,
-      selection: { selectedZoneId: 'z1', resizeHandle: null },
+      selection: { selectedZoneId: 'z1', selectedZoneIds: ['z1'], resizeHandle: null, marqueeRect: null },
       gridConfig: { size: 100, snapEnabled: false },
     });
 
@@ -191,7 +191,7 @@ describe('useKeyboardShortcuts', () => {
     useProjectStore.setState({ zones: [zone] });
     useCanvasStore.setState({
       mode: CanvasMode.DESIGNER,
-      selection: { selectedZoneId: 'z1', resizeHandle: null },
+      selection: { selectedZoneId: 'z1', selectedZoneIds: ['z1'], resizeHandle: null, marqueeRect: null },
       gridConfig: { size: 100, snapEnabled: true },
     });
 
@@ -216,7 +216,7 @@ describe('useKeyboardShortcuts', () => {
     useProjectStore.setState({ zones: [zone1, zone2] });
     useCanvasStore.setState({
       mode: CanvasMode.DESIGNER,
-      selection: { selectedZoneId: 'z1', resizeHandle: null },
+      selection: { selectedZoneId: 'z1', selectedZoneIds: ['z1'], resizeHandle: null, marqueeRect: null },
       gridConfig: { size: 100, snapEnabled: true },
     });
 
@@ -292,7 +292,7 @@ describe('useKeyboardShortcuts', () => {
     useProjectStore.setState({ zones: [zone] });
     useCanvasStore.setState({
       mode: CanvasMode.DESIGNER,
-      selection: { selectedZoneId: 'z1', resizeHandle: null },
+      selection: { selectedZoneId: 'z1', selectedZoneIds: ['z1'], resizeHandle: null, marqueeRect: null },
       gridConfig: { size: 100, snapEnabled: true },
     });
 
@@ -314,7 +314,7 @@ describe('useKeyboardShortcuts', () => {
     useProjectStore.setState({ zones: [zone] });
     useCanvasStore.setState({
       mode: CanvasMode.DESIGNER,
-      selection: { selectedZoneId: 'z1', resizeHandle: null },
+      selection: { selectedZoneId: 'z1', selectedZoneIds: ['z1'], resizeHandle: null, marqueeRect: null },
       gridConfig: { size: 100, snapEnabled: true },
     });
 
@@ -336,7 +336,7 @@ describe('useKeyboardShortcuts', () => {
     useProjectStore.setState({ zones: [zone] });
     useCanvasStore.setState({
       mode: CanvasMode.DESIGNER,
-      selection: { selectedZoneId: 'z1', resizeHandle: null },
+      selection: { selectedZoneId: 'z1', selectedZoneIds: ['z1'], resizeHandle: null, marqueeRect: null },
       gridConfig: { size: 100, snapEnabled: true },
     });
 

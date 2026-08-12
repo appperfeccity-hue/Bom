@@ -194,7 +194,7 @@ describe('BomPanel', () => {
   beforeEach(() => {
     useCanvasStore.setState({
       mode: CanvasMode.DESIGNER,
-      selection: { selectedZoneId: null, resizeHandle: null },
+      selection: { selectedZoneId: null, selectedZoneIds: [], resizeHandle: null, marqueeRect: null },
     });
     useBomStore.setState({
       masterBom: mockMasterBom,

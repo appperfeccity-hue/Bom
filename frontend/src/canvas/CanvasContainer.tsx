@@ -16,6 +16,7 @@ import { MeasurementsLayer } from './layers/MeasurementsLayer';
 import { useCanvasViewport } from './interactions/useCanvasViewport';
 import { useZoneCreate } from './interactions/useZoneCreate';
 import { useKeyboardShortcuts } from './interactions/useKeyboardShortcuts';
+import { useMarqueeSelect } from './interactions/useMarqueeSelect';
 import { useHistory } from './history/useHistory';
 import { resetHistory } from './history/useHistory';
 import { screenToCanvas } from '@/lib/coordinates';
@@ -61,6 +62,12 @@ export function CanvasContainer({ mode }: CanvasContainerProps) {
   } = useZoneCreate(history);
 
   const { handleKeyDown: handleShortcutKeyDown } = useKeyboardShortcuts({ history });
+
+  const {
+    handleMarqueeStart,
+    handleMarqueeMove,
+    handleMarqueeEnd,
+  } = useMarqueeSelect();
 
   // Set mode when prop changes
   useEffect(() => {
@@ -122,12 +129,12 @@ export function CanvasContainer({ mode }: CanvasContainerProps) {
   const wallWidth = currentTemplate?.base_width_mm ?? 3000;
   const wallHeight = currentTemplate?.base_height_mm ?? 2400;
 
-  // Handle click on empty canvas area for zone creation
+  // Handle click on empty canvas area for zone creation or marquee selection
   const handleStageMouseDown = (e: { evt: MouseEvent; target: { getStage: () => unknown } }) => {
     // Forward to pan handler
     handleMouseDown(e as { evt: MouseEvent });
 
-    // Zone creation on left click in designer mode on empty canvas
+    // Zone creation or marquee on left click in designer mode on empty canvas
     if (
       mode === CanvasMode.DESIGNER &&
       e.evt.button === 0 &&
@@ -139,6 +146,8 @@ export function CanvasContainer({ mode }: CanvasContainerProps) {
         { zoom: viewport.zoom, panX: 0, panY: 0 },
       );
       handleCreateStart(point.x, point.y);
+      // Also start marquee (it will be used if no zone is being created)
+      handleMarqueeStart(point.x, point.y);
     }
   };
 
@@ -152,6 +161,13 @@ export function CanvasContainer({ mode }: CanvasContainerProps) {
       );
       handleCreateMove(point.x, point.y);
     }
+    // Update marquee if active
+    const point = screenToCanvas(
+      { x: e.evt.offsetX - viewport.panX, y: e.evt.offsetY - viewport.panY },
+      wallHeight,
+      { zoom: viewport.zoom, panX: 0, panY: 0 },
+    );
+    handleMarqueeMove(point.x, point.y);
   };
 
   const handleStageMouseUp = () => {
@@ -159,6 +175,7 @@ export function CanvasContainer({ mode }: CanvasContainerProps) {
     if (isCreating) {
       handleCreateEnd();
     }
+    handleMarqueeEnd();
   };
 
   return (

@@ -60,7 +60,7 @@ describe('CanvasContainer', () => {
     useCanvasStore.setState({
       mode: CanvasMode.DESIGNER,
       viewport: { zoom: 1.0, panX: 0, panY: 0 },
-      selection: { selectedZoneId: null, resizeHandle: null },
+      selection: { selectedZoneId: null, selectedZoneIds: [], resizeHandle: null, marqueeRect: null },
       saveStatus: 'saved',
     });
     useProjectStore.setState({

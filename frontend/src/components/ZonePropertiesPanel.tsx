@@ -24,6 +24,38 @@ export function ZonePropertiesPanel() {
 
   const selectedZone = zones.find((z) => z.id === selection.selectedZoneId);
 
+  // Multi-selection info
+  if (selection.selectedZoneIds.length > 1) {
+    return (
+      <div
+        className="zone-properties-panel"
+        style={{
+          width: '280px',
+          padding: '16px',
+          borderLeft: '1px solid #e0e0e0',
+          overflowY: 'auto',
+        }}
+        data-testid="zone-properties-panel"
+      >
+        <h3 style={{ margin: '0 0 16px', fontSize: '14px', fontWeight: 600 }}>
+          Zone Properties
+        </h3>
+        <div
+          style={{
+            padding: '12px',
+            backgroundColor: '#e3f2fd',
+            borderRadius: '4px',
+            fontSize: '13px',
+            color: '#1565c0',
+          }}
+          data-testid="multi-select-info"
+        >
+          {selection.selectedZoneIds.length} zones selected
+        </div>
+      </div>
+    );
+  }
+
   const handleFieldChange = useCallback(
     (field: keyof TemplateZone, value: string | number) => {
       if (!selectedZone || !currentTemplate) return;

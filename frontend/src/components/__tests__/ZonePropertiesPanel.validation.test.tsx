@@ -61,7 +61,7 @@ describe('ZonePropertiesPanel - validation errors', () => {
     useCanvasStore.setState({
       mode: CanvasMode.DESIGNER,
       viewport: { zoom: 1.0, panX: 0, panY: 0 },
-      selection: { selectedZoneId: null, resizeHandle: null },
+      selection: { selectedZoneId: null, selectedZoneIds: [], resizeHandle: null, marqueeRect: null },
     });
     useProjectStore.setState({
       currentTemplate: mockTemplate,
@@ -73,7 +73,7 @@ describe('ZonePropertiesPanel - validation errors', () => {
   it('does not show validation errors for valid zones', () => {
     const zone = makeZone({ id: 'z1', x_mm: 0, y_mm: 0, width_mm: 400, height_mm: 400 });
     useProjectStore.setState({ zones: [zone] });
-    useCanvasStore.setState({ selection: { selectedZoneId: 'z1', resizeHandle: null } });
+    useCanvasStore.setState({ selection: { selectedZoneId: 'z1', selectedZoneIds: ['z1'], resizeHandle: null, marqueeRect: null } });
 
     render(<ZonePropertiesPanel />);
     expect(screen.queryByTestId('zone-validation-errors')).not.toBeInTheDocument();
@@ -85,7 +85,7 @@ describe('ZonePropertiesPanel - validation errors', () => {
       makeZone({ id: 'z2', x_mm: 200, y_mm: 200, width_mm: 400, height_mm: 400 }),
     ];
     useProjectStore.setState({ zones });
-    useCanvasStore.setState({ selection: { selectedZoneId: 'z1', resizeHandle: null } });
+    useCanvasStore.setState({ selection: { selectedZoneId: 'z1', selectedZoneIds: ['z1'], resizeHandle: null, marqueeRect: null } });
 
     render(<ZonePropertiesPanel />);
     const errorsContainer = screen.getByTestId('zone-validation-errors');
@@ -96,7 +96,7 @@ describe('ZonePropertiesPanel - validation errors', () => {
   it('shows error messages when selected zone is out of bounds', () => {
     const zone = makeZone({ id: 'z1', x_mm: 2800, y_mm: 0, width_mm: 400, height_mm: 400 });
     useProjectStore.setState({ zones: [zone] });
-    useCanvasStore.setState({ selection: { selectedZoneId: 'z1', resizeHandle: null } });
+    useCanvasStore.setState({ selection: { selectedZoneId: 'z1', selectedZoneIds: ['z1'], resizeHandle: null, marqueeRect: null } });
 
     render(<ZonePropertiesPanel />);
     const errorsContainer = screen.getByTestId('zone-validation-errors');
@@ -107,7 +107,7 @@ describe('ZonePropertiesPanel - validation errors', () => {
   it('shows error messages when selected zone is undersized', () => {
     const zone = makeZone({ id: 'z1', x_mm: 0, y_mm: 0, width_mm: 100, height_mm: 100 });
     useProjectStore.setState({ zones: [zone] });
-    useCanvasStore.setState({ selection: { selectedZoneId: 'z1', resizeHandle: null } });
+    useCanvasStore.setState({ selection: { selectedZoneId: 'z1', selectedZoneIds: ['z1'], resizeHandle: null, marqueeRect: null } });
 
     render(<ZonePropertiesPanel />);
     const errorsContainer = screen.getByTestId('zone-validation-errors');
@@ -119,7 +119,7 @@ describe('ZonePropertiesPanel - validation errors', () => {
     // Zone is both undersized and out of bounds
     const zone = makeZone({ id: 'z1', x_mm: 2900, y_mm: 2300, width_mm: 150, height_mm: 150 });
     useProjectStore.setState({ zones: [zone] });
-    useCanvasStore.setState({ selection: { selectedZoneId: 'z1', resizeHandle: null } });
+    useCanvasStore.setState({ selection: { selectedZoneId: 'z1', selectedZoneIds: ['z1'], resizeHandle: null, marqueeRect: null } });
 
     render(<ZonePropertiesPanel />);
     const errorsContainer = screen.getByTestId('zone-validation-errors');
@@ -130,7 +130,7 @@ describe('ZonePropertiesPanel - validation errors', () => {
 
   it('renders nothing when no zone is selected', () => {
     useProjectStore.setState({ zones: [makeZone({ id: 'z1' })] });
-    useCanvasStore.setState({ selection: { selectedZoneId: null, resizeHandle: null } });
+    useCanvasStore.setState({ selection: { selectedZoneId: null, selectedZoneIds: [], resizeHandle: null, marqueeRect: null } });
 
     const { container } = render(<ZonePropertiesPanel />);
     expect(container.innerHTML).toBe('');

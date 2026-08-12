@@ -59,7 +59,9 @@ export type ZoneResizeHandle = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w'
 /** Current selection state on the canvas. */
 export interface SelectionState {
   selectedZoneId: string | null;
+  selectedZoneIds: string[];
   resizeHandle: ZoneResizeHandle | null;
+  marqueeRect: BoundingBox | null;
 }
 
 /** Save status for autosave state machine. */

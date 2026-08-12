@@ -71,7 +71,7 @@ describe('Finalization Components', () => {
     });
     useCanvasStore.setState({
       mode: CanvasMode.CONSULTANT,
-      selection: { selectedZoneId: null, resizeHandle: null },
+      selection: { selectedZoneId: null, selectedZoneIds: [], resizeHandle: null, marqueeRect: null },
     });
     useAuthStore.setState({
       user: { id: 'user-1' } as never,
@@ -261,7 +261,7 @@ describe('Finalization Components', () => {
         viewport: { zoom: 1, panX: 0, panY: 0 },
         gridConfig: { snapEnabled: true, size: 10 },
         saveStatus: 'saved' as const,
-        selection: { selectedZoneId: null, resizeHandle: null },
+        selection: { selectedZoneId: null, selectedZoneIds: [], resizeHandle: null, marqueeRect: null },
       });
       useProjectStore.setState({
         currentProject: makeProject({ status: ProjectStatus.FINALIZED }),

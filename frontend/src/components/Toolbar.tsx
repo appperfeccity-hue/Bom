@@ -38,8 +38,11 @@ export function Toolbar() {
   const handleFitToViewport = () => resetViewport();
 
   const handleDeleteZone = () => {
-    if (selection.selectedZoneId) {
-      void removeZone(selection.selectedZoneId);
+    const selectedIds = selection.selectedZoneIds;
+    if (selectedIds.length > 0) {
+      for (const id of selectedIds) {
+        void removeZone(id);
+      }
     }
   };
 
@@ -180,7 +183,7 @@ export function Toolbar() {
           </button>
           <button
             onClick={handleDeleteZone}
-            disabled={!selection.selectedZoneId || isFinalized}
+            disabled={selection.selectedZoneIds.length === 0 || isFinalized}
             title={isFinalized ? 'Project is finalized' : 'Delete selected zone'}
             data-testid="delete-zone-btn"
           >

@@ -20,6 +20,7 @@ export function ZonesLayer({ wallHeight }: ZonesLayerProps) {
   const mode = useCanvasStore((s) => s.mode);
   const selection = useCanvasStore((s) => s.selection);
   const selectZone = useCanvasStore((s) => s.selectZone);
+  const toggleZoneSelection = useCanvasStore((s) => s.toggleZoneSelection);
   const zones = useProjectStore((s) => s.zones);
   const zoneSku = useProjectStore((s) => s.zoneSku);
   const zoom = useCanvasStore((s) => s.viewport.zoom);
@@ -29,16 +30,22 @@ export function ZonesLayer({ wallHeight }: ZonesLayerProps) {
 
   const isDesigner = mode === CanvasMode.DESIGNER;
 
-  const handleZoneClick = (zone: TemplateZone) => {
+  const handleZoneClick = (zone: TemplateZone, e: { evt: Event }) => {
     if (isDesigner) {
-      selectZone(zone.id);
+      const nativeEvt = e.evt as MouseEvent | TouchEvent;
+      const shiftHeld = 'shiftKey' in nativeEvt && (nativeEvt as MouseEvent).shiftKey;
+      if (shiftHeld) {
+        toggleZoneSelection(zone.id);
+      } else {
+        selectZone(zone.id);
+      }
     }
   };
 
   return (
     <Layer>
       {zones.map((zone) => {
-        const isSelected = selection.selectedZoneId === zone.id;
+        const isSelected = selection.selectedZoneIds.includes(zone.id);
         const hasErrors = validationMap.has(zone.id);
 
         // Convert from bottom-left origin to top-left (Konva)
@@ -61,8 +68,8 @@ export function ZonesLayer({ wallHeight }: ZonesLayerProps) {
             fill={isSelected ? '#bbdefb' : '#e3f2fd'}
             stroke={strokeColor}
             strokeWidth={(isSelected || hasErrors ? 2 : 1) / zoom}
-            onClick={() => handleZoneClick(zone)}
-            onTap={() => handleZoneClick(zone)}
+            onClick={(e) => handleZoneClick(zone, e)}
+            onTap={(e) => handleZoneClick(zone, e)}
             listening={isDesigner}
             data-zone-id={zone.id}
           />

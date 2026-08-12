@@ -22,7 +22,7 @@ describe('canvasStore', () => {
         [CanvasLayer.SELECTION]: true,
         [CanvasLayer.GRID_OVERLAY]: true,
       },
-      selection: { selectedZoneId: null, resizeHandle: null },
+      selection: { selectedZoneId: null, selectedZoneIds: [], resizeHandle: null, marqueeRect: null },
       saveStatus: 'saved',
       version: 1,
     });

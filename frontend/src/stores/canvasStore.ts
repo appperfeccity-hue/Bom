@@ -1,7 +1,9 @@
 import { create } from 'zustand';
 import { CanvasMode } from '@/types/database';
+import type { TemplateZone } from '@/types/database';
 import {
   CanvasLayer,
+  type BoundingBox,
   type GridConfig,
   type LayerVisibility,
   type SaveStatus,
@@ -28,6 +30,9 @@ export interface CanvasActions {
   toggleLayer: (layer: CanvasLayer) => void;
   setLayerVisibility: (layer: CanvasLayer, visible: boolean) => void;
   selectZone: (id: string | null) => void;
+  toggleZoneSelection: (id: string) => void;
+  selectZonesInRect: (rect: BoundingBox, zones: TemplateZone[]) => void;
+  setMarqueeRect: (rect: BoundingBox | null) => void;
   clearSelection: () => void;
   setResizeHandle: (handle: ZoneResizeHandle | null) => void;
   setSaveStatus: (status: SaveStatus) => void;
@@ -77,7 +82,9 @@ const initialState: CanvasState = {
   layerVisibility: defaultLayerVisibility(),
   selection: {
     selectedZoneId: null,
+    selectedZoneIds: [],
     resizeHandle: null,
+    marqueeRect: null,
   },
   saveStatus: 'saved',
   version: 1,
@@ -125,17 +132,74 @@ export const useCanvasStore = create<CanvasStore>((set) => ({
 
   selectZone: (id: string | null) =>
     set({
-      selection: { selectedZoneId: id, resizeHandle: null },
+      selection: {
+        selectedZoneId: id,
+        selectedZoneIds: id ? [id] : [],
+        resizeHandle: null,
+        marqueeRect: null,
+      },
     }),
+
+  toggleZoneSelection: (id: string) =>
+    set((state) => {
+      const current = state.selection.selectedZoneIds;
+      const newIds = current.includes(id)
+        ? current.filter((zid) => zid !== id)
+        : [...current, id];
+      return {
+        selection: {
+          selectedZoneId: newIds.length > 0 ? newIds[0] : null,
+          selectedZoneIds: newIds,
+          resizeHandle: null,
+          marqueeRect: null,
+        },
+      };
+    }),
+
+  selectZonesInRect: (rect: BoundingBox, zones: TemplateZone[]) =>
+    set(() => {
+      const selected = zones.filter((zone) => {
+        const zoneBox = { x: zone.x_mm, y: zone.y_mm, width: zone.width_mm, height: zone.height_mm };
+        // Check intersection between rect and zone bounding box
+        return (
+          rect.x < zoneBox.x + zoneBox.width &&
+          rect.x + rect.width > zoneBox.x &&
+          rect.y < zoneBox.y + zoneBox.height &&
+          rect.y + rect.height > zoneBox.y
+        );
+      });
+      const ids = selected.map((z) => z.id);
+      return {
+        selection: {
+          selectedZoneId: ids.length > 0 ? ids[0] : null,
+          selectedZoneIds: ids,
+          resizeHandle: null,
+          marqueeRect: null,
+        },
+      };
+    }),
+
+  setMarqueeRect: (rect: BoundingBox | null) =>
+    set((state) => ({
+      selection: { ...state.selection, marqueeRect: rect },
+    })),
 
   clearSelection: () =>
     set({
-      selection: { selectedZoneId: null, resizeHandle: null },
+      selection: {
+        selectedZoneId: null,
+        selectedZoneIds: [],
+        resizeHandle: null,
+        marqueeRect: null,
+      },
     }),
 
   setResizeHandle: (handle: ZoneResizeHandle | null) =>
     set((state) => ({
-      selection: { ...state.selection, resizeHandle: handle },
+      selection: {
+        ...state.selection,
+        resizeHandle: handle,
+      },
     })),
 
   setSaveStatus: (status: SaveStatus) => set({ saveStatus: status }),

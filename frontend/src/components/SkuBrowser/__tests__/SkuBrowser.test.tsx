@@ -116,7 +116,7 @@ describe('SkuBrowser', () => {
   beforeEach(() => {
     useCanvasStore.setState({
       mode: CanvasMode.DESIGNER,
-      selection: { selectedZoneId: 'zone-1', resizeHandle: null },
+      selection: { selectedZoneId: 'zone-1', selectedZoneIds: ['zone-1'], resizeHandle: null, marqueeRect: null },
     });
     useSkuStore.setState({
       isBrowserOpen: true,
@@ -236,7 +236,7 @@ describe('SkuBrowser', () => {
   it('assign button is disabled when no zone is selected', () => {
     useSkuStore.setState({ selectedSkuId: 'sku-001' });
     useCanvasStore.setState({
-      selection: { selectedZoneId: null, resizeHandle: null },
+      selection: { selectedZoneId: null, selectedZoneIds: [], resizeHandle: null, marqueeRect: null },
     });
 
     render(<SkuBrowser />);

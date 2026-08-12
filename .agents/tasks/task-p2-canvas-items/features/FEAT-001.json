@@ -1,0 +1,34 @@
+{
+  "id": "FEAT-001",
+  "type": "feat",
+  "description": "P2-6 Multi-select (#35) - Extend canvasStore.selection from single selectedZoneId to selectedZoneIds: string[], implement Shift+Click additive selection, marquee (rubber-band) rectangle selection, batch move/delete operations, and multi-selection handle rendering. This is implemented first because P2-5 (Copy/Paste/Duplicate) depends on multi-select being available.",
+  "status": "in_progress",
+  "steps": [
+    "1. Update SelectionState in frontend/src/types/canvas.ts: add `selectedZoneIds: string[]` field, keep selectedZoneId as a derived convenience (first item or null), add `marqueeRect: BoundingBox | null` for rubber-band preview.",
+    "2. Update canvasStore.ts: add selectedZoneIds array to initial state, update selectZone to set selectedZoneIds to [id], add `toggleZoneSelection(id: string)` for Shift+Click (adds/removes from selectedZoneIds), add `selectZonesInRect(rect: BoundingBox, zones: TemplateZone[])` for marquee, add `setMarqueeRect(rect: BoundingBox | null)` action, update clearSelection to clear selectedZoneIds, keep backward compat for code using selection.selectedZoneId.",
+    "3. Create frontend/src/canvas/interactions/useMarqueeSelect.ts: new hook that tracks mousedown-without-zone-hit -> mousemove -> mouseup to draw a rubber-band rectangle in screen coords, converts to canvas coords using screenToCanvas, then calls selectZonesInRect. Only active in DESIGNER mode.",
+    "4. Update ZonesLayer.tsx: change isSelected check from `zone.id === selection.selectedZoneId` to `selection.selectedZoneIds.includes(zone.id)`. On click: if Shift held, call toggleZoneSelection; otherwise call selectZone.",
+    "5. Update SelectionLayer.tsx: render selection outlines for ALL selectedZoneIds (not just one). Render a shared bounding-box handle set when multiple zones are selected (combine bounding boxes). Render marqueeRect as a dashed blue rectangle when non-null.",
+    "6. Update useKeyboardShortcuts.ts: Delete/Backspace removes ALL selectedZoneIds (batch delete with history push). Arrow nudge moves all selected zones by the same offset (batch nudge).",
+    "7. Update useZoneDrag.ts: when dragging a zone that is part of a multi-selection, move ALL selected zones by the same delta (batch move). Constrain the group bounding box to wall, check group overlap against non-selected zones.",
+    "8. Update Toolbar.tsx: delete button enabled when selectedZoneIds.length > 0. Update ZonePropertiesPanel.tsx to show 'Multiple zones selected' info when selectedZoneIds.length > 1.",
+    "9. Integrate useMarqueeSelect into CanvasContainer.tsx: wire up the marquee hooks to the Stage mouse events (only when not hitting a zone and not in pan mode).",
+    "10. Add tests in frontend/src/canvas/__tests__/multiSelect.test.ts and frontend/src/stores/__tests__/canvasStore.multiSelect.test.ts: test Shift+Click toggle, marquee select, batch delete, batch nudge, batch move constraints."
+  ],
+  "acceptance_criteria": [
+    "SelectionState type includes selectedZoneIds: string[]",
+    "canvasStore has toggleZoneSelection, selectZonesInRect, setMarqueeRect actions",
+    "Shift+Click on a zone adds/removes it from selectedZoneIds",
+    "Rubber-band marquee selects all zones intersecting the rectangle",
+    "Delete/Backspace removes all selected zones with single history push",
+    "Arrow nudge moves all selected zones as a group",
+    "All existing tests (814+) still pass",
+    "New multi-select tests pass"
+  ],
+  "verification": [
+    "cd /projects/sandbox/Bom/frontend && unset NODE_OPTIONS && npx tsc --noEmit",
+    "cd /projects/sandbox/Bom/frontend && unset NODE_OPTIONS && npx vitest run"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

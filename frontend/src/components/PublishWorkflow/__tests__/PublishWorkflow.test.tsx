@@ -69,7 +69,7 @@ describe('PublishWorkflow', () => {
     });
     useCanvasStore.setState({
       mode: CanvasMode.DESIGNER,
-      selection: { selectedZoneId: null, resizeHandle: null },
+      selection: { selectedZoneId: null, selectedZoneIds: [], resizeHandle: null, marqueeRect: null },
     });
   });
 
@@ -191,7 +191,7 @@ describe('Toolbar - Publish Template button', () => {
     });
     useCanvasStore.setState({
       mode: CanvasMode.DESIGNER,
-      selection: { selectedZoneId: null, resizeHandle: null },
+      selection: { selectedZoneId: null, selectedZoneIds: [], resizeHandle: null, marqueeRect: null },
     });
   });
 
