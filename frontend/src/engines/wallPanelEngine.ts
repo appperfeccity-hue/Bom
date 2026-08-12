@@ -28,6 +28,22 @@ function calculateAxis(
   panelSize: number,
   gap: number,
 ): { count: number; trim: number; retained: number } {
+  if (panelSize <= 0) {
+    throw new EngineError(
+      `Panel size must be positive, got ${panelSize}mm`,
+    );
+  }
+  if (gap < 0) {
+    throw new EngineError(
+      `Gap must be non-negative, got ${gap}mm`,
+    );
+  }
+  if (zoneSize <= 0) {
+    throw new EngineError(
+      `Zone size must be positive, got ${zoneSize}mm`,
+    );
+  }
+
   // Find the smallest N such that (N * panelSize) + ((N - 1) * gap) >= zoneSize
   let N = 1;
   while (N * panelSize + (N - 1) * gap < zoneSize) {

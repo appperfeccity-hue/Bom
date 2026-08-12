@@ -14,6 +14,7 @@ import { calculateWallPanels } from '@/engines/wallPanelEngine';
 import { calculateLights } from '@/engines/lightEngine';
 import { calculateFurniture } from '@/engines/furnitureEngine';
 import { calculateHiddenComponent } from '@/engines/hiddenComponentEngine';
+import { EngineError } from '@/engines/types';
 import type {
   WallPanelInput,
   LightInput,
@@ -65,9 +66,17 @@ export interface GeneratedBomLine {
   details: Record<string, unknown>;
 }
 
+/** A single engine error captured during BOM generation */
+export interface GenerationError {
+  productType: 'WALL_PANEL' | 'LIGHT' | 'FURNITURE' | 'HIDDEN_COMPONENT';
+  index: number;
+  message: string;
+}
+
 /** Output of the generateActualBom orchestration method */
 export interface GenerateActualBomOutput {
   lines: GeneratedBomLine[];
+  errors: GenerationError[];
 }
 
 export type BomStore = BomState & BomActions;
@@ -319,64 +328,97 @@ export const useBomStore = create<BomStore>((set, get) => ({
 
   generateActualBom: (input: GenerateActualBomInput): GenerateActualBomOutput => {
     const lines: GeneratedBomLine[] = [];
+    const errors: GenerationError[] = [];
 
     // 1. Wall panel engine
-    for (const wpInput of input.wallPanels) {
-      const result = calculateWallPanels(wpInput);
-      lines.push({
-        productType: 'WALL_PANEL',
-        quantity: result.procurementQuantity,
-        details: {
-          Ncol: result.Ncol,
-          Nrow: result.Nrow,
-          requiredQuantity: result.requiredQuantity,
-          procurementQuantity: result.procurementQuantity,
-          wasteQuantity: result.wasteQuantity,
-          trimWidth: result.trimWidth,
-          retainedWidth: result.retainedWidth,
-          trimHeight: result.trimHeight,
-          retainedHeight: result.retainedHeight,
-        },
-      });
+    for (let i = 0; i < input.wallPanels.length; i++) {
+      try {
+        const result = calculateWallPanels(input.wallPanels[i]);
+        lines.push({
+          productType: 'WALL_PANEL',
+          quantity: result.procurementQuantity,
+          details: {
+            Ncol: result.Ncol,
+            Nrow: result.Nrow,
+            requiredQuantity: result.requiredQuantity,
+            procurementQuantity: result.procurementQuantity,
+            wasteQuantity: result.wasteQuantity,
+            trimWidth: result.trimWidth,
+            retainedWidth: result.retainedWidth,
+            trimHeight: result.trimHeight,
+            retainedHeight: result.retainedHeight,
+          },
+        });
+      } catch (err) {
+        if (err instanceof EngineError) {
+          errors.push({ productType: 'WALL_PANEL', index: i, message: err.message });
+        } else {
+          throw err;
+        }
+      }
     }
 
     // 2. Light engine
-    for (const lightInput of input.lights) {
-      const result = calculateLights(lightInput);
-      lines.push({
-        productType: 'LIGHT',
-        quantity: result.quantity,
-        details: {
-          totalLength: result.totalLength,
-          driverCount: result.driverCount,
-          wireLength: result.wireLength,
-        },
-      });
+    for (let i = 0; i < input.lights.length; i++) {
+      try {
+        const result = calculateLights(input.lights[i]);
+        lines.push({
+          productType: 'LIGHT',
+          quantity: result.quantity,
+          details: {
+            totalLength: result.totalLength,
+            driverCount: result.driverCount,
+            wireLength: result.wireLength,
+          },
+        });
+      } catch (err) {
+        if (err instanceof EngineError) {
+          errors.push({ productType: 'LIGHT', index: i, message: err.message });
+        } else {
+          throw err;
+        }
+      }
     }
 
     // 3. Furniture engine
-    for (const furnInput of input.furniture) {
-      const result = calculateFurniture(furnInput);
-      lines.push({
-        productType: 'FURNITURE',
-        quantity: result.quantity,
-        omitted: result.omitted,
-        details: {},
-      });
+    for (let i = 0; i < input.furniture.length; i++) {
+      try {
+        const result = calculateFurniture(input.furniture[i]);
+        lines.push({
+          productType: 'FURNITURE',
+          quantity: result.quantity,
+          omitted: result.omitted,
+          details: {},
+        });
+      } catch (err) {
+        if (err instanceof EngineError) {
+          errors.push({ productType: 'FURNITURE', index: i, message: err.message });
+        } else {
+          throw err;
+        }
+      }
     }
 
     // 4. Hidden component engine
-    for (const hcInput of input.hiddenComponents) {
-      const result = calculateHiddenComponent(hcInput);
-      lines.push({
-        productType: 'HIDDEN_COMPONENT',
-        quantity: result.quantity,
-        included: result.included,
-        details: {},
-      });
+    for (let i = 0; i < input.hiddenComponents.length; i++) {
+      try {
+        const result = calculateHiddenComponent(input.hiddenComponents[i]);
+        lines.push({
+          productType: 'HIDDEN_COMPONENT',
+          quantity: result.quantity,
+          included: result.included,
+          details: {},
+        });
+      } catch (err) {
+        if (err instanceof EngineError) {
+          errors.push({ productType: 'HIDDEN_COMPONENT', index: i, message: err.message });
+        } else {
+          throw err;
+        }
+      }
     }
 
-    return { lines };
+    return { lines, errors };
   },
 
   openBomPanel: () => {

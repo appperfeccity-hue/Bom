@@ -454,4 +454,82 @@ describe('bomStore', () => {
       expect(rec[3].result_type).toBe(ReconciliationResultType.ADDED_BY_TRIGGER);
     });
   });
+
+  describe('generateActualBom', () => {
+    it('should return partial results and collect errors when one engine fails', () => {
+      const result = useBomStore.getState().generateActualBom({
+        wallPanels: [
+          // Valid input
+          { W: 2400, H: 1200, w: 1200, h: 1200, gh: 0, gv: 0, wasteFactor: 0 },
+          // Invalid input: zero panel width causes EngineError
+          { W: 2400, H: 1200, w: 0, h: 1200, gh: 0, gv: 0, wasteFactor: 0 },
+        ],
+        lights: [],
+        furniture: [],
+        hiddenComponents: [],
+      });
+
+      // First wall panel should succeed
+      expect(result.lines).toHaveLength(1);
+      expect(result.lines[0].productType).toBe('WALL_PANEL');
+      expect(result.lines[0].quantity).toBe(2);
+
+      // Second wall panel should produce an error
+      expect(result.errors).toHaveLength(1);
+      expect(result.errors[0].productType).toBe('WALL_PANEL');
+      expect(result.errors[0].index).toBe(1);
+      expect(result.errors[0].message).toContain('Panel size must be positive');
+    });
+
+    it('should return all lines and empty errors when all engines succeed', () => {
+      const result = useBomStore.getState().generateActualBom({
+        wallPanels: [
+          { W: 2400, H: 1200, w: 1200, h: 1200, gh: 0, gv: 0, wasteFactor: 0 },
+        ],
+        lights: [
+          { edges: [{ length: 2000 }], mountingType: 'DIRECT', mode: 'LINEAR', unitLength: 600 },
+        ],
+        furniture: [
+          { quantity: 3, min: 1, max: 10, skuId: 'sku-1' },
+        ],
+        hiddenComponents: [
+          { triggerType: 'ALWAYS', quantityRule: 'FIXED', fixedValue: 2 },
+        ],
+      });
+
+      expect(result.lines).toHaveLength(4);
+      expect(result.errors).toHaveLength(0);
+    });
+
+    it('should collect errors from multiple engines without aborting', () => {
+      const result = useBomStore.getState().generateActualBom({
+        wallPanels: [
+          // Invalid: zero panel width
+          { W: 2400, H: 1200, w: 0, h: 1200, gh: 0, gv: 0, wasteFactor: 0 },
+        ],
+        lights: [
+          // Invalid: zero unitLength in DISCRETE mode
+          { edges: [{ length: 1000 }], mountingType: 'DIRECT', mode: 'DISCRETE', unitLength: 0 },
+        ],
+        furniture: [
+          // Invalid: quantity below min
+          { quantity: 1, min: 5, max: 10, skuId: 'sku-1' },
+        ],
+        hiddenComponents: [
+          // Valid
+          { triggerType: 'ALWAYS', quantityRule: 'FIXED', fixedValue: 4 },
+        ],
+      });
+
+      // Only the hidden component should succeed
+      expect(result.lines).toHaveLength(1);
+      expect(result.lines[0].productType).toBe('HIDDEN_COMPONENT');
+
+      // Three errors collected
+      expect(result.errors).toHaveLength(3);
+      expect(result.errors[0].productType).toBe('WALL_PANEL');
+      expect(result.errors[1].productType).toBe('LIGHT');
+      expect(result.errors[2].productType).toBe('FURNITURE');
+    });
+  });
 });

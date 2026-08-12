@@ -130,6 +130,54 @@ describe('hiddenComponentEngine', () => {
         }),
       ).toThrow(EngineError);
     });
+
+    it('should correctly compare string field value to numeric target with GT', () => {
+      // "9" > 50 would be true with lexicographic comparison, false with numeric
+      const result = calculateHiddenComponent({
+        triggerType: 'CONDITION',
+        condition: { field: 'width', operator: 'GT', value: 50 },
+        quantityRule: 'FIXED',
+        fixedValue: 1,
+        fieldValues: { width: '9' },
+      });
+      expect(result.included).toBe(false);
+    });
+
+    it('should correctly compare numeric string field to numeric target with LT', () => {
+      // "100" < 50 would be true with lexicographic comparison, false with numeric
+      const result = calculateHiddenComponent({
+        triggerType: 'CONDITION',
+        condition: { field: 'height', operator: 'LT', value: 50 },
+        quantityRule: 'FIXED',
+        fixedValue: 1,
+        fieldValues: { height: '100' },
+      });
+      expect(result.included).toBe(false);
+    });
+
+    it('should correctly compare two string numbers with GTE', () => {
+      // "9" >= "50" would be true lexicographically, false numerically
+      const result = calculateHiddenComponent({
+        triggerType: 'CONDITION',
+        condition: { field: 'count', operator: 'GTE', value: '50' },
+        quantityRule: 'FIXED',
+        fixedValue: 1,
+        fieldValues: { count: '9' },
+      });
+      expect(result.included).toBe(false);
+    });
+
+    it('should correctly compare two string numbers with LTE', () => {
+      // "100" <= "50" would be true lexicographically ("1" < "5"), false numerically
+      const result = calculateHiddenComponent({
+        triggerType: 'CONDITION',
+        condition: { field: 'count', operator: 'LTE', value: '50' },
+        quantityRule: 'FIXED',
+        fixedValue: 1,
+        fieldValues: { count: '100' },
+      });
+      expect(result.included).toBe(false);
+    });
   });
 
   describe('DEPENDENCY trigger type', () => {

@@ -263,4 +263,146 @@ describe('wallPanelEngine', () => {
       ).toThrow(EngineError);
     });
   });
+
+  describe('input validation', () => {
+    it('should throw EngineError for zero panel width', () => {
+      expect(() =>
+        calculateWallPanels({
+          W: 2400,
+          H: 1200,
+          w: 0,
+          h: 1200,
+          gh: 0,
+          gv: 0,
+          wasteFactor: 0,
+        }),
+      ).toThrow(EngineError);
+    });
+
+    it('should throw EngineError for negative panel width', () => {
+      expect(() =>
+        calculateWallPanels({
+          W: 2400,
+          H: 1200,
+          w: -100,
+          h: 1200,
+          gh: 0,
+          gv: 0,
+          wasteFactor: 0,
+        }),
+      ).toThrow(EngineError);
+    });
+
+    it('should throw EngineError for zero panel height', () => {
+      expect(() =>
+        calculateWallPanels({
+          W: 2400,
+          H: 1200,
+          w: 1200,
+          h: 0,
+          gh: 0,
+          gv: 0,
+          wasteFactor: 0,
+        }),
+      ).toThrow(EngineError);
+    });
+
+    it('should throw EngineError for negative panel height', () => {
+      expect(() =>
+        calculateWallPanels({
+          W: 2400,
+          H: 1200,
+          w: 1200,
+          h: -50,
+          gh: 0,
+          gv: 0,
+          wasteFactor: 0,
+        }),
+      ).toThrow(EngineError);
+    });
+
+    it('should throw EngineError for negative horizontal gap', () => {
+      expect(() =>
+        calculateWallPanels({
+          W: 2400,
+          H: 1200,
+          w: 1200,
+          h: 1200,
+          gh: -5,
+          gv: 0,
+          wasteFactor: 0,
+        }),
+      ).toThrow(EngineError);
+    });
+
+    it('should throw EngineError for negative vertical gap', () => {
+      expect(() =>
+        calculateWallPanels({
+          W: 2400,
+          H: 1200,
+          w: 1200,
+          h: 1200,
+          gh: 0,
+          gv: -3,
+          wasteFactor: 0,
+        }),
+      ).toThrow(EngineError);
+    });
+
+    it('should throw EngineError for zero zone width', () => {
+      expect(() =>
+        calculateWallPanels({
+          W: 0,
+          H: 1200,
+          w: 1200,
+          h: 1200,
+          gh: 0,
+          gv: 0,
+          wasteFactor: 0,
+        }),
+      ).toThrow(EngineError);
+    });
+
+    it('should throw EngineError for negative zone width', () => {
+      expect(() =>
+        calculateWallPanels({
+          W: -500,
+          H: 1200,
+          w: 1200,
+          h: 1200,
+          gh: 0,
+          gv: 0,
+          wasteFactor: 0,
+        }),
+      ).toThrow(EngineError);
+    });
+
+    it('should throw EngineError for zero zone height', () => {
+      expect(() =>
+        calculateWallPanels({
+          W: 2400,
+          H: 0,
+          w: 1200,
+          h: 1200,
+          gh: 0,
+          gv: 0,
+          wasteFactor: 0,
+        }),
+      ).toThrow(EngineError);
+    });
+
+    it('should throw EngineError for negative zone height', () => {
+      expect(() =>
+        calculateWallPanels({
+          W: 2400,
+          H: -100,
+          w: 1200,
+          h: 1200,
+          gh: 0,
+          gv: 0,
+          wasteFactor: 0,
+        }),
+      ).toThrow(EngineError);
+    });
+  });
 });

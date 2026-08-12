@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { calculateLights } from '../lightEngine';
+import { EngineError } from '../types';
 
 describe('lightEngine', () => {
   describe('DISCRETE mode', () => {
@@ -164,6 +165,51 @@ describe('lightEngine', () => {
       expect(result.quantity).toBe(0);
       expect(result.driverCount).toBe(0);
       expect(result.wireLength).toBe(2000);
+    });
+  });
+
+  describe('input validation', () => {
+    it('should throw EngineError for zero unitLength in DISCRETE mode', () => {
+      expect(() =>
+        calculateLights({
+          edges: [{ length: 1000 }],
+          mountingType: 'DIRECT',
+          mode: 'DISCRETE',
+          unitLength: 0,
+        }),
+      ).toThrow(EngineError);
+    });
+
+    it('should throw EngineError for negative unitLength in DISCRETE mode', () => {
+      expect(() =>
+        calculateLights({
+          edges: [{ length: 1000 }],
+          mountingType: 'DIRECT',
+          mode: 'DISCRETE',
+          unitLength: -100,
+        }),
+      ).toThrow(EngineError);
+    });
+
+    it('should not throw for zero unitLength in LINEAR mode', () => {
+      const result = calculateLights({
+        edges: [{ length: 1000 }],
+        mountingType: 'DIRECT',
+        mode: 'LINEAR',
+        unitLength: 0,
+      });
+      expect(result.quantity).toBe(1000);
+    });
+
+    it('should throw EngineError for negative edge length', () => {
+      expect(() =>
+        calculateLights({
+          edges: [{ length: -500 }],
+          mountingType: 'DIRECT',
+          mode: 'LINEAR',
+          unitLength: 1000,
+        }),
+      ).toThrow(EngineError);
     });
   });
 });

@@ -7,6 +7,7 @@
  */
 
 import type { LightInput, LightOutput, MountingType } from './types';
+import { EngineError } from './types';
 
 /** Mounting offset in mm per edge based on mounting type */
 const MOUNTING_OFFSETS: Record<MountingType, number> = {
@@ -30,6 +31,21 @@ const WIRE_EXTRA = 2000;
 export function calculateLights(input: LightInput): LightOutput {
   const { edges, mountingType, mode, unitLength } = input;
   const offset = MOUNTING_OFFSETS[mountingType];
+
+  if (mode === 'DISCRETE' && unitLength <= 0) {
+    throw new EngineError(
+      `Unit length must be positive for DISCRETE mode, got ${unitLength}mm`,
+    );
+  }
+
+  // Validate edge lengths
+  for (const edge of edges) {
+    if (edge.length < 0) {
+      throw new EngineError(
+        `Edge length must be non-negative, got ${edge.length}mm`,
+      );
+    }
+  }
 
   // Total length = sum of (edge length + mounting offset) for each edge
   const totalLength = edges.reduce(

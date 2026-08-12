@@ -1,0 +1,14 @@
+{
+  "task_id": "task-quantity-engines",
+  "task_description": "Implement Wall Panel, Light, Furniture, and Hidden Component quantity resolution engines as pure TypeScript modules in frontend/src/engines/, with comprehensive test coverage including all 13 golden fixtures, and wire them into the bomStore.",
+  "status": "completed",
+  "feature_order": ["FEAT-001"],
+  "blocked_reason": null,
+  "verification": {
+    "build": "pass",
+    "tests": "pass",
+    "test_quality": "pass",
+    "docker_build": "skipped",
+    "summary": "TypeScript strict compilation passes cleanly. All 411 tests pass (349 existing + 62 new). All 13 golden fixtures verified. Tests exercise real calculation logic with concrete numeric assertions."
+  }
+}

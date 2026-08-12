@@ -32,13 +32,13 @@ function evaluateCondition(
     case 'NEQ':
       return fieldValue !== targetValue;
     case 'GT':
-      return fieldValue > targetValue;
+      return Number(fieldValue) > Number(targetValue);
     case 'LT':
-      return fieldValue < targetValue;
+      return Number(fieldValue) < Number(targetValue);
     case 'GTE':
-      return fieldValue >= targetValue;
+      return Number(fieldValue) >= Number(targetValue);
     case 'LTE':
-      return fieldValue <= targetValue;
+      return Number(fieldValue) <= Number(targetValue);
     default:
       return false;
   }
