@@ -5,6 +5,14 @@ import type { SkuCompatibility } from '@/types/database';
 import { fromTable } from '@/lib/supabase';
 import { AddRelationshipDialog } from './AddRelationshipDialog';
 
+/**
+ * Validates that a string is safe for use in PostgREST .or() filter interpolation.
+ * Rejects IDs containing characters that could corrupt the filter syntax.
+ */
+function isSafeFilterId(id: string): boolean {
+  return id.length > 0 && !/[(),\s"'\\]/.test(id);
+}
+
 interface ProductRelationshipsPanelProps {
   templateId: string;
 }
@@ -23,6 +31,7 @@ export function ProductRelationshipsPanel({ templateId }: ProductRelationshipsPa
   const mode = useCanvasStore((s) => s.mode);
   const [relationships, setRelationships] = useState<SkuCompatibility[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [removeError, setRemoveError] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     // Gather all SKU IDs used in this template from relevant tables
@@ -58,10 +67,17 @@ export function ProductRelationshipsPanel({ templateId }: ProductRelationshipsPa
 
     const skuIdArray = Array.from(skuIds);
 
+    // Filter out IDs with characters that would break PostgREST filter syntax
+    const validSkuIds = skuIdArray.filter(isSafeFilterId);
+    if (validSkuIds.length === 0) {
+      setRelationships([]);
+      return;
+    }
+
     // Fetch compatibility records where source or target is in the template's SKUs
     const { data: compatData } = await fromTable('sku_compatibility')
       .select('*')
-      .or(`source_sku_id.in.(${skuIdArray.join(',')}),target_sku_id.in.(${skuIdArray.join(',')})`);
+      .or(`source_sku_id.in.(${validSkuIds.join(',')}),target_sku_id.in.(${validSkuIds.join(',')})`);
 
     if (compatData) {
       setRelationships(compatData as SkuCompatibility[]);
@@ -73,12 +89,26 @@ export function ProductRelationshipsPanel({ templateId }: ProductRelationshipsPa
   }, [fetchData]);
 
   const handleRemove = async (compatibilityId: string) => {
-    await fromTable('sku_compatibility')
-      .delete()
-      .eq('compatibility_id', compatibilityId);
+    setRemoveError(null);
+    // Optimistically remove from UI
+    const previousRelationships = relationships;
     setRelationships((prev) =>
       prev.filter((r) => r.compatibility_id !== compatibilityId)
     );
+
+    const { error } = await fromTable('sku_compatibility')
+      .delete()
+      .eq('compatibility_id', compatibilityId);
+
+    if (error) {
+      // Roll back optimistic removal
+      setRelationships(previousRelationships);
+      const message =
+        typeof error === 'object' && 'message' in error
+          ? (error as { message: string }).message
+          : 'Failed to remove relationship';
+      setRemoveError(message);
+    }
   };
 
   if (mode !== CanvasMode.DESIGNER) {
@@ -114,6 +144,15 @@ export function ProductRelationshipsPanel({ templateId }: ProductRelationshipsPa
           Add Relationship
         </button>
       </div>
+
+      {removeError && (
+        <div
+          data-testid="remove-error"
+          style={{ marginBottom: '12px', padding: '8px', backgroundColor: '#ffebee', color: '#c62828', borderRadius: '4px', fontSize: '12px' }}
+        >
+          {removeError}
+        </div>
+      )}
 
       {relationships.length === 0 ? (
         <div data-testid="no-relationships-msg" style={{ fontSize: '13px', color: '#666' }}>

@@ -37,7 +37,7 @@ export function AddTrimDialog({ templateId, onClose, onAdded }: AddTrimDialogPro
     setWriteError(null);
     setIsSaving(true);
 
-    const fixedNum = quantityRule === 'TRIM_FIXED' && fixedQuantity ? Number(fixedQuantity) : null;
+    const fixedNum = quantityRule === 'TRIM_FIXED' && fixedQuantity ? Math.max(0, Number(fixedQuantity)) : null;
 
     const { error } = await fromTable('template_trim').insert({
       template_id: templateId,

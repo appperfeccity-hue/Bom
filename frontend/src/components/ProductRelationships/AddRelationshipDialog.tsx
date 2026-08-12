@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { fromTable } from '@/lib/supabase';
 import { CompatibilityRelationship, Directionality, SkuStatus } from '@/types/database';
 import type { SkuMaster } from '@/types/database';
@@ -28,50 +28,73 @@ export function AddRelationshipDialog({ onClose, onAdded }: AddRelationshipDialo
   const [isLoadingSource, setIsLoadingSource] = useState(false);
   const [isLoadingTarget, setIsLoadingTarget] = useState(false);
 
-  // Search source SKUs
+  const sourceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const targetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Search source SKUs with 300ms debounce
   useEffect(() => {
     if (!sourceQuery.trim()) {
       setSourceSkus([]);
       return;
     }
     let cancelled = false;
-    const fetchSkus = async () => {
-      setIsLoadingSource(true);
-      const { data } = await fromTable('sku_master')
-        .select('*')
-        .ilike('sku_code', `%${sourceQuery}%`)
-        .eq('status', 'ACTIVE')
-        .range(0, 19);
-      if (!cancelled && data) {
-        setSourceSkus(data as SkuMaster[]);
+    if (sourceTimerRef.current) {
+      clearTimeout(sourceTimerRef.current);
+    }
+    sourceTimerRef.current = setTimeout(() => {
+      const fetchSkus = async () => {
+        setIsLoadingSource(true);
+        const { data } = await fromTable('sku_master')
+          .select('*')
+          .ilike('sku_code', `%${sourceQuery}%`)
+          .eq('status', 'ACTIVE')
+          .range(0, 19);
+        if (!cancelled && data) {
+          setSourceSkus(data as SkuMaster[]);
+        }
+        if (!cancelled) setIsLoadingSource(false);
+      };
+      fetchSkus();
+    }, 300);
+    return () => {
+      cancelled = true;
+      if (sourceTimerRef.current) {
+        clearTimeout(sourceTimerRef.current);
       }
-      if (!cancelled) setIsLoadingSource(false);
     };
-    fetchSkus();
-    return () => { cancelled = true; };
   }, [sourceQuery]);
 
-  // Search target SKUs
+  // Search target SKUs with 300ms debounce
   useEffect(() => {
     if (!targetQuery.trim()) {
       setTargetSkus([]);
       return;
     }
     let cancelled = false;
-    const fetchSkus = async () => {
-      setIsLoadingTarget(true);
-      const { data } = await fromTable('sku_master')
-        .select('*')
-        .ilike('sku_code', `%${targetQuery}%`)
-        .eq('status', 'ACTIVE')
-        .range(0, 19);
-      if (!cancelled && data) {
-        setTargetSkus(data as SkuMaster[]);
+    if (targetTimerRef.current) {
+      clearTimeout(targetTimerRef.current);
+    }
+    targetTimerRef.current = setTimeout(() => {
+      const fetchSkus = async () => {
+        setIsLoadingTarget(true);
+        const { data } = await fromTable('sku_master')
+          .select('*')
+          .ilike('sku_code', `%${targetQuery}%`)
+          .eq('status', 'ACTIVE')
+          .range(0, 19);
+        if (!cancelled && data) {
+          setTargetSkus(data as SkuMaster[]);
+        }
+        if (!cancelled) setIsLoadingTarget(false);
+      };
+      fetchSkus();
+    }, 300);
+    return () => {
+      cancelled = true;
+      if (targetTimerRef.current) {
+        clearTimeout(targetTimerRef.current);
       }
-      if (!cancelled) setIsLoadingTarget(false);
     };
-    fetchSkus();
-    return () => { cancelled = true; };
   }, [targetQuery]);
 
   const handleConfirm = async () => {

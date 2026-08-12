@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { useCanvasStore } from '@/stores/canvasStore';
 import { CanvasMode, CompatibilityRelationship, Directionality, SkuStatus } from '@/types/database';
 
@@ -222,6 +222,25 @@ describe('ProductRelationshipsPanel', () => {
     expect(mockDeleteEq).toHaveBeenCalledWith('compatibility_id', 'comp-1');
   });
 
+  it('rolls back removal and shows error when delete fails', async () => {
+    mockDeleteEq.mockResolvedValueOnce({ error: { message: 'RLS policy denied' } });
+
+    render(<ProductRelationshipsPanel templateId="tpl-1" />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('relationship-item-comp-1')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTestId('remove-relationship-comp-1'));
+
+    // Item should reappear after rollback
+    await waitFor(() => {
+      expect(screen.getByTestId('relationship-item-comp-1')).toBeInTheDocument();
+    });
+
+    expect(screen.getByTestId('remove-error')).toHaveTextContent('RLS policy denied');
+  });
+
   it('shows add button', () => {
     render(<ProductRelationshipsPanel templateId="tpl-1" />);
     expect(screen.getByTestId('add-relationship-btn')).toBeInTheDocument();
@@ -231,6 +250,7 @@ describe('ProductRelationshipsPanel', () => {
 describe('AddRelationshipDialog', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.useFakeTimers({ shouldAdvanceTime: true });
 
     mockIlike.mockReturnValue({
       eq: vi.fn().mockReturnValue({
@@ -258,6 +278,10 @@ describe('AddRelationshipDialog', () => {
     });
   });
 
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('renders the dialog with all form fields', () => {
     render(<AddRelationshipDialog onClose={vi.fn()} onAdded={vi.fn()} />);
 
@@ -277,12 +301,22 @@ describe('AddRelationshipDialog', () => {
     // Search and select same SKU for source and target
     fireEvent.change(screen.getByTestId('source-sku-search'), { target: { value: 'SKU' } });
 
+    // Advance debounce timer
+    await act(async () => {
+      vi.advanceTimersByTime(300);
+    });
+
     await waitFor(() => {
       expect(screen.getByTestId('source-sku-option-sku-a')).toBeInTheDocument();
     });
     fireEvent.click(screen.getByTestId('source-sku-option-sku-a'));
 
     fireEvent.change(screen.getByTestId('target-sku-search'), { target: { value: 'SKU' } });
+
+    // Advance debounce timer
+    await act(async () => {
+      vi.advanceTimersByTime(300);
+    });
 
     await waitFor(() => {
       expect(screen.getByTestId('target-sku-option-sku-a')).toBeInTheDocument();
@@ -313,12 +347,24 @@ describe('AddRelationshipDialog', () => {
 
     // Select different source and target
     fireEvent.change(screen.getByTestId('source-sku-search'), { target: { value: 'SKU' } });
+
+    // Advance debounce timer
+    await act(async () => {
+      vi.advanceTimersByTime(300);
+    });
+
     await waitFor(() => {
       expect(screen.getByTestId('source-sku-option-sku-a')).toBeInTheDocument();
     });
     fireEvent.click(screen.getByTestId('source-sku-option-sku-a'));
 
     fireEvent.change(screen.getByTestId('target-sku-search'), { target: { value: 'SKU' } });
+
+    // Advance debounce timer
+    await act(async () => {
+      vi.advanceTimersByTime(300);
+    });
+
     await waitFor(() => {
       expect(screen.getByTestId('target-sku-option-sku-b')).toBeInTheDocument();
     });

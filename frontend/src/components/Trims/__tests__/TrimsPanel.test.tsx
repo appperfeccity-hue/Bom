@@ -235,4 +235,27 @@ describe('TrimsPanel', () => {
     expect(screen.getByTestId('trim-item-trim-3')).toHaveTextContent('Rule: TRIM_BY_PANEL_EDGE');
     expect(screen.getByTestId('trim-item-trim-4')).toHaveTextContent('Rule: TRIM_BY_LENGTH');
   });
+
+  it('dialog clamps negative fixed_quantity to zero on submit', async () => {
+    render(<TrimsPanel templateId="tpl-1" />);
+    fireEvent.click(screen.getByTestId('add-trim-btn'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('add-trim-dialog')).toBeInTheDocument();
+    });
+
+    // Set TRIM_FIXED and a negative quantity
+    fireEvent.change(screen.getByTestId('quantity-rule-select'), { target: { value: 'TRIM_FIXED' } });
+    fireEvent.change(screen.getByTestId('fixed-quantity-input'), { target: { value: '-5' } });
+
+    fireEvent.click(screen.getByTestId('confirm-btn'));
+
+    await waitFor(() => {
+      expect(mockInsert).toHaveBeenCalled();
+    });
+
+    // Verify the insert was called with fixed_quantity clamped to 0
+    const insertArg = mockInsert.mock.calls[0][0];
+    expect(insertArg.fixed_quantity).toBe(0);
+  });
 });
