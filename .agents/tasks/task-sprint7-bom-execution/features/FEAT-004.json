@@ -1,0 +1,32 @@
+{
+  "id": "FEAT-004",
+  "type": "fix",
+  "description": "Address review issues: implement missing geometry validations, fix snapshot ID, add integration tests, add dialog error handling, fix catch block, fix reconciliation traceability, make aspect ratio configurable",
+  "status": "in_progress",
+  "steps": [
+    "Implement 9 missing geometry validation rules in validateGeometry (panel/gap-level checks, total dimension checks)",
+    "Fix GenerateActualBomButton to use actual snapshot ID from projectStore.currentSnapshot",
+    "Add integration tests that exercise runPipeline through the store with realistic mocked Supabase responses",
+    "Add error handling to all three dialog writes (check returned { error } and show error state)",
+    "Fix catch block in runPipeline to surface error info in pipelineErrors",
+    "Fix reconciliation to preserve per-zone traceability (use componentId in merge key)",
+    "Make aspect ratio warning configurable - only emit when maxAspectRatio is explicitly set"
+  ],
+  "acceptance_criteria": [
+    "All 9 geometry error codes are emitted by validateGeometry with appropriate checks",
+    "GenerateActualBomButton uses currentSnapshot.id as snapshotId, not project ID",
+    "Integration tests exercise runPipeline through store with mocked Supabase",
+    "All three dialogs check { error } from insert and show error state on failure",
+    "runPipeline catch block surfaces structured errors in pipelineErrors",
+    "reconcileBomLines preserves per-zone traceability via componentId in merge key",
+    "Aspect ratio warning only fires when maxAspectRatio is explicitly configured",
+    "TypeScript strict mode passes",
+    "All tests pass"
+  ],
+  "verification": [
+    "cd frontend && unset NODE_OPTIONS && npx tsc --noEmit",
+    "cd frontend && unset NODE_OPTIONS && npx vitest --run"
+  ],
+  "blocked_reason": null,
+  "findings": null
+}

@@ -39,7 +39,10 @@ const makeProject = (overrides: Partial<Project> = {}): Project => ({
 describe('GenerateActualBomButton', () => {
   beforeEach(() => {
     useCanvasStore.setState({ mode: CanvasMode.CONSULTANT });
-    useProjectStore.setState({ currentProject: makeProject() });
+    useProjectStore.setState({
+      currentProject: makeProject(),
+      currentSnapshot: { id: 'snap-1', project_id: 'proj-1', template_id: 'tpl-1', snapshot_data: {}, created_by: 'user-1', created_at: '2024-01-01T00:00:00Z', version: 1 },
+    });
     useBomStore.setState({
       pipelineStatus: 'idle',
       pipelineErrors: [],
@@ -61,14 +64,14 @@ describe('GenerateActualBomButton', () => {
     expect(screen.queryByTestId('generate-actual-bom-btn')).not.toBeInTheDocument();
   });
 
-  it('should call runPipeline on click', () => {
+  it('should call runPipeline with snapshot ID on click', () => {
     const mockRunPipeline = vi.fn().mockResolvedValue(undefined);
     useBomStore.setState({ runPipeline: mockRunPipeline } as unknown as Parameters<typeof useBomStore.setState>[0]);
 
     render(<GenerateActualBomButton />);
     fireEvent.click(screen.getByTestId('generate-actual-bom-btn'));
 
-    expect(mockRunPipeline).toHaveBeenCalledWith('proj-1', 'proj-1');
+    expect(mockRunPipeline).toHaveBeenCalledWith('proj-1', 'snap-1');
   });
 
   it('should be disabled while pipeline is running', () => {
@@ -80,13 +83,21 @@ describe('GenerateActualBomButton', () => {
     expect(screen.getByText('Running...')).toBeInTheDocument();
   });
 
-  it('should be enabled when pipeline is idle', () => {
+  it('should be disabled when no snapshot is available', () => {
+    useProjectStore.setState({ currentSnapshot: null });
+
+    render(<GenerateActualBomButton />);
+    const btn = screen.getByTestId('generate-actual-bom-btn');
+    expect(btn).toBeDisabled();
+  });
+
+  it('should be enabled when pipeline is idle and snapshot is available', () => {
     render(<GenerateActualBomButton />);
     const btn = screen.getByTestId('generate-actual-bom-btn');
     expect(btn).not.toBeDisabled();
   });
 
-  it('should be enabled when pipeline is success', () => {
+  it('should be enabled when pipeline is success and snapshot is available', () => {
     useBomStore.setState({ pipelineStatus: 'success' });
 
     render(<GenerateActualBomButton />);

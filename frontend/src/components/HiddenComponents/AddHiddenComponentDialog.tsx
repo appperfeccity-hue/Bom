@@ -30,9 +30,14 @@ export function AddHiddenComponentDialog({
   const [conditionValue, setConditionValue] = useState('');
   const [quantityRule, setQuantityRule] = useState<QuantityRule>('FIXED');
   const [fixedValue, setFixedValue] = useState('');
+  const [writeError, setWriteError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   const handleConfirm = async () => {
     if (!skuId.trim()) return;
+
+    setWriteError(null);
+    setIsSaving(true);
 
     let condition: Record<string, unknown> | null = null;
     if (triggerType === 'CONDITION') {
@@ -45,7 +50,7 @@ export function AddHiddenComponentDialog({
 
     const fixedNum = fixedValue ? Number(fixedValue) : null;
 
-    await fromTable('template_hidden_component').insert({
+    const { error } = await fromTable('template_hidden_component').insert({
       template_id: templateId,
       sku_id: skuId.trim(),
       trigger_type: triggerType,
@@ -54,6 +59,13 @@ export function AddHiddenComponentDialog({
       fixed_value: fixedNum,
       created_by: user?.id ?? null,
     });
+
+    setIsSaving(false);
+
+    if (error) {
+      setWriteError(typeof error === 'object' && 'message' in error ? (error as { message: string }).message : 'Failed to save hidden component');
+      return;
+    }
 
     onAdded();
   };
@@ -198,6 +210,15 @@ export function AddHiddenComponentDialog({
           </div>
         )}
 
+        {writeError && (
+          <div
+            data-testid="write-error"
+            style={{ marginBottom: '12px', padding: '8px', backgroundColor: '#ffebee', color: '#c62828', borderRadius: '4px', fontSize: '12px' }}
+          >
+            {writeError}
+          </div>
+        )}
+
         <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
           <button
             data-testid="cancel-btn"
@@ -216,7 +237,7 @@ export function AddHiddenComponentDialog({
           <button
             data-testid="confirm-btn"
             onClick={handleConfirm}
-            disabled={!isValid}
+            disabled={!isValid || isSaving}
             style={{
               padding: '6px 16px',
               fontSize: '13px',
@@ -224,11 +245,11 @@ export function AddHiddenComponentDialog({
               borderRadius: '4px',
               backgroundColor: '#1976d2',
               color: '#fff',
-              cursor: !isValid ? 'not-allowed' : 'pointer',
-              opacity: !isValid ? 0.5 : 1,
+              cursor: !isValid || isSaving ? 'not-allowed' : 'pointer',
+              opacity: !isValid || isSaving ? 0.5 : 1,
             }}
           >
-            Confirm
+            {isSaving ? 'Saving...' : 'Confirm'}
           </button>
         </div>
       </div>

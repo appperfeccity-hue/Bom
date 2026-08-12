@@ -10,6 +10,7 @@ export function ValidationResultsPanel() {
   const pipelineStatus = useBomStore((s) => s.pipelineStatus);
   const pipelineErrors = useBomStore((s) => s.pipelineErrors);
   const pipelineWarnings = useBomStore((s) => s.pipelineWarnings);
+  const storeError = useBomStore((s) => s.error);
 
   if (pipelineStatus === 'idle' || pipelineStatus === 'running') {
     return null;
@@ -85,6 +86,18 @@ export function ValidationResultsPanel() {
               </li>
             ))}
           </ul>
+        </div>
+      )}
+
+      {/* Store-level error (when pipeline errors are empty but a fetch error occurred) */}
+      {pipelineErrors.length === 0 && storeError && pipelineStatus === 'blocked' && (
+        <div data-testid="pipeline-fetch-error" style={{ marginTop: '8px' }}>
+          <div style={{ fontSize: '12px', fontWeight: 600, color: '#c62828', marginBottom: '4px' }}>
+            Error
+          </div>
+          <div style={{ color: '#c62828', fontSize: '12px' }}>
+            {storeError}
+          </div>
         </div>
       )}
     </div>

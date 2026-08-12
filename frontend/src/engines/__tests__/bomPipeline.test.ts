@@ -330,7 +330,7 @@ describe('bomPipeline', () => {
       expect(output.actualBomLines).toHaveLength(0);
     });
 
-    it('should merge BOM lines with same SKU and calculation rule', () => {
+    it('should keep BOM lines separate per zone for traceability', () => {
       const input = createValidInput({
         snapshotData: {
           zones: [
@@ -365,13 +365,16 @@ describe('bomPipeline', () => {
       });
       const output = runBomPipeline(input);
       expect(output.status).toBe('SUCCESS');
-      // Same SKU + same calculation rule should be merged
+      // Same SKU + same calculation rule but different componentId keeps lines separate
       const panelLines = output.actualBomLines.filter(
         (l) => l.calculationRule === 'WALL_PANEL'
       );
-      expect(panelLines).toHaveLength(1);
-      // Merged quantity should be sum of both zones
+      expect(panelLines).toHaveLength(2);
+      expect(panelLines[0].componentId).toBe('z1');
+      expect(panelLines[1].componentId).toBe('z2');
+      // Each line has its own quantity
       expect(panelLines[0].quantity).toBeGreaterThan(0);
+      expect(panelLines[1].quantity).toBeGreaterThan(0);
     });
   });
 });

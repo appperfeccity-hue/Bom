@@ -125,6 +125,13 @@ export interface BomConfiguration {
   maxZoneCount?: number;
   minZoneDimension?: number;
   maxAspectRatio?: number;
+  maxZoneDimension?: number;
+  minGap?: number;
+  maxGap?: number;
+  minPanelDimension?: number;
+  maxPanelDimension?: number;
+  minRetainedWidth?: number;
+  checkTotalDimensions?: boolean;
 }
 
 export interface BomRuleSet {
@@ -232,6 +239,10 @@ export function runBomPipeline(input: BomPipelineInput): BomPipelineOutput {
     y: z.y,
     width: z.width,
     height: z.height,
+    panelWidth: z.panelWidth,
+    panelHeight: z.panelHeight,
+    gapHorizontal: z.gapHorizontal,
+    gapVertical: z.gapVertical,
   }));
 
   const wallDimensions: WallDimensions = {
@@ -240,6 +251,13 @@ export function runBomPipeline(input: BomPipelineInput): BomPipelineOutput {
     maxZoneCount: input.configuration.maxZoneCount,
     minZoneDimension: input.configuration.minZoneDimension,
     maxAspectRatio: input.configuration.maxAspectRatio,
+    maxZoneDimension: input.configuration.maxZoneDimension,
+    minGap: input.configuration.minGap,
+    maxGap: input.configuration.maxGap,
+    minPanelDimension: input.configuration.minPanelDimension,
+    maxPanelDimension: input.configuration.maxPanelDimension,
+    minRetainedWidth: input.configuration.minRetainedWidth,
+    checkTotalDimensions: input.configuration.checkTotalDimensions,
   };
 
   const geoResult = validateGeometry(geometryZones, wallDimensions);
@@ -561,11 +579,11 @@ function runQuantityCalculation(
 }
 
 function reconcileBomLines(lines: BomOutputLine[]): BomOutputLine[] {
-  // Group lines by skuId and merge quantities for same SKU
+  // Group lines by skuId, calculationRule, AND componentId to preserve per-zone traceability
   const mergedMap = new Map<string, BomOutputLine>();
 
   for (const line of lines) {
-    const key = `${line.skuId}-${line.calculationRule}`;
+    const key = `${line.skuId}-${line.calculationRule}-${line.componentId}`;
     const existing = mergedMap.get(key);
     if (existing) {
       existing.quantity += line.quantity;

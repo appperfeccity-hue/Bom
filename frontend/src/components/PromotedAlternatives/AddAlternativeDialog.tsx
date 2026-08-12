@@ -27,6 +27,8 @@ export function AddAlternativeDialog({
   const [skus, setSkus] = useState<SkuMaster[]>([]);
   const [selectedSkuId, setSelectedSkuId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [writeError, setWriteError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Suppress unused variable warning - templateId is used conceptually for scoping
   void templateId;
@@ -55,11 +57,23 @@ export function AddAlternativeDialog({
 
   const handleConfirm = async () => {
     if (!selectedZoneId || !selectedSkuId) return;
-    await fromTable('template_zone_alternative').insert({
+
+    setWriteError(null);
+    setIsSaving(true);
+
+    const { error } = await fromTable('template_zone_alternative').insert({
       zone_id: selectedZoneId,
       sku_id: selectedSkuId,
       promoted_by: user?.id ?? null,
     });
+
+    setIsSaving(false);
+
+    if (error) {
+      setWriteError(typeof error === 'object' && 'message' in error ? (error as { message: string }).message : 'Failed to save alternative');
+      return;
+    }
+
     onAdded();
   };
 
@@ -143,6 +157,15 @@ export function AddAlternativeDialog({
           ))}
         </div>
 
+        {writeError && (
+          <div
+            data-testid="write-error"
+            style={{ marginBottom: '12px', padding: '8px', backgroundColor: '#ffebee', color: '#c62828', borderRadius: '4px', fontSize: '12px' }}
+          >
+            {writeError}
+          </div>
+        )}
+
         <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
           <button
             data-testid="cancel-btn"
@@ -161,7 +184,7 @@ export function AddAlternativeDialog({
           <button
             data-testid="confirm-btn"
             onClick={handleConfirm}
-            disabled={!selectedZoneId || !selectedSkuId}
+            disabled={!selectedZoneId || !selectedSkuId || isSaving}
             style={{
               padding: '6px 16px',
               fontSize: '13px',
@@ -169,11 +192,11 @@ export function AddAlternativeDialog({
               borderRadius: '4px',
               backgroundColor: '#1976d2',
               color: '#fff',
-              cursor: !selectedZoneId || !selectedSkuId ? 'not-allowed' : 'pointer',
-              opacity: !selectedZoneId || !selectedSkuId ? 0.5 : 1,
+              cursor: !selectedZoneId || !selectedSkuId || isSaving ? 'not-allowed' : 'pointer',
+              opacity: !selectedZoneId || !selectedSkuId || isSaving ? 0.5 : 1,
             }}
           >
-            Confirm
+            {isSaving ? 'Saving...' : 'Confirm'}
           </button>
         </div>
       </div>

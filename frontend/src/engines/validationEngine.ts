@@ -60,6 +60,14 @@ export interface GeometryZone {
   y: number;
   width: number;
   height: number;
+  /** Panel width within this zone (for panel-level checks) */
+  panelWidth?: number;
+  /** Panel height within this zone (for panel-level checks) */
+  panelHeight?: number;
+  /** Horizontal gap between panels */
+  gapHorizontal?: number;
+  /** Vertical gap between panels */
+  gapVertical?: number;
 }
 
 export interface WallDimensions {
@@ -68,6 +76,20 @@ export interface WallDimensions {
   maxZoneCount?: number;
   minZoneDimension?: number;
   maxAspectRatio?: number;
+  /** Maximum allowed zone dimension */
+  maxZoneDimension?: number;
+  /** Minimum gap between panels */
+  minGap?: number;
+  /** Maximum gap between panels */
+  maxGap?: number;
+  /** Minimum panel dimension */
+  minPanelDimension?: number;
+  /** Maximum panel dimension */
+  maxPanelDimension?: number;
+  /** Minimum retained panel width after trim */
+  minRetainedWidth?: number;
+  /** Whether to check total width/height match against wall dimensions */
+  checkTotalDimensions?: boolean;
 }
 
 export interface ConstructionLine {
@@ -283,7 +305,6 @@ export function validateGeometry(
   }
 
   const minDim = wallDimensions.minZoneDimension ?? 100;
-  const maxAspect = wallDimensions.maxAspectRatio ?? 10;
 
   for (const zone of zones) {
     // Negative dimension
@@ -332,6 +353,20 @@ export function validateGeometry(
       );
     }
 
+    // Zone too large (dimension-based) - only checked when maxZoneDimension configured
+    if (wallDimensions.maxZoneDimension !== undefined) {
+      if (zone.width > wallDimensions.maxZoneDimension || zone.height > wallDimensions.maxZoneDimension) {
+        allErrors.push(
+          createPipelineError(ErrorCode.GEO_ZONE_TOO_LARGE, {
+            zoneId: zone.zoneId,
+            width: zone.width,
+            height: zone.height,
+            maxDimension: wallDimensions.maxZoneDimension,
+          })
+        );
+      }
+    }
+
     // Zone exceeds wall
     if (
       zone.x + zone.width > wallDimensions.width ||
@@ -362,17 +397,124 @@ export function validateGeometry(
       );
     }
 
-    // Aspect ratio check
-    if (zone.width > 0 && zone.height > 0) {
+    // Aspect ratio check - only emit when maxAspectRatio is explicitly configured
+    if (wallDimensions.maxAspectRatio !== undefined && zone.width > 0 && zone.height > 0) {
       const ratio = Math.max(zone.width / zone.height, zone.height / zone.width);
-      if (ratio > maxAspect) {
+      if (ratio > wallDimensions.maxAspectRatio) {
         allErrors.push(
           createPipelineError(ErrorCode.GEO_ZONE_ASPECT_RATIO, {
             zoneId: zone.zoneId,
             aspectRatio: ratio,
-            maxAspectRatio: maxAspect,
+            maxAspectRatio: wallDimensions.maxAspectRatio,
           })
         );
+      }
+    }
+
+    // Panel-level checks (only when panel dimensions are provided)
+    if (zone.panelWidth !== undefined && zone.panelHeight !== undefined) {
+      // Panel too small
+      if (wallDimensions.minPanelDimension !== undefined) {
+        if (zone.panelWidth < wallDimensions.minPanelDimension || zone.panelHeight < wallDimensions.minPanelDimension) {
+          allErrors.push(
+            createPipelineError(ErrorCode.GEO_PANEL_TOO_SMALL, {
+              zoneId: zone.zoneId,
+              panelWidth: zone.panelWidth,
+              panelHeight: zone.panelHeight,
+              minPanelDimension: wallDimensions.minPanelDimension,
+            })
+          );
+        }
+      }
+
+      // Panel too large
+      if (wallDimensions.maxPanelDimension !== undefined) {
+        if (zone.panelWidth > wallDimensions.maxPanelDimension || zone.panelHeight > wallDimensions.maxPanelDimension) {
+          allErrors.push(
+            createPipelineError(ErrorCode.GEO_PANEL_TOO_LARGE, {
+              zoneId: zone.zoneId,
+              panelWidth: zone.panelWidth,
+              panelHeight: zone.panelHeight,
+              maxPanelDimension: wallDimensions.maxPanelDimension,
+            })
+          );
+        }
+      }
+
+      // Retained width below minimum: check if the remaining width after full panels is below threshold
+      if (wallDimensions.minRetainedWidth !== undefined && zone.panelWidth > 0) {
+        const gapH = zone.gapHorizontal ?? 0;
+        const effectivePanelWidth = zone.panelWidth + gapH;
+        const numFullPanels = Math.floor(zone.width / effectivePanelWidth);
+        if (numFullPanels > 0) {
+          const usedWidth = numFullPanels * effectivePanelWidth - gapH;
+          const retained = zone.width - usedWidth;
+          if (retained > 0 && retained < wallDimensions.minRetainedWidth) {
+            allErrors.push(
+              createPipelineError(ErrorCode.GEO_RETAINED_BELOW_MIN, {
+                zoneId: zone.zoneId,
+                retainedWidth: retained,
+                minRetainedWidth: wallDimensions.minRetainedWidth,
+              })
+            );
+          }
+        }
+      }
+
+      // Trim exceeds panel: check if trim amount exceeds the panel dimension
+      if (zone.panelWidth > 0) {
+        const gapH = zone.gapHorizontal ?? 0;
+        const effectivePanelWidth = zone.panelWidth + gapH;
+        const numFullPanels = Math.floor(zone.width / effectivePanelWidth);
+        if (numFullPanels > 0) {
+          const usedWidth = numFullPanels * effectivePanelWidth - gapH;
+          const trimAmount = zone.width - usedWidth;
+          if (trimAmount > zone.panelWidth) {
+            allErrors.push(
+              createPipelineError(ErrorCode.GEO_TRIM_EXCEEDS_PANEL, {
+                zoneId: zone.zoneId,
+                trimAmount,
+                panelWidth: zone.panelWidth,
+              })
+            );
+          }
+        }
+      }
+    }
+
+    // Gap checks (only when gap values are provided)
+    if (zone.gapHorizontal !== undefined || zone.gapVertical !== undefined) {
+      const gapH = zone.gapHorizontal ?? 0;
+      const gapV = zone.gapVertical ?? 0;
+
+      // Gap too small
+      if (wallDimensions.minGap !== undefined) {
+        if ((zone.gapHorizontal !== undefined && gapH < wallDimensions.minGap) ||
+            (zone.gapVertical !== undefined && gapV < wallDimensions.minGap)) {
+          allErrors.push(
+            createPipelineError(ErrorCode.GEO_GAP_TOO_SMALL, {
+              zoneId: zone.zoneId,
+              gapHorizontal: gapH,
+              gapVertical: gapV,
+              minGap: wallDimensions.minGap,
+            })
+          );
+        }
+      }
+
+      // Gap too large
+      if (wallDimensions.maxGap !== undefined) {
+        if ((zone.gapHorizontal !== undefined && gapH > wallDimensions.maxGap) ||
+            (zone.gapVertical !== undefined && gapV > wallDimensions.maxGap)) {
+          allErrors.push(
+            createPipelineError(ErrorCode.GEO_GAP_TOO_LARGE, {
+              zoneId: zone.zoneId,
+              gapHorizontal: gapH,
+              gapVertical: gapV,
+              maxGap: wallDimensions.maxGap,
+            })
+          );
+        }
       }
     }
   }
@@ -395,6 +537,32 @@ export function validateGeometry(
           })
         );
       }
+    }
+  }
+
+  // Total dimension consistency checks (only when checkTotalDimensions is true)
+  if (wallDimensions.checkTotalDimensions && zones.length > 0) {
+    const totalZoneWidth = zones.reduce((sum, z) => sum + z.width, 0);
+    const totalZoneHeight = zones.reduce((max, z) => Math.max(max, z.y + z.height), 0);
+
+    if (Math.abs(totalZoneWidth - wallDimensions.width) > 1) {
+      allErrors.push(
+        createPipelineError(ErrorCode.GEO_TOTAL_WIDTH_MISMATCH, {
+          totalZoneWidth,
+          wallWidth: wallDimensions.width,
+          difference: Math.abs(totalZoneWidth - wallDimensions.width),
+        })
+      );
+    }
+
+    if (Math.abs(totalZoneHeight - wallDimensions.height) > 1) {
+      allErrors.push(
+        createPipelineError(ErrorCode.GEO_TOTAL_HEIGHT_MISMATCH, {
+          totalZoneHeight,
+          wallHeight: wallDimensions.height,
+          difference: Math.abs(totalZoneHeight - wallDimensions.height),
+        })
+      );
     }
   }
 

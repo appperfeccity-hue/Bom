@@ -22,6 +22,7 @@ import type {
   HiddenComponentInput,
 } from '@/engines/types';
 import type { PipelineError } from '@/engines/errorCatalogue';
+import { ErrorCode, ErrorSeverity, ErrorCategory } from '@/engines/errorCatalogue';
 import { runBomPipeline } from '@/engines/bomPipeline';
 import type { BomPipelineInput, BomOutputLine } from '@/engines/bomPipeline';
 
@@ -524,13 +525,20 @@ export const useBomStore = create<BomStore>((set, get) => ({
         pipelineProgress: null,
       });
     } catch (err) {
+      const errorMessage = (err as Error).message;
       set({
         pipelineStatus: 'blocked',
-        pipelineErrors: [],
+        pipelineErrors: [{
+          code: ErrorCode.GEO_WALL_DIMENSION_INVALID,
+          severity: ErrorSeverity.BLOCKING,
+          category: ErrorCategory.GEOMETRY,
+          message: `Pipeline failed: ${errorMessage}`,
+          context: { source: 'supabase_fetch', originalError: errorMessage },
+        }],
         pipelineWarnings: [],
         pipelineProgress: null,
         pipelineOutputLines: [],
-        error: (err as Error).message,
+        error: errorMessage,
       });
     }
   },

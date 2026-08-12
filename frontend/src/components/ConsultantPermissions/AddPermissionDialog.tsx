@@ -36,9 +36,14 @@ export function AddPermissionDialog({
   const [minValue, setMinValue] = useState('');
   const [maxValue, setMaxValue] = useState('');
   const [allowedValues, setAllowedValues] = useState('');
+  const [writeError, setWriteError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   const handleConfirm = async () => {
     if (!parameterName) return;
+
+    setWriteError(null);
+    setIsSaving(true);
 
     let constraints: Record<string, unknown> = {};
     if (permissionType === 'RANGE') {
@@ -55,13 +60,20 @@ export function AddPermissionDialog({
       };
     }
 
-    await fromTable('template_consultant_permission').insert({
+    const { error } = await fromTable('template_consultant_permission').insert({
       template_id: templateId,
       parameter_name: parameterName,
       permission_type: permissionType,
       constraints,
       created_by: user?.id ?? null,
     });
+
+    setIsSaving(false);
+
+    if (error) {
+      setWriteError(typeof error === 'object' && 'message' in error ? (error as { message: string }).message : 'Failed to save permission');
+      return;
+    }
 
     onAdded();
   };
@@ -176,6 +188,15 @@ export function AddPermissionDialog({
           </div>
         )}
 
+        {writeError && (
+          <div
+            data-testid="write-error"
+            style={{ marginBottom: '12px', padding: '8px', backgroundColor: '#ffebee', color: '#c62828', borderRadius: '4px', fontSize: '12px' }}
+          >
+            {writeError}
+          </div>
+        )}
+
         <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
           <button
             data-testid="cancel-btn"
@@ -194,7 +215,7 @@ export function AddPermissionDialog({
           <button
             data-testid="confirm-btn"
             onClick={handleConfirm}
-            disabled={!isValid}
+            disabled={!isValid || isSaving}
             style={{
               padding: '6px 16px',
               fontSize: '13px',
@@ -202,11 +223,11 @@ export function AddPermissionDialog({
               borderRadius: '4px',
               backgroundColor: '#1976d2',
               color: '#fff',
-              cursor: !isValid ? 'not-allowed' : 'pointer',
-              opacity: !isValid ? 0.5 : 1,
+              cursor: !isValid || isSaving ? 'not-allowed' : 'pointer',
+              opacity: !isValid || isSaving ? 0.5 : 1,
             }}
           >
-            Confirm
+            {isSaving ? 'Saving...' : 'Confirm'}
           </button>
         </div>
       </div>

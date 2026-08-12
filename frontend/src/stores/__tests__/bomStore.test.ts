@@ -661,6 +661,8 @@ describe('bomStore', () => {
       const state = useBomStore.getState();
       expect(state.pipelineStatus).toBe('blocked');
       expect(state.error).toBe('Snapshot not found');
+      expect(state.pipelineErrors).toHaveLength(1);
+      expect(state.pipelineErrors[0].message).toContain('Snapshot not found');
     });
 
     it('should store warnings from pipeline output', async () => {

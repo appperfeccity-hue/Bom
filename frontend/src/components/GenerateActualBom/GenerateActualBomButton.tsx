@@ -12,6 +12,7 @@ export function GenerateActualBomButton() {
   const pipelineStatus = useBomStore((s) => s.pipelineStatus);
   const runPipeline = useBomStore((s) => s.runPipeline);
   const currentProject = useProjectStore((s) => s.currentProject);
+  const currentSnapshot = useProjectStore((s) => s.currentSnapshot);
 
   const isConsultant = mode === CanvasMode.CONSULTANT;
 
@@ -22,15 +23,15 @@ export function GenerateActualBomButton() {
   const isRunning = pipelineStatus === 'running';
 
   const handleClick = () => {
-    if (currentProject) {
-      void runPipeline(currentProject.id, currentProject.id);
+    if (currentProject && currentSnapshot) {
+      void runPipeline(currentProject.id, currentSnapshot.id);
     }
   };
 
   return (
     <button
       onClick={handleClick}
-      disabled={isRunning}
+      disabled={isRunning || !currentSnapshot}
       title="Generate Actual BOM"
       data-testid="generate-actual-bom-btn"
       style={{
@@ -41,8 +42,8 @@ export function GenerateActualBomButton() {
         color: '#ffffff',
         border: 'none',
         borderRadius: '4px',
-        cursor: isRunning ? 'not-allowed' : 'pointer',
-        opacity: isRunning ? 0.7 : 1,
+        cursor: isRunning || !currentSnapshot ? 'not-allowed' : 'pointer',
+        opacity: isRunning || !currentSnapshot ? 0.7 : 1,
       }}
     >
       {isRunning ? 'Running...' : 'Generate Actual BOM'}
