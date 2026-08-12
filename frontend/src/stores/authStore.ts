@@ -84,6 +84,17 @@ export const useAuthStore = create<AuthStore>((set) => ({
   },
 
   subscribeToAuthChanges: () => {
+    // Check initial session immediately to avoid indefinite loading state
+    supabase.auth.getSession().then(({ data }) => {
+      const user = data.session?.user ?? null;
+      set({
+        user,
+        role: extractRole(user),
+        isAuthenticated: !!user,
+        isLoading: false,
+      });
+    });
+
     const { data } = supabase.auth.onAuthStateChange((_event, session) => {
       const user = session?.user ?? null;
       set({

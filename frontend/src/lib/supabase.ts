@@ -12,7 +12,8 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 /**
  * Singleton Supabase client configured with Vite environment variables.
- * Uses the perfecity schema by default.
+ * Note: The perfecity schema is accessed via the schema option on individual
+ * queries since PostgREST may not expose custom schemas by default.
  * If env vars are missing, the client is created with placeholder values
  * and all queries will fail gracefully.
  */
@@ -20,9 +21,6 @@ export const supabase = createClient(
   supabaseUrl ?? 'http://localhost:54321',
   supabaseAnonKey ?? 'placeholder-key',
   {
-    db: {
-      schema: 'perfecity',
-    },
     auth: {
       autoRefreshToken: true,
       persistSession: true,
@@ -37,8 +35,9 @@ export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
 
 /**
  * Helper to query a table in the perfecity schema.
+ * Uses the schema option on the query builder to target perfecity.
  * Returns the query builder. Callers should handle errors from results.
  */
 export function fromTable(table: string) {
-  return supabase.from(table);
+  return supabase.schema('perfecity').from(table);
 }
