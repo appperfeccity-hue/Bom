@@ -1,0 +1,29 @@
+{
+  "id": "FEAT-001",
+  "type": "feat",
+  "description": "Create the error catalogue, validation engine, and BOM pipeline orchestration - the core execution layer for Sprint 7",
+  "status": "in_progress",
+  "steps": [
+    "Create src/engines/errorCatalogue.ts with all structured error codes: 19 geometry errors (GEO_ZONE_OVERLAP, GEO_ZONE_OUTSIDE_WALL, GEO_ZONE_TOO_SMALL, GEO_ZONE_TOO_LARGE, GEO_ZONE_NEGATIVE_DIMENSION, GEO_ZONE_INVALID_POSITION, GEO_ZONE_EXCEEDS_WALL, GEO_GAP_TOO_SMALL, GEO_GAP_TOO_LARGE, GEO_PANEL_TOO_SMALL, GEO_PANEL_TOO_LARGE, GEO_RETAINED_BELOW_MIN, GEO_TRIM_EXCEEDS_PANEL, GEO_TOTAL_WIDTH_MISMATCH, GEO_TOTAL_HEIGHT_MISMATCH, GEO_ZONE_COUNT_EXCEEDED, GEO_ZONE_ASPECT_RATIO, GEO_WALL_DIMENSION_INVALID, GEO_ZONE_MIN_DIMENSION), 3 construction errors (CONST_MISSING_REQUIRED_COMPONENT, CONST_INVALID_MOUNTING, CONST_STRUCTURE_REQUIRED), 2 compatibility errors (COMPAT_INCOMPATIBLE_SKUS, COMPAT_MISSING_REQUIRED), 3 permission errors (PERM_LOCKED_PARAMETER, PERM_VALUE_OUT_OF_RANGE, PERM_INVALID_SKU_SELECTION), 1 quantity error (QTY_PANEL_NO_VALID_ARRANGEMENT). Each error has code, severity (BLOCKING/WARNING), category, and messageTemplate. Export PipelineError interface and createPipelineError helper.",
+    "Create src/engines/validationEngine.ts implementing 5 validation functions: validatePermissions(snapshotPermissions, consultantActions) - checks against template_consultant_permission rules; checkCompatibility(skuPairs, compatibilityRules) - checks sku_compatibility relationships; validateGeometry(zones, wallDimensions) - implements 19 geometry rules; validateConstruction(bomLines, mountingRules) - checks mounting and structure; validateBom(finalLines) - final coherence checks. Each returns { passed: boolean, errors: PipelineError[], warnings: PipelineError[] }.",
+    "Create src/engines/bomPipeline.ts with BomPipelineInput interface (snapshotData, measurements, configuration, ruleSet, permissions, compatibilityRules) and BomPipelineOutput interface ({ actualBomLines: [], errors: [], warnings: [], status: 'SUCCESS' | 'BLOCKED' }). Implement runBomPipeline() that executes 8 steps in order: (1) Permission Validation, (2) Site Adaptation (calls adaptZonesToSite), (3) SKU Compatibility Check, (4) Geometry Validation, (5) Construction Validation, (6) Quantity Calculation (calls wallPanel/light/furniture/hiddenComponent engines), (7) BOM Reconciliation, (8) Final BOM Validation. Each step that returns blocking errors stops the pipeline and returns BLOCKED status. Warnings accumulate but don't stop execution.",
+    "Update src/engines/index.ts to export runBomPipeline, all validation functions, error catalogue types and helpers.",
+    "Create src/engines/__tests__/errorCatalogue.test.ts - test that all error codes are unique, messageTemplates are non-empty, createPipelineError helper works correctly.",
+    "Create src/engines/__tests__/validationEngine.test.ts - test each validation function: permission violations produce correct errors, incompatible SKUs are detected, geometry violations (overlap, outside wall, too small) produce correct error codes, construction rule violations detected, BOM coherence checks work.",
+    "Create src/engines/__tests__/bomPipeline.test.ts - test full pipeline: (a) happy path with valid input produces SUCCESS, (b) permission violation at step 1 produces BLOCKED with no further steps executed, (c) geometry violation produces BLOCKED with error codes, (d) warnings from non-blocking steps accumulate in output, (e) pipeline chains all engines correctly."
+  ],
+  "acceptance_criteria": [
+    "src/engines/errorCatalogue.ts exports PipelineError interface, ErrorCode enum with 28 codes, createPipelineError function",
+    "src/engines/validationEngine.ts exports validatePermissions, checkCompatibility, validateGeometry, validateConstruction, validateBom - all pure functions",
+    "src/engines/bomPipeline.ts exports runBomPipeline with 8-step sequential pipeline and BLOCKED/SUCCESS semantics",
+    "All new engine tests pass: npx vitest --run src/engines/__tests__/errorCatalogue.test.ts src/engines/__tests__/validationEngine.test.ts src/engines/__tests__/bomPipeline.test.ts",
+    "TypeScript strict mode passes: npx tsc --noEmit",
+    "Existing 517 tests still pass"
+  ],
+  "verification": [
+    "cd frontend && unset NODE_OPTIONS && npx tsc --noEmit",
+    "cd frontend && unset NODE_OPTIONS && npx vitest --run"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

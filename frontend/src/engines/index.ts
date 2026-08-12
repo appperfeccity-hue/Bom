@@ -34,3 +34,51 @@ export type {
   SiteAdaptationZoneOutput,
   SiteAdaptationOutput,
 } from './types';
+
+// --- Error Catalogue ---
+export {
+  ErrorCode,
+  ErrorSeverity,
+  ErrorCategory,
+  ERROR_DEFINITIONS,
+  createPipelineError,
+} from './errorCatalogue';
+export type { PipelineError } from './errorCatalogue';
+
+// --- Validation Engine ---
+export {
+  validatePermissions,
+  checkCompatibility,
+  validateGeometry,
+  validateConstruction,
+  validateBom,
+} from './validationEngine';
+export type {
+  ValidationResult,
+  PermissionRule,
+  ConsultantAction,
+  SkuPair,
+  CompatibilityRule,
+  GeometryZone,
+  WallDimensions,
+  ConstructionLine,
+  ConstructionRule,
+  BomValidationLine,
+} from './validationEngine';
+
+// --- BOM Pipeline ---
+export { runBomPipeline } from './bomPipeline';
+export type {
+  BomPipelineInput,
+  BomPipelineOutput,
+  BomPipelineStatus,
+  BomOutputLine,
+  SnapshotData,
+  SnapshotZone,
+  SnapshotLighting,
+  SnapshotFurniture,
+  SnapshotHiddenComponent,
+  BomMeasurements,
+  BomConfiguration,
+  BomRuleSet,
+} from './bomPipeline';
