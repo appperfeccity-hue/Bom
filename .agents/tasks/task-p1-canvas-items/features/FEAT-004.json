@@ -2,7 +2,7 @@
   "id": "FEAT-004",
   "type": "feat",
   "description": "P1-C: Canvas layers - Lighting (#22), Furniture (#24), and Trim (#26) layers. LED strips along edges color-coded by mounting type. Positioned rectangles with labels for furniture. Border lines (thick for physical, dashed for geometry) for trims.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "1. Create frontend/src/canvas/layers/LightingLayer.tsx: Controlled by CanvasLayer.LIGHTING visibility. Reads lighting array from useProjectStore. For each TemplateLighting item, render LED strip as a Konva Line/Rect along the edge defined by x_mm, y_mm, width_mm, height_mm. Color-code by type field (use configuration.mounting_type or type field): e.g., 'CEILING' = warm white (#FFD700), 'WALL' = cool white (#87CEEB), 'UNDER_SHELF' = blue (#4FC3F7), default = white. Convert coordinates using wallHeight. listening={false}. Render in a <Layer>.",
     "2. Create frontend/src/canvas/layers/FurnitureLayer.tsx: Controlled by CanvasLayer.FURNITURE visibility. Reads furniture array from useProjectStore. For each TemplateFurniture item, render a positioned Konva Rect at (x_mm, screenY) with width_mm x height_mm, filled with a light gray (#f0f0f0) with 1px border. Apply rotation_deg via Konva's rotation prop (rotate around center using offset). Add a Konva Text label with the furniture name centered in the rect. listening={false}.",
@@ -24,5 +24,5 @@
     "cd /projects/sandbox/Bom/frontend && NODE_OPTIONS='' npx vitest --run"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All 814 tests pass (21 new). Build succeeds. strokeWidth/offsetX/offsetY are camelCase Konva props that React does not render as DOM attributes on div elements in the mock, so tests verify stroke color and structure rather than numeric strokeWidth values."
 }
