@@ -2,12 +2,14 @@ import { useEffect } from 'react';
 import { useCanvasStore } from '@/stores/canvasStore';
 import { useAuthStore } from '@/stores/authStore';
 import { useSkuStore } from '@/stores/skuStore';
+import { useBomStore } from '@/stores/bomStore';
 import { CanvasMode } from '@/types/database';
 import { CanvasContainer } from '@/canvas/CanvasContainer';
 import { Toolbar } from '@/components/Toolbar';
 import { ZonePropertiesPanel } from '@/components/ZonePropertiesPanel';
 import { MeasurementPanel } from '@/components/MeasurementPanel';
 import { SkuBrowser } from '@/components/SkuBrowser';
+import { BomPanel } from '@/components/BomPanel';
 
 function App() {
   const mode = useCanvasStore((s) => s.mode);
@@ -15,6 +17,8 @@ function App() {
   const selection = useCanvasStore((s) => s.selection);
   const subscribeToAuthChanges = useAuthStore((s) => s.subscribeToAuthChanges);
   const isBrowserOpen = useSkuStore((s) => s.isBrowserOpen);
+  const isBomPanelOpen = useBomStore((s) => s.isBomPanelOpen);
+  const openBomPanel = useBomStore((s) => s.openBomPanel);
 
   // Subscribe to Supabase auth state changes on mount
   useEffect(() => {
@@ -79,6 +83,21 @@ function App() {
           >
             Consultant
           </button>
+          <button
+            onClick={openBomPanel}
+            style={{
+              padding: '4px 12px',
+              fontSize: '13px',
+              fontWeight: 500,
+              backgroundColor: '#f3e5f5',
+              border: '1px solid #ccc',
+              borderRadius: '4px',
+              cursor: 'pointer',
+            }}
+            data-testid="bom-open-btn"
+          >
+            BOM
+          </button>
         </div>
       </header>
 
@@ -99,6 +118,9 @@ function App() {
 
       {/* SKU Browser overlay */}
       {isBrowserOpen && <SkuBrowser />}
+
+      {/* BOM Panel overlay */}
+      {isBomPanelOpen && <BomPanel />}
     </div>
   );
 }

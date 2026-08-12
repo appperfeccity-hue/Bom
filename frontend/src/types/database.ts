@@ -303,3 +303,127 @@ export interface SkuWithCatalogue {
   catalogueEntry: CatalogueEntry | null;
   thumbnailUrl: string | null;
 }
+
+// --- BOM Enums ---
+
+export enum MasterBomStatus {
+  GENERATED = 'GENERATED',
+  VALIDATED = 'VALIDATED',
+  APPROVED = 'APPROVED',
+  INVALIDATED = 'INVALIDATED',
+}
+
+export enum ActualBomStatus {
+  GENERATED = 'GENERATED',
+  VALIDATED = 'VALIDATED',
+  SUPERSEDED = 'SUPERSEDED',
+}
+
+export enum ReconciliationResultType {
+  UNCHANGED = 'UNCHANGED',
+  QUANTITY_CHANGED = 'QUANTITY_CHANGED',
+  SKU_CHANGED = 'SKU_CHANGED',
+  REMOVED = 'REMOVED',
+  ADDED_BY_TRIGGER = 'ADDED_BY_TRIGGER',
+  UNEXPECTED = 'UNEXPECTED',
+}
+
+// --- BOM Interfaces ---
+
+export interface MasterBom {
+  master_bom_id: string;
+  template_id: string;
+  status: MasterBomStatus;
+  generated_at: string;
+  engine_version: string;
+  rule_set_id: string;
+  approved_by: string | null;
+  approved_at: string | null;
+  created_at: string;
+}
+
+export interface MasterBomLine {
+  master_bom_line_id: string;
+  master_bom_id: string;
+  template_component_id: string;
+  sku_id: string;
+  product_type: ProductType;
+  source_zone_id: string | null;
+  source_relationship_id: string | null;
+  quantity_rule: string;
+  default_quantity: number;
+  unit_of_measure: string;
+  mandatory: boolean;
+  hidden: boolean;
+  calculation_parameters: Record<string, unknown>;
+  parent_bom_line_id: string | null;
+  created_at: string;
+}
+
+export interface ActualBom {
+  actual_bom_id: string;
+  project_id: string;
+  snapshot_id: string;
+  configuration_id: string;
+  status: ActualBomStatus;
+  engine_version: string;
+  rule_set_id: string;
+  input_hash: string;
+  calculation_timestamp: string;
+}
+
+export interface ActualBomLine {
+  actual_bom_line_id: string;
+  actual_bom_id: string;
+  master_bom_line_id: string | null;
+  component_id: string;
+  sku_id: string;
+  product_type: ProductType;
+  quantity: number;
+  required_quantity: number;
+  waste_factor: number;
+  waste_quantity: number;
+  unit_of_measure: string;
+  resolved_dimensions: Record<string, unknown>;
+  calculation_rule: string;
+  calculation_inputs: Record<string, unknown>;
+}
+
+export interface FinalBom {
+  final_bom_id: string;
+  project_id: string;
+  actual_bom_id: string;
+  final_bom_hash: string;
+  engine_version: string;
+  rule_set_id: string;
+  input_hash: string;
+  finalized_at: string;
+  finalized_by: string;
+}
+
+export interface FinalBomLine {
+  final_bom_line_id: string;
+  final_bom_id: string;
+  actual_bom_line_id: string;
+  sku_id: string;
+  sku_code: string;
+  product_type: ProductType;
+  sku_material: string | null;
+  sku_colour: string | null;
+  sku_finish: string | null;
+  sku_dimensions_json: Record<string, unknown> | null;
+  source_zone_id: string | null;
+  source_component_id: string | null;
+  quantity: number;
+  required_quantity: number;
+  waste_quantity: number;
+  unit_of_measure: string;
+  resolved_dimensions: Record<string, unknown>;
+  source_trace: Record<string, unknown>;
+}
+
+export interface ReconciliationLine {
+  master_line: MasterBomLine | null;
+  actual_line: ActualBomLine | null;
+  result_type: ReconciliationResultType;
+}

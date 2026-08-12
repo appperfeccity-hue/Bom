@@ -1,0 +1,37 @@
+{
+  "id": "FEAT-001",
+  "type": "feat",
+  "description": "Add BOM TypeScript interfaces and enums to src/types/database.ts, create bomStore with loading/fetching logic, and add BOM display components (MasterBomTable, ActualBomTable, FinalBomTable, BomReconciliationView, BomStatusBadge) with integration into App.tsx.",
+  "status": "in_progress",
+  "steps": [
+    "Step 1: Add BOM enums and interfaces to src/types/database.ts. Add enums: MasterBomStatus ('GENERATED'|'VALIDATED'|'APPROVED'|'INVALIDATED'), ActualBomStatus ('GENERATED'|'VALIDATED'|'SUPERSEDED'), ReconciliationResultType ('UNCHANGED'|'QUANTITY_CHANGED'|'SKU_CHANGED'|'REMOVED'|'ADDED_BY_TRIGGER'|'UNEXPECTED'). Add interfaces matching DB columns: MasterBom (master_bom_id, template_id, status, generated_at, engine_version, rule_set_id, approved_by, approved_at, created_at), MasterBomLine (master_bom_line_id, master_bom_id, template_component_id, sku_id, product_type, source_zone_id, source_relationship_id, quantity_rule, default_quantity, unit_of_measure, mandatory, hidden, calculation_parameters, parent_bom_line_id, created_at), ActualBom (actual_bom_id, project_id, snapshot_id, configuration_id, status, engine_version, rule_set_id, input_hash, calculation_timestamp), ActualBomLine (actual_bom_line_id, actual_bom_id, master_bom_line_id, component_id, sku_id, product_type, quantity, required_quantity, waste_factor, waste_quantity, unit_of_measure, resolved_dimensions, calculation_rule, calculation_inputs), FinalBom (final_bom_id, project_id, actual_bom_id, final_bom_hash, engine_version, rule_set_id, input_hash, finalized_at, finalized_by), FinalBomLine (final_bom_line_id, final_bom_id, actual_bom_line_id, sku_id, sku_code, product_type, sku_material, sku_colour, sku_finish, sku_dimensions_json, source_zone_id, source_component_id, quantity, required_quantity, waste_quantity, unit_of_measure, resolved_dimensions, source_trace). Add ReconciliationLine interface with fields: master_line, actual_line, result_type.",
+    "Step 2: Create src/stores/bomStore.ts following the pattern in skuStore.ts. State: masterBom (MasterBom | null), masterBomLines (MasterBomLine[]), actualBom (ActualBom | null), actualBomLines (ActualBomLine[]), finalBom (FinalBom | null), finalBomLines (FinalBomLine[]), reconciliation (ReconciliationLine[]), isLoading, error, isBomPanelOpen. Actions: fetchMasterBom(templateId: string) - queries master_bom where template_id=templateId and status='APPROVED' (single), then master_bom_line where master_bom_id. fetchActualBom(projectId: string) - queries actual_bom where project_id=projectId and status != 'SUPERSEDED' order by calculation_timestamp desc limit 1, then actual_bom_line. fetchFinalBom(projectId: string) - queries final_bom where project_id=projectId (unique constraint), then final_bom_line. computeReconciliation() - compares masterBomLines to actualBomLines by master_bom_line_id, assigns result types. openBomPanel(), closeBomPanel(). resetBom().",
+    "Step 3: Create src/components/BomPanel/ directory with: index.ts (barrel export), BomPanel.tsx (container component similar to SkuBrowser - fixed overlay panel, 600px wide, renders MasterBomTable in DESIGNER mode, ActualBomTable + FinalBomTable in CONSULTANT mode), BomStatusBadge.tsx (small colored badge for status values - green for APPROVED, blue for GENERATED, orange for VALIDATED, red for INVALIDATED/SUPERSEDED), BomSectionTable.tsx (reusable table grouped by product_type sections: WALL_PANEL, LIGHT, FURNITURE with summary/totals row per section).",
+    "Step 4: Create MasterBomTable.tsx in src/components/BomPanel/. Shows master BOM lines grouped by product_type (Wall Panel, Light, Furniture sections). Columns: SKU Code, Quantity Rule, Default Qty, Unit, Zone Source, Mandatory. Include a totals row per section showing count of items. Uses BomSectionTable for layout.",
+    "Step 5: Create ActualBomTable.tsx in src/components/BomPanel/. Shows actual BOM lines grouped by product_type. Columns: SKU Code, Quantity, Required Qty, Waste Factor, Waste Qty, Unit, Calculation Rule. Include totals row per section. Note per spec section 91: same SKU in multiple zones stays as separate lines.",
+    "Step 6: Create FinalBomTable.tsx in src/components/BomPanel/. Shows final BOM lines grouped by product_type. Columns: SKU Code, Material, Colour, Finish, Qty, Required, Waste, Unit. Display immutability indicator (lock icon or badge). Shows denormalized SKU data. Include totals row per section.",
+    "Step 7: Create BomReconciliationView.tsx in src/components/BomPanel/. Compares Master vs Actual BOM. Shows each line with its reconciliation result type (UNCHANGED, QUANTITY_CHANGED, SKU_CHANGED, REMOVED, ADDED_BY_TRIGGER, UNEXPECTED) using color coding. Only visible when both masterBomLines and actualBomLines are loaded.",
+    "Step 8: Wire BomPanel into App.tsx. Add a 'BOM' button to the header (next to Designer/Consultant mode buttons) that opens the BOM panel. Import useBomStore and BomPanel. Conditionally render BomPanel when isBomPanelOpen is true. The button triggers openBomPanel() and also calls fetchMasterBom or fetchActualBom/fetchFinalBom depending on current mode and loaded template/project.",
+    "Step 9: Create tests in src/stores/__tests__/bomStore.test.ts following the pattern in skuStore.test.ts. Test: initial state, fetchMasterBom sets loading/calls fromTable with correct params, fetchActualBom, fetchFinalBom, computeReconciliation logic (test each result type), openBomPanel/closeBomPanel, error handling.",
+    "Step 10: Create tests in src/components/BomPanel/__tests__/BomPanel.test.tsx following the SkuBrowser test pattern. Test: renders in DESIGNER mode showing MasterBomTable, renders in CONSULTANT mode showing ActualBomTable and FinalBomTable, BomStatusBadge renders correct colors, section grouping by product_type works, totals row shows correct counts, reconciliation view shows result type badges, close button works."
+  ],
+  "acceptance_criteria": [
+    "TypeScript interfaces for all 6 BOM tables exist in src/types/database.ts with correct field types",
+    "bomStore exports useBomStore with fetch actions for master/actual/final BOM and reconciliation computation",
+    "BomPanel renders MasterBomTable in DESIGNER mode and ActualBomTable + FinalBomTable in CONSULTANT mode",
+    "Tables are grouped by product_type sections (Wall Panel, Light, Furniture) with summary/totals rows",
+    "BomStatusBadge correctly renders colored badges for each status value",
+    "BomReconciliationView shows comparison results with correct result type classification",
+    "App.tsx has a BOM button that opens the panel and triggers data fetching based on mode",
+    "All existing 107 tests continue to pass",
+    "New bomStore tests pass covering state management and fetch logic",
+    "New BomPanel component tests pass covering rendering in both modes",
+    "npx tsc --noEmit passes with zero errors"
+  ],
+  "verification": [
+    "Run: cd /projects/sandbox/Bom/frontend && unset NODE_OPTIONS && npx tsc --noEmit",
+    "Run: cd /projects/sandbox/Bom/frontend && unset NODE_OPTIONS && npx vitest run"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}
