@@ -2,7 +2,7 @@
   "id": "FEAT-003",
   "type": "feat",
   "description": "Build the Konva Canvas component with dual-mode architecture (Designer/Consultant), all canvas layers, zone CRUD for Designer mode, measurement entry for Consultant mode, and wire Supabase persistence with autosave. This is the core visual canvas implementation.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "Create src/canvas/CanvasContainer.tsx - Main canvas wrapper component. Accepts mode prop (DESIGNER/CONSULTANT). Sets up the Konva Stage with responsive sizing (fills parent container). Handles wheel zoom (ctrl+scroll), pan (middle-click drag or space+drag). Renders layers in correct z-order: GRID -> WALL_OUTLINE -> ZONES -> SKU_PLACEMENT -> LIGHTING -> FURNITURE -> TRIMS -> MEASUREMENTS -> SELECTION -> GRID_OVERLAY. Each layer only renders if visible in canvasStore.layerVisibility.",
     "Create src/canvas/layers/GridLayer.tsx - Renders the 100mm grid using Konva Lines. Grid lines are light gray (#e0e0e0), major grid lines (every 500mm) slightly darker. Accounts for current viewport zoom and pan. Uses coordinate transform from lib/coordinates.ts to handle bottom-left origin.",
@@ -42,5 +42,5 @@
     "cd /projects/sandbox/Bom/frontend && npm run build"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All canvas components, interaction hooks, toolbar, and side panels implemented. Tests required mocking @/lib/supabase and react-konva for jsdom environment. The react-konva mock spreads props from components onto divs, causing React warnings about non-boolean attributes (listening, closed, scaleX, etc.) in test stderr - these are harmless as they only occur with the mock, not in actual canvas rendering. 67 tests passing (24 zone constraints, 6 canvas integration, 21 coordinate, 16 canvas store)."
 }
