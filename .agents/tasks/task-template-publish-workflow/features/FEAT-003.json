@@ -2,7 +2,7 @@
   "id": "FEAT-003",
   "type": "feat",
   "description": "Comprehensive tests for the publishStore and PublishWorkflow UI components. Tests cover the workflow state machine, validation logic, and component rendering/interaction.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "Create src/stores/__tests__/publishStore.test.ts following the pattern in bomStore.test.ts. Mock @/lib/supabase. Tests: (1) initial state is correct, (2) runValidation detects missing SKU assignments (set projectStore with zones but empty zoneSku map), (3) runValidation detects zone overlaps (set overlapping zones in projectStore), (4) runValidation detects zone boundary violations, (5) runValidation detects missing metadata, (6) runValidation passes when all gates pass, (7) generateMasterBom inserts and fetches BOM data, (8) approveMasterBom updates status, (9) publishTemplate updates template status, (10) publishTemplate handles DB trigger error, (11) reset returns to initial state.",
     "Create src/components/PublishWorkflow/__tests__/PublishWorkflow.test.tsx following the pattern in BomPanel/__tests__/BomPanel.test.tsx. Mock @/lib/supabase. Tests: (1) does not render when currentStep is IDLE, (2) renders panel when workflow is active, (3) StepIndicator shows correct active step, (4) ValidationResultsPanel shows pass/fail results, (5) Generate BOM button appears only when all validations pass, (6) ApprovalStep shows BOM lines and Approve button, (7) PublishConfirmation shows Publish button, (8) close button resets state, (9) Publish Template button in Toolbar only visible for DESIGNER + DRAFT, (10) error state displayed when publish fails.",
@@ -20,5 +20,5 @@
     "Run: cd /projects/sandbox/Bom/frontend && unset NODE_OPTIONS && npx tsc --noEmit"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All 172 tests pass (145 existing + 27 new). publishStore.test.ts has 15 test cases covering all actions, validation gates, and error paths. PublishWorkflow.test.tsx has 12 test cases covering rendering, interactions, and Toolbar visibility. No TypeScript errors."
 }
