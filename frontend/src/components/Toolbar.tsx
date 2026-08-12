@@ -5,6 +5,7 @@ import { CanvasMode, TemplateStatus, ProjectStatus } from '@/types/database';
 import { CanvasLayer } from '@/types/canvas';
 import { canAddZone } from '@/canvas/utils/zoneConstraints';
 import { FinalizeButton } from '@/components/Finalization/FinalizeButton';
+import { GenerateActualBomButton } from '@/components/GenerateActualBom/GenerateActualBomButton';
 
 /**
  * Top toolbar with mode indicator, zoom controls, grid snap toggle,
@@ -195,6 +196,9 @@ export function Toolbar() {
 
       {/* Finalize button - CONSULTANT mode, VALIDATED status */}
       <FinalizeButton />
+
+      {/* Generate Actual BOM button - CONSULTANT mode */}
+      <GenerateActualBomButton />
 
       {/* Save status */}
       <span

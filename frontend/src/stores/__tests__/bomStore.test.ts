@@ -6,6 +6,13 @@ import {
   ReconciliationResultType,
 } from '@/types/database';
 import type { MasterBomLine, ActualBomLine } from '@/types/database';
+import type { PipelineError } from '@/engines/errorCatalogue';
+import { ErrorCode, ErrorSeverity, ErrorCategory } from '@/engines/errorCatalogue';
+
+// Mock the bomPipeline module
+vi.mock('@/engines/bomPipeline', () => ({
+  runBomPipeline: vi.fn(),
+}));
 
 // Mock the supabase module
 vi.mock('@/lib/supabase', () => {
@@ -41,6 +48,11 @@ describe('bomStore', () => {
       isLoading: false,
       error: null,
       isBomPanelOpen: false,
+      pipelineStatus: 'idle',
+      pipelineErrors: [],
+      pipelineWarnings: [],
+      pipelineProgress: null,
+      pipelineOutputLines: [],
     });
   });
 
@@ -530,6 +542,208 @@ describe('bomStore', () => {
       expect(result.errors[0].productType).toBe('WALL_PANEL');
       expect(result.errors[1].productType).toBe('LIGHT');
       expect(result.errors[2].productType).toBe('FURNITURE');
+    });
+  });
+
+  describe('runPipeline', () => {
+    it('should set pipelineStatus to running at start', async () => {
+      const { fromTable } = await import('@/lib/supabase');
+      const mockedFromTable = vi.mocked(fromTable);
+
+      const mockChain = {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        neq: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockReturnThis(),
+        order: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({ data: { snapshot_data: { zones: [] }, configuration: {}, rule_set: {} }, error: null }),
+      };
+      mockedFromTable.mockReturnValue(mockChain as unknown as ReturnType<typeof fromTable>);
+
+      const { runBomPipeline } = await import('@/engines/bomPipeline');
+      vi.mocked(runBomPipeline).mockReturnValue({
+        actualBomLines: [],
+        errors: [],
+        warnings: [],
+        status: 'SUCCESS',
+      });
+
+      const promise = useBomStore.getState().runPipeline('proj-1', 'snap-1');
+      expect(useBomStore.getState().pipelineStatus).toBe('running');
+      await promise;
+    });
+
+    it('should set pipelineStatus to success when pipeline returns SUCCESS', async () => {
+      const { fromTable } = await import('@/lib/supabase');
+      const mockedFromTable = vi.mocked(fromTable);
+
+      const mockChain = {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        neq: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockReturnThis(),
+        order: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({ data: { snapshot_data: { zones: [] }, configuration: {}, rule_set: {}, wall_width: 2400, wall_height: 1200, template_wall_width: 2400 }, error: null }),
+      };
+      mockedFromTable.mockReturnValue(mockChain as unknown as ReturnType<typeof fromTable>);
+
+      const { runBomPipeline } = await import('@/engines/bomPipeline');
+      vi.mocked(runBomPipeline).mockReturnValue({
+        actualBomLines: [{ lineId: 'l1', componentId: 'c1', skuId: 's1', quantity: 5, requiredQuantity: 5, wasteQuantity: 0, unitOfMeasure: 'PCS', calculationRule: 'FIXED' }],
+        errors: [],
+        warnings: [],
+        status: 'SUCCESS',
+      });
+
+      await useBomStore.getState().runPipeline('proj-1', 'snap-1');
+
+      const state = useBomStore.getState();
+      expect(state.pipelineStatus).toBe('success');
+      expect(state.pipelineErrors).toEqual([]);
+      expect(state.pipelineWarnings).toEqual([]);
+      expect(state.pipelineOutputLines).toHaveLength(1);
+      expect(state.pipelineProgress).toBeNull();
+    });
+
+    it('should set pipelineStatus to blocked when pipeline returns BLOCKED', async () => {
+      const { fromTable } = await import('@/lib/supabase');
+      const mockedFromTable = vi.mocked(fromTable);
+
+      const mockChain = {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        neq: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockReturnThis(),
+        order: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({ data: { snapshot_data: { zones: [] }, configuration: {}, rule_set: {}, wall_width: 2400, wall_height: 1200, template_wall_width: 2400 }, error: null }),
+      };
+      mockedFromTable.mockReturnValue(mockChain as unknown as ReturnType<typeof fromTable>);
+
+      const blockedError: PipelineError = {
+        code: ErrorCode.GEO_ZONE_OVERLAP,
+        severity: ErrorSeverity.BLOCKING,
+        category: ErrorCategory.GEOMETRY,
+        message: 'Zones overlap each other',
+      };
+
+      const { runBomPipeline } = await import('@/engines/bomPipeline');
+      vi.mocked(runBomPipeline).mockReturnValue({
+        actualBomLines: [],
+        errors: [blockedError],
+        warnings: [],
+        status: 'BLOCKED',
+      });
+
+      await useBomStore.getState().runPipeline('proj-1', 'snap-1');
+
+      const state = useBomStore.getState();
+      expect(state.pipelineStatus).toBe('blocked');
+      expect(state.pipelineErrors).toHaveLength(1);
+      expect(state.pipelineErrors[0].code).toBe(ErrorCode.GEO_ZONE_OVERLAP);
+    });
+
+    it('should set pipelineStatus to blocked on fetch error', async () => {
+      const { fromTable } = await import('@/lib/supabase');
+      const mockedFromTable = vi.mocked(fromTable);
+
+      const mockChain = {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        neq: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockReturnThis(),
+        order: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({ data: null, error: { message: 'Snapshot not found' } }),
+      };
+      mockedFromTable.mockReturnValue(mockChain as unknown as ReturnType<typeof fromTable>);
+
+      await useBomStore.getState().runPipeline('proj-1', 'snap-1');
+
+      const state = useBomStore.getState();
+      expect(state.pipelineStatus).toBe('blocked');
+      expect(state.error).toBe('Snapshot not found');
+    });
+
+    it('should store warnings from pipeline output', async () => {
+      const { fromTable } = await import('@/lib/supabase');
+      const mockedFromTable = vi.mocked(fromTable);
+
+      const mockChain = {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        neq: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockReturnThis(),
+        order: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({ data: { snapshot_data: { zones: [] }, configuration: {}, rule_set: {}, wall_width: 2400, wall_height: 1200, template_wall_width: 2400 }, error: null }),
+      };
+      mockedFromTable.mockReturnValue(mockChain as unknown as ReturnType<typeof fromTable>);
+
+      const warning: PipelineError = {
+        code: ErrorCode.GEO_GAP_TOO_SMALL,
+        severity: ErrorSeverity.WARNING,
+        category: ErrorCategory.GEOMETRY,
+        message: 'Gap is too small',
+      };
+
+      const { runBomPipeline } = await import('@/engines/bomPipeline');
+      vi.mocked(runBomPipeline).mockReturnValue({
+        actualBomLines: [],
+        errors: [],
+        warnings: [warning],
+        status: 'SUCCESS',
+      });
+
+      await useBomStore.getState().runPipeline('proj-1', 'snap-1');
+
+      const state = useBomStore.getState();
+      expect(state.pipelineStatus).toBe('success');
+      expect(state.pipelineWarnings).toHaveLength(1);
+      expect(state.pipelineWarnings[0].code).toBe(ErrorCode.GEO_GAP_TOO_SMALL);
+    });
+  });
+
+  describe('resetPipeline', () => {
+    it('should reset all pipeline state to initial values', () => {
+      useBomStore.setState({
+        pipelineStatus: 'success',
+        pipelineErrors: [{
+          code: ErrorCode.GEO_ZONE_OVERLAP,
+          severity: ErrorSeverity.BLOCKING,
+          category: ErrorCategory.GEOMETRY,
+          message: 'test',
+        }],
+        pipelineWarnings: [{
+          code: ErrorCode.GEO_GAP_TOO_SMALL,
+          severity: ErrorSeverity.WARNING,
+          category: ErrorCategory.GEOMETRY,
+          message: 'test warning',
+        }],
+        pipelineProgress: 'Running pipeline',
+        pipelineOutputLines: [{ lineId: 'l1', componentId: 'c1', skuId: 's1', quantity: 5, requiredQuantity: 5, wasteQuantity: 0, unitOfMeasure: 'PCS', calculationRule: 'FIXED' }],
+      });
+
+      useBomStore.getState().resetPipeline();
+
+      const state = useBomStore.getState();
+      expect(state.pipelineStatus).toBe('idle');
+      expect(state.pipelineErrors).toEqual([]);
+      expect(state.pipelineWarnings).toEqual([]);
+      expect(state.pipelineProgress).toBeNull();
+      expect(state.pipelineOutputLines).toEqual([]);
+    });
+
+    it('should not affect other store state', () => {
+      useBomStore.setState({
+        pipelineStatus: 'success',
+        isBomPanelOpen: true,
+        error: 'some error',
+      });
+
+      useBomStore.getState().resetPipeline();
+
+      const state = useBomStore.getState();
+      expect(state.pipelineStatus).toBe('idle');
+      expect(state.isBomPanelOpen).toBe(true);
+      expect(state.error).toBe('some error');
     });
   });
 });

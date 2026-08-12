@@ -21,6 +21,9 @@ import type {
   FurnitureInput,
   HiddenComponentInput,
 } from '@/engines/types';
+import type { PipelineError } from '@/engines/errorCatalogue';
+import { runBomPipeline } from '@/engines/bomPipeline';
+import type { BomPipelineInput, BomOutputLine } from '@/engines/bomPipeline';
 
 export interface BomState {
   masterBom: MasterBom | null;
@@ -36,6 +39,11 @@ export interface BomState {
   isLoading: boolean;
   error: string | null;
   isBomPanelOpen: boolean;
+  pipelineStatus: 'idle' | 'running' | 'success' | 'blocked';
+  pipelineErrors: PipelineError[];
+  pipelineWarnings: PipelineError[];
+  pipelineProgress: string | null;
+  pipelineOutputLines: BomOutputLine[];
 }
 
 export interface BomActions {
@@ -43,7 +51,10 @@ export interface BomActions {
   fetchActualBom: (projectId: string) => Promise<void>;
   fetchFinalBom: (projectId: string) => Promise<void>;
   computeReconciliation: () => void;
+  /** @deprecated Use runPipeline instead */
   generateActualBom: (input: GenerateActualBomInput) => GenerateActualBomOutput;
+  runPipeline: (projectId: string, snapshotId: string) => Promise<void>;
+  resetPipeline: () => void;
   openBomPanel: () => void;
   closeBomPanel: () => void;
   resetBom: () => void;
@@ -95,6 +106,11 @@ const initialState: BomState = {
   isLoading: false,
   error: null,
   isBomPanelOpen: false,
+  pipelineStatus: 'idle',
+  pipelineErrors: [],
+  pipelineWarnings: [],
+  pipelineProgress: null,
+  pipelineOutputLines: [],
 };
 
 export const useBomStore = create<BomStore>((set, get) => ({
@@ -427,6 +443,96 @@ export const useBomStore = create<BomStore>((set, get) => ({
 
   closeBomPanel: () => {
     set({ isBomPanelOpen: false });
+  },
+
+  resetPipeline: () => {
+    set({
+      pipelineStatus: 'idle',
+      pipelineErrors: [],
+      pipelineWarnings: [],
+      pipelineProgress: null,
+      pipelineOutputLines: [],
+    });
+  },
+
+  runPipeline: async (projectId: string, snapshotId: string) => {
+    set({ pipelineStatus: 'running', pipelineErrors: [], pipelineWarnings: [], pipelineProgress: 'Fetching data', pipelineOutputLines: [] });
+
+    try {
+      // Fetch snapshot data
+      set({ pipelineProgress: 'Loading snapshot' });
+      const { data: snapshotData, error: snapErr } = await fromTable('project_snapshot')
+        .select('*')
+        .eq('snapshot_id', snapshotId)
+        .eq('project_id', projectId)
+        .single();
+
+      if (snapErr) throw new Error(snapErr.message ?? 'Failed to fetch snapshot');
+
+      // Fetch measurements
+      set({ pipelineProgress: 'Loading measurements' });
+      const { data: measurementData, error: measErr } = await fromTable('project_measurement')
+        .select('*')
+        .eq('project_id', projectId)
+        .single();
+
+      if (measErr) throw new Error(measErr.message ?? 'Failed to fetch measurements');
+
+      // Fetch permissions
+      set({ pipelineProgress: 'Loading permissions' });
+      const { data: permissionsData, error: permErr } = await fromTable('permission_rule')
+        .select('*')
+        .eq('project_id', projectId);
+
+      if (permErr) throw new Error(permErr.message ?? 'Failed to fetch permissions');
+
+      // Fetch compatibility rules
+      set({ pipelineProgress: 'Loading compatibility rules' });
+      const { data: compatData, error: compatErr } = await fromTable('compatibility_rule')
+        .select('*')
+        .eq('project_id', projectId);
+
+      if (compatErr) throw new Error(compatErr.message ?? 'Failed to fetch compatibility rules');
+
+      // Build pipeline input
+      set({ pipelineProgress: 'Running pipeline' });
+      const snapshot = snapshotData as Record<string, unknown>;
+      const measurement = measurementData as Record<string, unknown>;
+
+      const pipelineInput: BomPipelineInput = {
+        snapshotData: (snapshot?.snapshot_data ?? { zones: [] }) as BomPipelineInput['snapshotData'],
+        measurements: {
+          wallWidth: (measurement?.wall_width as number) ?? 0,
+          wallHeight: (measurement?.wall_height as number) ?? 0,
+          templateWallWidth: (measurement?.template_wall_width as number) ?? 0,
+          templateWallHeight: (measurement?.template_wall_height as number) ?? undefined,
+        },
+        configuration: (snapshot?.configuration ?? {}) as BomPipelineInput['configuration'],
+        ruleSet: (snapshot?.rule_set ?? {}) as BomPipelineInput['ruleSet'],
+        permissions: (permissionsData ?? []) as BomPipelineInput['permissions'],
+        compatibilityRules: (compatData ?? []) as BomPipelineInput['compatibilityRules'],
+      };
+
+      // Execute pipeline
+      const result = runBomPipeline(pipelineInput);
+
+      set({
+        pipelineStatus: result.status === 'SUCCESS' ? 'success' : 'blocked',
+        pipelineErrors: result.errors,
+        pipelineWarnings: result.warnings,
+        pipelineOutputLines: result.actualBomLines,
+        pipelineProgress: null,
+      });
+    } catch (err) {
+      set({
+        pipelineStatus: 'blocked',
+        pipelineErrors: [],
+        pipelineWarnings: [],
+        pipelineProgress: null,
+        pipelineOutputLines: [],
+        error: (err as Error).message,
+      });
+    }
   },
 
   resetBom: () => {

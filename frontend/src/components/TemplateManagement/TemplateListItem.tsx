@@ -5,9 +5,10 @@ import { useTemplateManagementStore } from '@/stores/templateManagementStore';
 
 interface TemplateListItemProps {
   template: Template;
+  hasInactiveSkus?: boolean;
 }
 
-export function TemplateListItem({ template }: TemplateListItemProps) {
+export function TemplateListItem({ template, hasInactiveSkus }: TemplateListItemProps) {
   const editTemplate = useTemplateManagementStore((s) => s.editTemplate);
   const duplicateAsNewDraft = useTemplateManagementStore((s) => s.duplicateAsNewDraft);
   const openRetireDialog = useTemplateManagementStore((s) => s.openRetireDialog);
@@ -29,6 +30,22 @@ export function TemplateListItem({ template }: TemplateListItemProps) {
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
           <span style={{ fontWeight: 600, fontSize: '14px' }}>{template.name}</span>
           <TemplateStatusBadge status={template.status} />
+          {hasInactiveSkus && (
+            <span
+              data-testid="sku-inactive-badge"
+              style={{
+                padding: '2px 6px',
+                borderRadius: '4px',
+                fontSize: '11px',
+                fontWeight: 600,
+                backgroundColor: '#fff3e0',
+                color: '#e65100',
+                border: '1px solid #ffcc80',
+              }}
+            >
+              BLOCKED
+            </span>
+          )}
         </div>
         <div style={{ display: 'flex', gap: '12px', fontSize: '12px', color: '#666' }}>
           <span>{template.wall_geometry}</span>
