@@ -1,0 +1,36 @@
+{
+  "id": "FEAT-004",
+  "type": "feat",
+  "description": "P2-4 Object/wall snapping (#30) and P2-7 Mobile/responsive (#54). (A) Snap zones to wall edges and other zone edges with 10mm threshold and visual snap guide lines. (B) Touch pinch-zoom, two-finger pan, responsive toolbar layout, and touch-friendly hit areas.",
+  "status": "completed",
+  "steps": [
+    "1. Create frontend/src/canvas/utils/snapEngine.ts: pure functions for edge snapping. `findSnapLines(movingZone: BoundingBox, otherZones: TemplateZone[], wallWidth: number, wallHeight: number, threshold: number): { vertical: number[], horizontal: number[] }`. Checks all 4 edges of moving zone against all 4 edges of other zones + wall edges. Returns snap positions within threshold (default 10mm).",
+    "2. Add `snapToEdges(x: number, y: number, width: number, height: number, snapLines: {vertical: number[], horizontal: number[]}, threshold: number): {x: number, y: number, snappedVertical: number | null, snappedHorizontal: number | null}` to snapEngine.ts. Adjusts position to snap the closest edge to the nearest snap line within threshold.",
+    "3. Add `activeSnapLines: { vertical: number[], horizontal: number[] }` state to canvasStore with `setActiveSnapLines` action. These are rendered visually.",
+    "4. Update useZoneDrag.ts handleDragMove: after grid snap, apply snapToEdges if within threshold. Call setActiveSnapLines with active lines during drag. Clear on drag end.",
+    "5. Create frontend/src/canvas/layers/SnapGuidesLayer.tsx: renders thin dashed green/cyan lines at each active snap position (full-height vertical lines, full-width horizontal lines). Positioned between ZoneDimensionsLayer and SelectionLayer in CanvasContainer.",
+    "6. For mobile/responsive: Update useCanvasViewport.ts to handle touch events: add `handleTouchStart`, `handleTouchMove`, `handleTouchEnd` that implement pinch-zoom (two-finger distance change maps to zoom) and two-finger pan (center movement maps to pan delta).",
+    "7. Update CanvasContainer.tsx Stage: add onTouchStart, onTouchMove, onTouchEnd handlers from the viewport hook.",
+    "8. Update Toolbar.tsx: add responsive CSS via inline styles that wrap items to a second row on narrow screens (flexWrap: wrap is already there). Add a media-query-like breakpoint detection using a containerRef width check. For narrow (<640px): hide text labels, show icon-only buttons, increase button padding to 12px for touch targets.",
+    "9. Update SelectionLayer.tsx handle size: increase from 8px to 16px on touch devices (detect via window.matchMedia('(pointer: coarse)') or a `isTouchDevice` state in canvasStore).",
+    "10. Update ZonesLayer.tsx: increase zone click/tap hit area for touch by adding a transparent rect with 10mm padding around each zone (hitStrokeWidth or separate invisible Rect).",
+    "11. Add tests: frontend/src/canvas/__tests__/snapEngine.test.ts (edge detection, threshold, multi-zone snapping), frontend/src/canvas/__tests__/touchViewport.test.ts (pinch-zoom calculation, two-finger pan)."
+  ],
+  "acceptance_criteria": [
+    "Zones snap to wall edges and other zone edges within 10mm threshold during drag",
+    "Visual snap guide lines appear during snap (green/cyan dashed lines)",
+    "Snap lines disappear when drag ends",
+    "Touch pinch-zoom changes canvas zoom level proportionally",
+    "Two-finger pan translates the canvas viewport",
+    "Toolbar is responsive with touch-friendly button sizes on narrow viewports",
+    "Selection handles are larger on touch devices",
+    "Zone tap hit areas are expanded for touch",
+    "All existing tests pass, new tests pass"
+  ],
+  "verification": [
+    "cd /projects/sandbox/Bom/frontend && unset NODE_OPTIONS && npx tsc --noEmit",
+    "cd /projects/sandbox/Bom/frontend && unset NODE_OPTIONS && npx vitest run"
+  ],
+  "blocked_reason": null,
+  "findings": "Added matchMedia and ResizeObserver mocks to test-setup.ts since jsdom does not support these APIs. Pre-existing TS errors in usePermissionEnforcement.test.ts and ValidationOverlayLayer.tsx remain untouched. All 901 tests pass after changes."
+}
