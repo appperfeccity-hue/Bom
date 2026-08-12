@@ -2,7 +2,7 @@
   "id": "FEAT-002",
   "type": "feat",
   "description": "Create an RLS regression test harness that validates the policies are correctly enforced for each role. Save test file to repository and run validation queries against live Supabase.",
-  "status": "pending",
+  "status": "completed",
   "steps": [
     "Create tests/regression_rls.sql following the same pattern as tests/regression_v1.1.5.sql (DO $$ blocks with RAISE NOTICE for PASS, RAISE EXCEPTION for FAIL)",
     "Test T-RLS-01: Verify all 34 tables have RLS enabled",
@@ -23,5 +23,5 @@
     "Verify file exists at tests/regression_rls.sql in the repository"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All 5 RLS regression tests (T-RLS-01 through T-RLS-05) passed on live Supabase project fbiemsbykrmrbqcsobvh. Tests confirmed: 34 tables with RLS enabled, authenticated role has USAGE, all tables have policies, current_user_role() exists, 151 policies total (exceeds 100 minimum)."
 }
