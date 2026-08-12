@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "feat",
   "description": "Implement the Wall Panel, Light, and Furniture quantity resolution engines as pure TypeScript modules with comprehensive tests, plus a shared types file. Wire them into the bomStore for Actual BOM generation.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "Create frontend/src/engines/types.ts with shared engine types: WallPanelInput (W, H, w, h, gh, gv, wasteFactor), WallPanelOutput (Ncol, Nrow, requiredQuantity, procurementQuantity, wasteQuantity, trimWidth, retainedWidth, trimHeight, retainedHeight), LightInput (edges with lengths, mountingType, mode, unitLength), LightOutput (totalLength, driverCount, wireLength, quantity), FurnitureInput (quantity, min, max, skuId), FurnitureOutput (quantity, omitted), HiddenComponentInput (triggerType, condition, quantity rule, parentQuantity, zoneCount, panelCount), HiddenComponentOutput (quantity, included), and an EngineError class.",
     "Create frontend/src/engines/wallPanelEngine.ts implementing the wall panel calculation per spec section 82. Key algorithm: (1) For width axis: find smallest Ncol where (Ncol * w) + ((Ncol - 1) * gh) >= W. Apply symmetric trimming: trim = ((Ncol * w) + ((Ncol - 1) * gh) - W) / 2 per side. retained = w - trim. Validate retained >= MIN_RETAINED (50mm). Single-panel special case: final_panel_width = W, trim = w - W, retained = W. (2) Same logic for height axis with H, h, gv. (3) requiredQuantity = Ncol * Nrow. (4) procurementQuantity = CEILING(requiredQuantity * (1 + wasteFactor)). (5) wasteQuantity = procurementQuantity - requiredQuantity. Throw EngineError if retained < 50mm.",
@@ -32,5 +32,5 @@
     "cd frontend && NODE_OPTIONS='' npx vitest --run"
   ],
   "blocked_reason": null,
-  "findings": "All 13 golden test fixtures pass. 62 new engine tests added. Total test count increased from 349 to 411, all passing. TypeScript strict mode compiles cleanly. Engines are pure functions with no side effects or DB calls."
+  "findings": "All 13 golden test fixtures pass. 62 new engine tests added. Total test count increased from 349 to 432 after review fixes added 21 more edge case tests. TypeScript strict mode compiles cleanly. Engines are pure functions with no side effects or DB calls. Review fixes applied: infinite loop guard in calculateAxis, numeric coercion for relational operators in evaluateCondition, unitLength/edge validation in lightEngine, and partial-result handling in generateActualBom with errors array."
 }
