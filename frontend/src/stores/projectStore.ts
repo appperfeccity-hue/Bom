@@ -62,18 +62,19 @@ const initialState: ProjectState = {
 /**
  * Module-level autosave debouncer instance, created lazily.
  * Wraps zone-persistence calls with debounce and save-status transitions.
+ * Uses a Map keyed by zone ID so that concurrent zone updates within the
+ * debounce window are all persisted when the debounce fires.
  */
 let autosaver: ReturnType<typeof createDebouncedSave> | null = null;
-let pendingZoneUpdate: (() => Promise<void>) | null = null;
+const pendingZoneUpdates = new Map<string, () => Promise<void>>();
 
 function getAutosaver(onStatusChange: (status: SaveStatus) => void): ReturnType<typeof createDebouncedSave> {
   if (!autosaver) {
     autosaver = createDebouncedSave(
       async (version: number) => {
-        if (pendingZoneUpdate) {
-          await pendingZoneUpdate();
-          pendingZoneUpdate = null;
-        }
+        const entries = Array.from(pendingZoneUpdates.values());
+        pendingZoneUpdates.clear();
+        await Promise.all(entries.map((fn) => fn()));
         return { version: version + 1 };
       },
       onStatusChange,
@@ -168,9 +169,11 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       zones: prevZones.map((z) => (z.id === zone.id ? zone : z)),
     });
 
-    // Schedule debounced persistence with save-status transitions
+    // Schedule debounced persistence with save-status transitions.
+    // Each zone update is stored by zone ID so concurrent updates within
+    // the debounce window are all persisted (not just the last one).
     const saver = getAutosaver((status) => useCanvasStore.getState().setSaveStatus(status));
-    pendingZoneUpdate = async () => {
+    pendingZoneUpdates.set(zone.id, async () => {
       const { error } = await fromTable('template_zone')
         .update({
           x_mm: zone.x_mm,
@@ -189,7 +192,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
         set({ zones: prevZones, error: error.message });
         throw error;
       }
-    };
+    });
     saver.debouncedSave(useCanvasStore.getState().version);
   },
 

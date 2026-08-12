@@ -127,7 +127,7 @@ export function useZoneCreate() {
     setIsCreating(false);
     setCreatePreview(null);
     startPos.current = null;
-  }, [isCreating, createPreview, currentTemplate, zones.length, addZone]);
+  }, [isCreating, createPreview, currentTemplate, zones, addZone]);
 
   return {
     canCreate,
