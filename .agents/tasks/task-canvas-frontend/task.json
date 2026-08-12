@@ -1,7 +1,7 @@
 {
   "task_id": "task-canvas-frontend",
   "task_description": "Build the PERFECCITY Konva-based Designer/Consultant Canvas UI as a React+TypeScript+Vite application in /frontend. Implements the dual-mode canvas with zone CRUD, measurement entry, Supabase persistence, and autosave - completing the stack: PostgreSQL/RLS -> Supabase API -> React/Zustand -> Konva 2D Canvas.",
-  "status": "in_progress",
+  "status": "completed",
   "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003"],
   "blocked_reason": null,
   "verification": {
@@ -9,6 +9,6 @@
     "tests": "pass",
     "test_quality": "pass",
     "docker_build": "skipped",
-    "summary": "67 tests passing across 4 test files. Build succeeds (690KB bundle). TypeScript strict mode passes with 0 errors. Review fixes applied: autosave debouncer wired, overlap detection enforced, resize handles functional, properties panel constrained, auth listener activated, fitToViewport guarded, void index removed."
+    "summary": "67 tests passing across 4 test files. Build succeeds (690KB bundle). TypeScript strict mode passes with 0 errors. Review v2 fixes applied: pendingZoneUpdate replaced with Map<string, () => Promise<void>> to persist all concurrent zone updates within debounce window; handleCreateEnd dependency changed from zones.length to zones to fix stale-closure overlap detection."
   }
 }
