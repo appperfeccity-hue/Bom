@@ -4,6 +4,7 @@ import { usePublishStore } from '@/stores/publishStore';
 import { CanvasMode, TemplateStatus, ProjectStatus } from '@/types/database';
 import { CanvasLayer } from '@/types/canvas';
 import { canAddZone } from '@/canvas/utils/zoneConstraints';
+import { useHistory } from '@/canvas/history/useHistory';
 import { FinalizeButton } from '@/components/Finalization/FinalizeButton';
 import { GenerateActualBomButton } from '@/components/GenerateActualBom/GenerateActualBomButton';
 
@@ -26,6 +27,7 @@ export function Toolbar() {
   const currentTemplate = useProjectStore((s) => s.currentTemplate);
   const currentProject = useProjectStore((s) => s.currentProject);
   const runValidation = usePublishStore((s) => s.runValidation);
+  const history = useHistory();
 
   const zoomPercent = Math.round(viewport.zoom * 100);
   const isDesigner = mode === CanvasMode.DESIGNER;
@@ -38,6 +40,20 @@ export function Toolbar() {
   const handleDeleteZone = () => {
     if (selection.selectedZoneId) {
       void removeZone(selection.selectedZoneId);
+    }
+  };
+
+  const handleUndo = () => {
+    const undoState = history.undo();
+    if (undoState) {
+      useProjectStore.setState({ zones: undoState });
+    }
+  };
+
+  const handleRedo = () => {
+    const redoState = history.redo();
+    if (redoState) {
+      useProjectStore.setState({ zones: redoState });
     }
   };
 
@@ -139,6 +155,22 @@ export function Toolbar() {
       {/* Designer-only zone tools */}
       {isDesigner && (
         <div style={{ display: 'flex', gap: '4px' }}>
+          <button
+            onClick={handleUndo}
+            disabled={!history.canUndo || isFinalized}
+            title="Undo (Ctrl+Z)"
+            data-testid="undo-btn"
+          >
+            Undo
+          </button>
+          <button
+            onClick={handleRedo}
+            disabled={!history.canRedo || isFinalized}
+            title="Redo (Ctrl+Shift+Z)"
+            data-testid="redo-btn"
+          >
+            Redo
+          </button>
           <button
             disabled={!canAddZone(zones.length) || isFinalized}
             title={isFinalized ? 'Project is finalized' : canAddZone(zones.length) ? 'Click and drag on canvas to create zone' : 'Maximum 12 zones reached'}

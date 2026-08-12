@@ -1,0 +1,7 @@
+{
+  "task_id": "task-p0-canvas-completeness",
+  "task_description": "Build P0 Canvas Completeness fixes: Undo/Redo history for zone operations, keyboard shortcuts (Delete/Escape/Arrow), consultant permission enforcement on measurements and zone interactions, and consultant alternative SKU selection panel.",
+  "status": "in_progress",
+  "feature_order": ["FEAT-001", "FEAT-002"],
+  "blocked_reason": null
+}

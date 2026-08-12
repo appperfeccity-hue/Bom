@@ -5,13 +5,14 @@ import { snapToGrid } from '@/lib/coordinates';
 import { constrainToWall, hasOverlap } from '@/canvas/utils/zoneConstraints';
 import { CanvasMode } from '@/types/database';
 import type { TemplateZone } from '@/types/database';
+import type { HistoryState } from '@/canvas/history/useHistory';
 
 /**
  * Custom hook for zone drag interaction (DESIGNER mode only).
  * On drag: snaps to grid, constrains within wall boundary.
  * On drag end: updates projectStore.updateZone() for autosave.
  */
-export function useZoneDrag() {
+export function useZoneDrag(history?: HistoryState) {
   const mode = useCanvasStore((s) => s.mode);
   const gridConfig = useCanvasStore((s) => s.gridConfig);
   const updateZone = useProjectStore((s) => s.updateZone);
@@ -73,6 +74,11 @@ export function useZoneDrag() {
         return;
       }
 
+      // Push current state to history before applying drag
+      if (history) {
+        history.pushState(zones);
+      }
+
       const updatedZone: TemplateZone = {
         ...zone,
         x_mm: finalX,
@@ -82,7 +88,7 @@ export function useZoneDrag() {
       void updateZone(updatedZone);
       dragStartPos.current = null;
     },
-    [canDrag, updateZone, zones],
+    [canDrag, updateZone, zones, history],
   );
 
   return {

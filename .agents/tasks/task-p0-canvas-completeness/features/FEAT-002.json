@@ -1,0 +1,30 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "Consultant permission enforcement on measurement fields and zone interactions, plus consultant alternative SKU selection panel. In Consultant mode with a loaded project snapshot, permissions from snapshot_data control which fields are editable. A new panel allows consultants to select from promoted alternative SKUs for a selected zone.",
+  "status": "pending",
+  "steps": [
+    "Create src/canvas/permissions/usePermissionEnforcement.ts - A hook that: (1) reads currentSnapshot from projectStore, (2) extracts permissions array from snapshot_data.permissions (each with parameter_key, parameter_type, edit_mode: LOCKED|RESTRICTED|FREE, min_value, max_value, allowed_values), (3) exposes getFieldPermission(parameterKey) returning the permission config, (4) exposes isFieldLocked(parameterKey) boolean, (5) exposes validateField(parameterKey, value) returning {valid, error?} that checks min/max for RESTRICTED numeric fields and allowed_values for RESTRICTED selection fields, (6) exposes canEditZone(zoneId) based on zone-level permissions. Only active in CONSULTANT mode with a loaded snapshot.",
+    "Update src/components/MeasurementPanel.tsx to use permission enforcement - Import and call usePermissionEnforcement(). For each field (wall_width_mm, wall_height_mm, segment_a_width_mm, segment_b_width_mm): (1) if LOCKED, set the input to disabled with a lock icon (Unicode lock char or CSS), (2) if RESTRICTED, apply min_value/max_value from permission as input constraints and show validation error on blur, (3) if FREE or no permission found, leave as-is. Add data-testid='field-locked-{fieldname}' indicators.",
+    "Apply permission enforcement to zone interactions - In useZoneDrag and useZoneResize, check if the mode is CONSULTANT and if canEditZone returns false for the selected zone. If not editable, prevent drag/resize. This supplements the existing DESIGNER-only guards by adding fine-grained CONSULTANT constraints.",
+    "Create src/components/ConsultantAlternatives/ConsultantAlternativesPanel.tsx - A panel visible only in Consultant mode when a zone is selected AND that zone has promoted alternatives in the snapshot_data. It: (1) reads currentSnapshot.snapshot_data.alternatives (array of {template_zone_id, alternative_sku_id, sku_code, display_order, status}), (2) filters to the selected zone, (3) shows a dropdown/card list of available alternative SKUs, (4) on selection calls projectStore.assignSku(zoneId, selectedSkuId) to update the project configuration, (5) shows the currently selected SKU highlighted. Add data-testid='consultant-alternatives-panel' and data-testid='alternative-option-{skuId}'.",
+    "Create tests in src/canvas/__tests__/usePermissionEnforcement.test.ts - Test: (1) returns no restrictions when no snapshot loaded, (2) isFieldLocked returns true for LOCKED fields, (3) validateField returns error for out-of-range RESTRICTED value, (4) validateField passes for valid RESTRICTED value, (5) FREE fields always validate.",
+    "Create tests in src/components/ConsultantAlternatives/__tests__/ConsultantAlternativesPanel.test.tsx - Test: (1) renders nothing when not in Consultant mode, (2) renders nothing when no alternatives for selected zone, (3) shows alternatives dropdown when zone has promoted alternatives, (4) selecting an alternative calls assignSku, (5) cannot select arbitrary SKU not in alternatives list."
+  ],
+  "acceptance_criteria": [
+    "In Consultant mode with snapshot, LOCKED measurement fields are disabled with visual lock indicator",
+    "RESTRICTED fields validate against min/max/allowed_values and show error messages",
+    "FREE fields remain fully editable",
+    "Zone drag/resize is blocked for zones the consultant cannot edit",
+    "Consultant alternatives panel shows promoted SKUs from snapshot for selected zone",
+    "Selecting an alternative calls assignSku with correct zone and SKU IDs",
+    "Panel is hidden when not in Consultant mode or zone has no alternatives",
+    "All new tests pass alongside existing 716 tests"
+  ],
+  "verification": [
+    "cd /projects/sandbox/Bom/frontend && unset NODE_OPTIONS && npx vitest --run",
+    "cd /projects/sandbox/Bom/frontend && unset NODE_OPTIONS && npx vite build"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

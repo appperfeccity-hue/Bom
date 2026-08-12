@@ -1,0 +1,33 @@
+{
+  "project_type": "React + Zustand SPA with Konva canvas, Vite build",
+  "language": "TypeScript",
+  "build_system": "Vite (vite build), npm scripts",
+  "test_framework": "Vitest with @testing-library/react, jsdom environment, vi mocking",
+  "build_command": "cd /projects/sandbox/Bom/frontend && unset NODE_OPTIONS && npx vite build",
+  "test_command": "cd /projects/sandbox/Bom/frontend && unset NODE_OPTIONS && npx vitest --run",
+  "verification_instructions": "Run vitest --run to ensure all 716+ tests pass. Run vite build to ensure no type/compile errors.",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "cd /projects/sandbox/Bom/frontend && npm install (already done - node_modules present)",
+  "environment_constraints": "COMMON_DEPENDENCIES network. Must unset NODE_OPTIONS before running node/npx. react-konva mocked in tests as jsdom has no canvas.",
+  "contribution_requirements": "All tests must pass. Use existing patterns. Zustand stores with create(). Hooks for interactions. Tests mock @/lib/supabase and react-konva.",
+  "key_patterns": "Zustand stores (canvasStore, projectStore) with typed State+Actions interfaces. Canvas interactions as custom hooks in src/canvas/interactions/. Zone constraints in src/canvas/utils/zoneConstraints.ts. CanvasMode.DESIGNER vs CONSULTANT guards. Tests use vi.mock for supabase/konva. projectStore has FINALIZED guards on mutations. Toolbar.tsx renders mode-dependent buttons. Components use data-testid attributes.",
+  "relevant_files": [
+    "frontend/src/stores/canvasStore.ts",
+    "frontend/src/stores/projectStore.ts",
+    "frontend/src/canvas/CanvasContainer.tsx",
+    "frontend/src/canvas/interactions/useCanvasViewport.ts",
+    "frontend/src/canvas/interactions/useZoneDrag.ts",
+    "frontend/src/canvas/interactions/useZoneResize.ts",
+    "frontend/src/canvas/interactions/useZoneCreate.ts",
+    "frontend/src/canvas/utils/zoneConstraints.ts",
+    "frontend/src/canvas/__tests__/CanvasContainer.test.tsx",
+    "frontend/src/components/Toolbar.tsx",
+    "frontend/src/components/MeasurementPanel.tsx",
+    "frontend/src/components/ConsultantPermissions/ConsultantPermissionsPanel.tsx",
+    "frontend/src/components/PromotedAlternatives/PromotedAlternativesPanel.tsx",
+    "frontend/src/types/canvas.ts",
+    "frontend/src/types/database.ts",
+    "frontend/src/lib/coordinates.ts"
+  ],
+  "directory_structure": "frontend/src/canvas/ - CanvasContainer + interactions/ hooks + layers/ + utils/ + __tests__. frontend/src/stores/ - Zustand stores. frontend/src/components/ - UI panels/dialogs. frontend/src/types/ - TypeScript types. frontend/src/lib/ - utilities (supabase, coordinates, autosave)."
+}

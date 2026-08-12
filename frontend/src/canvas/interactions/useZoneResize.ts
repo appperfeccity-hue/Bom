@@ -6,6 +6,7 @@ import { clampDimensions, constrainToWall, hasOverlap } from '@/canvas/utils/zon
 import { CanvasMode } from '@/types/database';
 import type { TemplateZone } from '@/types/database';
 import type { ZoneResizeHandle } from '@/types/canvas';
+import type { HistoryState } from '@/canvas/history/useHistory';
 
 interface ResizeState {
   handle: ZoneResizeHandle;
@@ -16,7 +17,7 @@ interface ResizeState {
  * Custom hook for zone resize via 8-point handles (DESIGNER mode only).
  * Enforces min 200x200mm, max 3000x2700mm, snaps to grid, constrains to wall.
  */
-export function useZoneResize() {
+export function useZoneResize(history?: HistoryState) {
   const mode = useCanvasStore((s) => s.mode);
   const gridConfig = useCanvasStore((s) => s.gridConfig);
   const setResizeHandle = useCanvasStore((s) => s.setResizeHandle);
@@ -135,6 +136,11 @@ export function useZoneResize() {
         return;
       }
 
+      // Push current state to history before applying resize
+      if (history) {
+        history.pushState(zones);
+      }
+
       const updatedZone: TemplateZone = {
         ...zone,
         x_mm: finalBounds.x,
@@ -147,7 +153,7 @@ export function useZoneResize() {
       resizeState.current = null;
       setResizeHandle(null);
     },
-    [canResize, updateZone, setResizeHandle, zones],
+    [canResize, updateZone, setResizeHandle, zones, history],
   );
 
   return {

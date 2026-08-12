@@ -1,0 +1,31 @@
+{
+  "id": "FEAT-001",
+  "type": "feat",
+  "description": "Undo/Redo history stack for zone operations and keyboard shortcuts (Delete, Escape, Arrow nudge). Implements a history hook that captures zone state snapshots, Ctrl+Z/Ctrl+Shift+Z shortcuts, toolbar buttons, plus Delete/Escape/Arrow key handlers with full constraint enforcement.",
+  "status": "in_progress",
+  "steps": [
+    "Create src/canvas/history/useHistory.ts - A custom hook that manages an undo/redo stack of TemplateZone[] snapshots. It should: (1) expose pushState(zones) to record a snapshot, (2) expose undo() that reverts zones to previous snapshot and returns the reverted state, (3) expose redo() that moves forward in the stack, (4) expose canUndo/canRedo booleans, (5) maintain a max stack size (e.g., 50 entries). The hook should NOT directly mutate projectStore - it returns the state to apply.",
+    "Create src/canvas/interactions/useKeyboardShortcuts.ts - A custom hook for CanvasContainer that handles all keydown events: (1) Ctrl+Z calls undo, (2) Ctrl+Shift+Z calls redo, (3) Delete/Backspace calls removeZone(selectedZoneId) if Designer mode + zone selected, (4) Escape calls clearSelection(), (5) Arrow keys nudge selected zone by gridConfig.size (if snap enabled) or 1mm (if snap disabled) with constrainToWall and hasOverlap checks. The hook should integrate with useHistory to push snapshots before zone mutations. Returns a handleKeyDown callback for window event listener.",
+    "Integrate useKeyboardShortcuts into CanvasContainer.tsx - Replace the existing keydown/keyup useEffect that only handles space (from useCanvasViewport) with one that also calls the keyboard shortcuts handler. Keep space+drag panning working. The shortcut handler should call event.preventDefault() for its handled keys to avoid browser defaults (e.g., backspace navigation).",
+    "Add Undo/Redo buttons to Toolbar.tsx - In the Designer-only section, add two buttons: Undo (disabled when !canUndo) and Redo (disabled when !canRedo). They call the same undo/redo functions from the history hook. Include data-testid='undo-btn' and data-testid='redo-btn'.",
+    "Wire history pushState calls into zone mutations - Before updateZone, addZone, removeZone execute in the canvas interactions (useZoneDrag.handleDragEnd, useZoneResize.handleResizeEnd, useZoneCreate.handleCreateEnd, and the keyboard Delete handler), push the current zones snapshot to history. This ensures every user-initiated zone change can be undone.",
+    "Create tests in src/canvas/__tests__/useHistory.test.ts - Test: (1) initial state has canUndo=false, canRedo=false, (2) after pushState, canUndo=true, (3) undo returns previous state, (4) redo returns next state after undo, (5) new pushState after undo clears redo stack, (6) max stack size respected.",
+    "Create tests in src/canvas/__tests__/useKeyboardShortcuts.test.ts - Test: (1) Delete key removes selected zone in Designer mode, (2) Delete does nothing in Consultant mode, (3) Escape clears selection, (4) Arrow keys nudge zone by grid size, (5) Arrow keys nudge by 1mm when snap disabled, (6) Nudge is constrained to wall boundary, (7) Ctrl+Z triggers undo, (8) Ctrl+Shift+Z triggers redo."
+  ],
+  "acceptance_criteria": [
+    "Ctrl+Z undoes the last zone operation (move, resize, create, delete) and restores previous zone state",
+    "Ctrl+Shift+Z redoes an undone operation",
+    "Undo/Redo buttons in toolbar reflect canUndo/canRedo disabled state",
+    "Delete key removes selected zone in Designer mode only",
+    "Escape key clears zone selection",
+    "Arrow keys nudge selected zone by grid size (100mm default) when snap enabled, 1mm when disabled",
+    "Arrow nudge respects wall boundary constraints and overlap prevention",
+    "All new tests pass alongside existing 716 tests"
+  ],
+  "verification": [
+    "cd /projects/sandbox/Bom/frontend && unset NODE_OPTIONS && npx vitest --run",
+    "cd /projects/sandbox/Bom/frontend && unset NODE_OPTIONS && npx vite build"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

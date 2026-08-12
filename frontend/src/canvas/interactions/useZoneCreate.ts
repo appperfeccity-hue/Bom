@@ -11,12 +11,13 @@ import {
 } from '@/canvas/utils/zoneConstraints';
 import { CanvasMode, ZoneWidthStrategy, ZoneHeightStrategy, ZonePositionStrategy } from '@/types/database';
 import type { BoundingBox } from '@/types/canvas';
+import type { HistoryState } from '@/canvas/history/useHistory';
 
 /**
  * Custom hook for creating new zones via click-drag on empty canvas area.
  * DESIGNER mode only. Enforces min size 200x200mm, max 12 zones.
  */
-export function useZoneCreate() {
+export function useZoneCreate(history?: HistoryState) {
   const mode = useCanvasStore((s) => s.mode);
   const gridConfig = useCanvasStore((s) => s.gridConfig);
   const addZone = useProjectStore((s) => s.addZone);
@@ -111,23 +112,29 @@ export function useZoneCreate() {
       return;
     }
 
-    void addZone({
-      template_id: currentTemplate.id,
-      name: `Zone ${zones.length + 1}`,
-      x_mm: constrained.x,
-      y_mm: constrained.y,
-      width_mm: createPreview.width,
-      height_mm: createPreview.height,
-      width_strategy: ZoneWidthStrategy.FIXED,
-      height_strategy: ZoneHeightStrategy.FIXED,
-      position_strategy: ZonePositionStrategy.ABSOLUTE,
-      z_index: zones.length,
-    });
+    void (() => {
+      // Push current state to history before adding zone
+      if (history) {
+        history.pushState(zones);
+      }
+      return addZone({
+        template_id: currentTemplate.id,
+        name: `Zone ${zones.length + 1}`,
+        x_mm: constrained.x,
+        y_mm: constrained.y,
+        width_mm: createPreview.width,
+        height_mm: createPreview.height,
+        width_strategy: ZoneWidthStrategy.FIXED,
+        height_strategy: ZoneHeightStrategy.FIXED,
+        position_strategy: ZonePositionStrategy.ABSOLUTE,
+        z_index: zones.length,
+      });
+    })();
 
     setIsCreating(false);
     setCreatePreview(null);
     startPos.current = null;
-  }, [isCreating, createPreview, currentTemplate, zones, addZone]);
+  }, [isCreating, createPreview, currentTemplate, zones, addZone, history]);
 
   return {
     canCreate,

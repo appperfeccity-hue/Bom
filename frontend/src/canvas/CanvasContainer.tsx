@@ -10,6 +10,8 @@ import { SelectionLayer } from './layers/SelectionLayer';
 import { MeasurementsLayer } from './layers/MeasurementsLayer';
 import { useCanvasViewport } from './interactions/useCanvasViewport';
 import { useZoneCreate } from './interactions/useZoneCreate';
+import { useKeyboardShortcuts } from './interactions/useKeyboardShortcuts';
+import { useHistory } from './history/useHistory';
 import { screenToCanvas } from '@/lib/coordinates';
 
 interface CanvasContainerProps {
@@ -42,13 +44,17 @@ export function CanvasContainer({ mode }: CanvasContainerProps) {
     fitToViewport,
   } = useCanvasViewport();
 
+  const history = useHistory();
+
   const {
     isCreating,
     createPreview,
     handleCreateStart,
     handleCreateMove,
     handleCreateEnd,
-  } = useZoneCreate();
+  } = useZoneCreate(history);
+
+  const { handleKeyDown: handleShortcutKeyDown } = useKeyboardShortcuts({ history });
 
   // Set mode when prop changes
   useEffect(() => {
@@ -69,15 +75,19 @@ export function CanvasContainer({ mode }: CanvasContainerProps) {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Keyboard events for space+drag pan
+  // Keyboard events for space+drag pan and shortcuts
   useEffect(() => {
-    window.addEventListener('keydown', handleKeyDown);
+    const onKeyDown = (e: KeyboardEvent) => {
+      handleKeyDown(e);
+      handleShortcutKeyDown(e);
+    };
+    window.addEventListener('keydown', onKeyDown);
     window.addEventListener('keyup', handleKeyUp);
     return () => {
-      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [handleKeyDown, handleKeyUp]);
+  }, [handleKeyDown, handleKeyUp, handleShortcutKeyDown]);
 
   // Fit to viewport on initial load and template change only (not on every resize)
   const hasInitialized = useRef(false);
