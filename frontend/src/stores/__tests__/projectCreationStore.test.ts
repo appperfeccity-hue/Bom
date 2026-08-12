@@ -82,6 +82,7 @@ describe('projectCreationStore', () => {
       expect(state.customerReference).toBe('');
       expect(state.siteReference).toBe('');
       expect(state.createdProjectId).toBeNull();
+      expect(state.idempotencyKey).toBeNull();
       expect(state.isLoading).toBe(false);
       expect(state.error).toBeNull();
     });
@@ -227,7 +228,12 @@ describe('projectCreationStore', () => {
       expect(mockedRpc).toHaveBeenCalledWith('create_project', expect.objectContaining({
         p_template_id: 'tpl-1',
         p_user_id: 'user-1',
-        p_snapshot_data: expect.any(Object),
+        p_snapshot_data: expect.objectContaining({
+          project_metadata: {
+            customer_reference: 'CUST-001',
+            site_reference: 'SITE-001',
+          },
+        }),
         p_snapshot_hash: 'abc123hash',
         p_rule_set_id: null,
       }));
@@ -242,6 +248,100 @@ describe('projectCreationStore', () => {
       expect(state.step).toBe(CreationStep.CREATED);
       expect(state.createdProjectId).toBe('proj-123');
       expect(state.isLoading).toBe(false);
+      // Idempotency key cleared after success
+      expect(state.idempotencyKey).toBeNull();
+    });
+
+    it('reuses idempotency key on retry', async () => {
+      const { fromTable, supabase } = await import('@/lib/supabase');
+      const mockedFromTable = vi.mocked(fromTable);
+      const mockedRpc = vi.mocked(supabase.rpc);
+      mockedRpc.mockClear();
+
+      const template = makeTemplate();
+      useProjectCreationStore.setState({
+        selectedTemplate: template,
+        step: CreationStep.PROJECT_DETAILS,
+        customerReference: 'CUST-001',
+        siteReference: 'SITE-001',
+        idempotencyKey: null,
+      });
+
+      mockedFromTable.mockReturnValue({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnValue({
+          order: vi.fn().mockResolvedValue({ data: [], error: null }),
+          then: (resolve: (v: unknown) => void) => Promise.resolve({ data: [], error: null }).then(resolve),
+        }),
+        in: vi.fn().mockResolvedValue({ data: [], error: null }),
+        order: vi.fn().mockResolvedValue({ data: [], error: null }),
+      } as unknown as ReturnType<typeof fromTable>);
+
+      // First call fails
+      mockedRpc.mockResolvedValueOnce({ data: null, error: { message: 'Timeout' } } as never);
+
+      await useProjectCreationStore.getState().createProject();
+
+      const keyAfterFirstAttempt = useProjectCreationStore.getState().idempotencyKey;
+      expect(keyAfterFirstAttempt).toBeTruthy();
+      expect(keyAfterFirstAttempt).toContain('user-1');
+      expect(keyAfterFirstAttempt).toContain('tpl-1');
+
+      // Retry (simulate handleRetry then createProject again)
+      useProjectCreationStore.setState({ step: CreationStep.PROJECT_DETAILS, error: null });
+
+      // Mock loadProject and setMode for success
+      const mockLoadProject = vi.fn().mockResolvedValue(undefined);
+      useProjectStore.setState({ loadProject: mockLoadProject } as never);
+      useCanvasStore.setState({ setMode: vi.fn() } as never);
+
+      mockedRpc.mockResolvedValueOnce({ data: 'proj-456', error: null } as never);
+
+      await useProjectCreationStore.getState().createProject();
+
+      // Same idempotency key used
+      const firstCallKey = (mockedRpc.mock.calls[0][1] as Record<string, unknown>).p_idempotency_key;
+      const secondCallKey = (mockedRpc.mock.calls[1][1] as Record<string, unknown>).p_idempotency_key;
+      expect(firstCallKey).toBe(secondCallKey);
+    });
+
+    it('shows post-creation error without retry when loadProject fails', async () => {
+      const { fromTable, supabase } = await import('@/lib/supabase');
+      const mockedFromTable = vi.mocked(fromTable);
+      const mockedRpc = vi.mocked(supabase.rpc);
+
+      const template = makeTemplate();
+      useProjectCreationStore.setState({
+        selectedTemplate: template,
+        step: CreationStep.PROJECT_DETAILS,
+        customerReference: 'CUST-001',
+        siteReference: 'SITE-001',
+      });
+
+      mockedFromTable.mockReturnValue({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnValue({
+          order: vi.fn().mockResolvedValue({ data: [], error: null }),
+          then: (resolve: (v: unknown) => void) => Promise.resolve({ data: [], error: null }).then(resolve),
+        }),
+        in: vi.fn().mockResolvedValue({ data: [], error: null }),
+        order: vi.fn().mockResolvedValue({ data: [], error: null }),
+      } as unknown as ReturnType<typeof fromTable>);
+
+      // RPC succeeds
+      mockedRpc.mockResolvedValue({ data: 'proj-789', error: null } as never);
+
+      // loadProject fails
+      const mockLoadProject = vi.fn().mockRejectedValue(new Error('Network blip'));
+      useProjectStore.setState({ loadProject: mockLoadProject } as never);
+      useCanvasStore.setState({ setMode: vi.fn() } as never);
+
+      await useProjectCreationStore.getState().createProject();
+
+      const state = useProjectCreationStore.getState();
+      expect(state.step).toBe(CreationStep.ERROR);
+      expect(state.error).toBe('Project created but failed to load. Please navigate to it manually.');
+      expect(state.createdProjectId).toBe('proj-789');
     });
 
     it('transitions to ERROR step with error message on failure', async () => {
@@ -398,6 +498,7 @@ describe('projectCreationStore', () => {
         customerReference: 'CUST-001',
         siteReference: 'SITE-001',
         createdProjectId: 'proj-1',
+        idempotencyKey: 'some-key-123',
         isLoading: true,
         error: 'some error',
       });
@@ -411,6 +512,7 @@ describe('projectCreationStore', () => {
       expect(state.customerReference).toBe('');
       expect(state.siteReference).toBe('');
       expect(state.createdProjectId).toBeNull();
+      expect(state.idempotencyKey).toBeNull();
       expect(state.isLoading).toBe(false);
       expect(state.error).toBeNull();
     });

@@ -91,6 +91,7 @@ describe('ProjectCreationWizard', () => {
     useProjectCreationStore.setState({
       step: CreationStep.ERROR,
       error: 'Something went wrong',
+      createdProjectId: null,
     });
     render(<ProjectCreationWizard />);
     expect(screen.getByText('Something went wrong')).toBeInTheDocument();
@@ -101,12 +102,25 @@ describe('ProjectCreationWizard', () => {
     useProjectCreationStore.setState({
       step: CreationStep.ERROR,
       error: 'Some error',
+      createdProjectId: null,
     });
     render(<ProjectCreationWizard />);
     fireEvent.click(screen.getByText('Retry'));
 
     expect(useProjectCreationStore.getState().step).toBe(CreationStep.BROWSE_TEMPLATES);
     expect(useProjectCreationStore.getState().error).toBeNull();
+  });
+
+  it('does not show Retry button when project was already created', () => {
+    useProjectCreationStore.setState({
+      step: CreationStep.ERROR,
+      error: 'Project created but failed to load. Please navigate to it manually.',
+      createdProjectId: 'proj-123',
+    });
+    render(<ProjectCreationWizard />);
+    expect(screen.getByText('Project created but failed to load. Please navigate to it manually.')).toBeInTheDocument();
+    expect(screen.queryByText('Retry')).not.toBeInTheDocument();
+    expect(screen.getByText('Close')).toBeInTheDocument();
   });
 
   it('clicking Close (x button) resets state', () => {

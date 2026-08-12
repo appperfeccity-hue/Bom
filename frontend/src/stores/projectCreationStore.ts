@@ -27,6 +27,7 @@ export interface ProjectCreationState {
   customerReference: string;
   siteReference: string;
   createdProjectId: string | null;
+  idempotencyKey: string | null;
   isLoading: boolean;
   error: string | null;
 }
@@ -49,6 +50,7 @@ const initialState: ProjectCreationState = {
   customerReference: '',
   siteReference: '',
   createdProjectId: null,
+  idempotencyKey: null,
   isLoading: false,
   error: null,
 };
@@ -85,7 +87,7 @@ export const useProjectCreationStore = create<ProjectCreationStore>((set, get) =
   },
 
   createProject: async () => {
-    const { selectedTemplate } = get();
+    const { selectedTemplate, customerReference, siteReference } = get();
     if (!selectedTemplate) return;
 
     set({ step: CreationStep.CREATING, isLoading: true, error: null });
@@ -93,30 +95,41 @@ export const useProjectCreationStore = create<ProjectCreationStore>((set, get) =
     try {
       const templateId = selectedTemplate.id;
 
-      // Load full template data (zones, lighting, furniture, trims, zone SKUs)
-      const { data: zones, error: zErr } = await fromTable('template_zone')
-        .select('*')
-        .eq('template_id', templateId)
-        .order('z_index');
-      if (zErr) throw zErr;
+      // Get current user id
+      const userId = useAuthStore.getState().user?.id;
+      if (!userId) throw new Error('User not authenticated');
 
-      const { data: lighting, error: lErr } = await fromTable('template_lighting')
-        .select('*')
-        .eq('template_id', templateId);
-      if (lErr) throw lErr;
+      // Generate idempotency key once and store it (reuse on retry)
+      let { idempotencyKey } = get();
+      if (!idempotencyKey) {
+        idempotencyKey = `${userId}-${templateId}-${Date.now()}`;
+        set({ idempotencyKey });
+      }
 
-      const { data: furniture, error: fErr } = await fromTable('template_furniture')
-        .select('*')
-        .eq('template_id', templateId);
-      if (fErr) throw fErr;
+      // Load full template data in parallel (zones, lighting, furniture, trims)
+      const [zonesResult, lightingResult, furnitureResult, trimsResult] = await Promise.all([
+        fromTable('template_zone')
+          .select('*')
+          .eq('template_id', templateId)
+          .order('z_index'),
+        fromTable('template_lighting')
+          .select('*')
+          .eq('template_id', templateId),
+        fromTable('template_furniture')
+          .select('*')
+          .eq('template_id', templateId),
+        fromTable('template_trim')
+          .select('*')
+          .eq('template_id', templateId),
+      ]);
 
-      const { data: trims, error: trErr } = await fromTable('template_trim')
-        .select('*')
-        .eq('template_id', templateId);
-      if (trErr) throw trErr;
+      if (zonesResult.error) throw zonesResult.error;
+      if (lightingResult.error) throw lightingResult.error;
+      if (furnitureResult.error) throw furnitureResult.error;
+      if (trimsResult.error) throw trimsResult.error;
 
       // Load zone SKU mappings
-      const typedZones = (zones ?? []) as TemplateZone[];
+      const typedZones = (zonesResult.data ?? []) as TemplateZone[];
       const zoneIds = typedZones.map((z) => z.id);
       const zoneSku = new Map<string, SkuMaster>();
 
@@ -147,32 +160,34 @@ export const useProjectCreationStore = create<ProjectCreationStore>((set, get) =
         }
       }
 
-      // Build snapshot data
+      // Build snapshot data (include project metadata with customer/site references)
       const snapshotData = buildSnapshotData(
         selectedTemplate,
         typedZones,
-        (lighting ?? []) as TemplateLighting[],
-        (furniture ?? []) as TemplateFurniture[],
-        (trims ?? []) as TemplateTrim[],
+        (lightingResult.data ?? []) as TemplateLighting[],
+        (furnitureResult.data ?? []) as TemplateFurniture[],
+        (trimsResult.data ?? []) as TemplateTrim[],
         zoneSku,
       );
 
+      // Embed project metadata (customer/site references) in snapshot
+      const snapshotWithMetadata = {
+        ...snapshotData,
+        project_metadata: {
+          customer_reference: customerReference,
+          site_reference: siteReference,
+        },
+      };
+
       // Compute hash
       const snapshotHash = await computeSnapshotHash(snapshotData);
-
-      // Get current user id
-      const userId = useAuthStore.getState().user?.id;
-      if (!userId) throw new Error('User not authenticated');
-
-      // Generate idempotency key
-      const idempotencyKey = `${userId}-${templateId}-${Date.now()}`;
 
       // Call RPC to create project atomically
       const { data: projectId, error: rpcErr } = await supabase.rpc('create_project', {
         p_template_id: templateId,
         p_user_id: userId,
         p_idempotency_key: idempotencyKey,
-        p_snapshot_data: snapshotData,
+        p_snapshot_data: snapshotWithMetadata,
         p_snapshot_hash: snapshotHash,
         p_rule_set_id: null,
       });
@@ -182,11 +197,22 @@ export const useProjectCreationStore = create<ProjectCreationStore>((set, get) =
         createdProjectId: projectId as string,
         step: CreationStep.CREATED,
         isLoading: false,
+        idempotencyKey: null,
       });
 
-      // Load the project and switch to consultant mode
-      await useProjectStore.getState().loadProject(projectId as string);
-      useCanvasStore.getState().setMode(CanvasMode.CONSULTANT);
+      // Load the project and switch to consultant mode.
+      // If this fails, the project was already created successfully - show a different message.
+      try {
+        await useProjectStore.getState().loadProject(projectId as string);
+        useCanvasStore.getState().setMode(CanvasMode.CONSULTANT);
+      } catch {
+        set({
+          step: CreationStep.ERROR,
+          error: 'Project created but failed to load. Please navigate to it manually.',
+          isLoading: false,
+          createdProjectId: projectId as string,
+        });
+      }
     } catch (err) {
       set({
         step: CreationStep.ERROR,

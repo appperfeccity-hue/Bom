@@ -10,6 +10,7 @@ export function ProjectCreationWizard() {
   const step = useProjectCreationStore((s) => s.step);
   const error = useProjectCreationStore((s) => s.error);
   const isLoading = useProjectCreationStore((s) => s.isLoading);
+  const createdProjectId = useProjectCreationStore((s) => s.createdProjectId);
   const reset = useProjectCreationStore((s) => s.reset);
 
   if (step === CreationStep.IDLE) return null;
@@ -76,21 +77,23 @@ export function ProjectCreationWizard() {
               </div>
             </div>
             <div style={{ display: 'flex', gap: '8px' }}>
-              <button
-                onClick={handleRetry}
-                style={{
-                  padding: '6px 12px',
-                  fontSize: '12px',
-                  fontWeight: 500,
-                  backgroundColor: '#1976d2',
-                  color: '#ffffff',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                }}
-              >
-                Retry
-              </button>
+              {!createdProjectId && (
+                <button
+                  onClick={handleRetry}
+                  style={{
+                    padding: '6px 12px',
+                    fontSize: '12px',
+                    fontWeight: 500,
+                    backgroundColor: '#1976d2',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Retry
+                </button>
+              )}
               <button
                 onClick={reset}
                 style={{

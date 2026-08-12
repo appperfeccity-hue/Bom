@@ -299,5 +299,89 @@ describe('snapshotBuilder', () => {
 
       expect(hash1).not.toBe(hash2);
     });
+
+    it('returns different hash when nested zone properties differ', async () => {
+      const data1: SnapshotData = {
+        wall_geometry: 'STRAIGHT',
+        base_dimensions: { width_mm: 3000, height_mm: 2700 },
+        zones: [{
+          id: 'zone-1',
+          name: 'Zone A',
+          x_mm: 0,
+          y_mm: 0,
+          width_mm: 1000,
+          height_mm: 800,
+          width_strategy: 'FIXED',
+          height_strategy: 'FIXED',
+          position_strategy: 'ABSOLUTE',
+          z_index: 1,
+          primary_sku: null,
+          alternatives: [],
+        }],
+        lighting: [],
+        furniture: [],
+        trims: [],
+        hidden_components: [],
+        calculation_parameters: {},
+      };
+
+      const data2: SnapshotData = {
+        wall_geometry: 'STRAIGHT',
+        base_dimensions: { width_mm: 3000, height_mm: 2700 },
+        zones: [{
+          id: 'zone-1',
+          name: 'Zone A',
+          x_mm: 0,
+          y_mm: 0,
+          width_mm: 2000,
+          height_mm: 800,
+          width_strategy: 'FIXED',
+          height_strategy: 'FIXED',
+          position_strategy: 'ABSOLUTE',
+          z_index: 1,
+          primary_sku: null,
+          alternatives: [],
+        }],
+        lighting: [],
+        furniture: [],
+        trims: [],
+        hidden_components: [],
+        calculation_parameters: {},
+      };
+
+      const hash1 = await computeSnapshotHash(data1);
+      const hash2 = await computeSnapshotHash(data2);
+
+      expect(hash1).not.toBe(hash2);
+    });
+
+    it('includes nested base_dimensions properties in hash', async () => {
+      const data1: SnapshotData = {
+        wall_geometry: 'STRAIGHT',
+        base_dimensions: { width_mm: 3000, height_mm: 2700 },
+        zones: [],
+        lighting: [],
+        furniture: [],
+        trims: [],
+        hidden_components: [],
+        calculation_parameters: {},
+      };
+
+      const data2: SnapshotData = {
+        wall_geometry: 'STRAIGHT',
+        base_dimensions: { width_mm: 3000, height_mm: 3000 },
+        zones: [],
+        lighting: [],
+        furniture: [],
+        trims: [],
+        hidden_components: [],
+        calculation_parameters: {},
+      };
+
+      const hash1 = await computeSnapshotHash(data1);
+      const hash2 = await computeSnapshotHash(data2);
+
+      expect(hash1).not.toBe(hash2);
+    });
   });
 });

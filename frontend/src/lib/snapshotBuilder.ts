@@ -80,11 +80,28 @@ export function buildSnapshotData(
 }
 
 /**
+ * Recursively sorts object keys to produce a deterministic JSON string.
+ * Arrays preserve their order; objects have keys sorted alphabetically at every level.
+ */
+function sortKeysDeep(value: unknown): unknown {
+  if (value === null || value === undefined) return value;
+  if (Array.isArray(value)) return value.map(sortKeysDeep);
+  if (typeof value === 'object') {
+    const sorted: Record<string, unknown> = {};
+    for (const key of Object.keys(value as Record<string, unknown>).sort()) {
+      sorted[key] = sortKeysDeep((value as Record<string, unknown>)[key]);
+    }
+    return sorted;
+  }
+  return value;
+}
+
+/**
  * Computes a SHA-256 hex digest of the canonical JSON representation
- * of the snapshot data (keys sorted deterministically).
+ * of the snapshot data (keys sorted deterministically at all nesting levels).
  */
 export async function computeSnapshotHash(snapshotData: SnapshotData): Promise<string> {
-  const canonical = JSON.stringify(snapshotData, Object.keys(snapshotData).sort());
+  const canonical = JSON.stringify(sortKeysDeep(snapshotData));
   const encoder = new TextEncoder();
   const data = encoder.encode(canonical);
   const hashBuffer = await crypto.subtle.digest('SHA-256', data);
