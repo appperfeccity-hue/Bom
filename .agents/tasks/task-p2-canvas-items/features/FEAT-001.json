@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "feat",
   "description": "P2-6 Multi-select (#35) - Extend canvasStore.selection from single selectedZoneId to selectedZoneIds: string[], implement Shift+Click additive selection, marquee (rubber-band) rectangle selection, batch move/delete operations, and multi-selection handle rendering. This is implemented first because P2-5 (Copy/Paste/Duplicate) depends on multi-select being available.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "1. Update SelectionState in frontend/src/types/canvas.ts: add `selectedZoneIds: string[]` field, keep selectedZoneId as a derived convenience (first item or null), add `marqueeRect: BoundingBox | null` for rubber-band preview.",
     "2. Update canvasStore.ts: add selectedZoneIds array to initial state, update selectZone to set selectedZoneIds to [id], add `toggleZoneSelection(id: string)` for Shift+Click (adds/removes from selectedZoneIds), add `selectZonesInRect(rect: BoundingBox, zones: TemplateZone[])` for marquee, add `setMarqueeRect(rect: BoundingBox | null)` action, update clearSelection to clear selectedZoneIds, keep backward compat for code using selection.selectedZoneId.",
@@ -30,5 +30,5 @@
     "cd /projects/sandbox/Bom/frontend && unset NODE_OPTIONS && npx vitest run"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All 832 tests pass (814 original + 18 new). Pre-existing TS errors in usePermissionEnforcement.test.ts and ValidationOverlayLayer.tsx are unrelated. The sed-based bulk replacement for selection state in test files worked cleanly. The SelectionState interface now includes selectedZoneIds and marqueeRect as required fields - all tests updated accordingly."
 }
