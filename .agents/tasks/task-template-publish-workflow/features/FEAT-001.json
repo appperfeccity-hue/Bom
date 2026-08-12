@@ -1,0 +1,31 @@
+{
+  "id": "FEAT-001",
+  "type": "feat",
+  "description": "Create publishStore (Zustand store) managing the 4-step template publishing workflow: Validate -> Generate Master BOM -> Approve Master BOM -> Publish. Includes client-side validation logic, RPC calls to Supabase for BOM generation and approval, and error handling for DB trigger rejections.",
+  "status": "in_progress",
+  "steps": [
+    "Create src/stores/publishStore.ts as a new Zustand store following the State+Actions pattern from bomStore.ts. Define PublishState with: currentStep (enum: IDLE, VALIDATING, VALIDATION_RESULTS, GENERATING_BOM, BOM_GENERATED, APPROVING_BOM, BOM_APPROVED, PUBLISHING, PUBLISHED, ERROR), validationResults (array of {gate: string, passed: boolean, message: string}), generatedBom (MasterBom | null), generatedBomLines (MasterBomLine[]), isLoading, error.",
+    "Implement runValidation(templateId: string) action that performs client-side pre-checks by reading projectStore state: (1) All zones have a primary SKU assigned (check zoneSku map keys against zones array), (2) All assigned SKUs are ACTIVE with catalogue READY (query via fromTable), (3) No zone overlaps (use hasOverlap from canvas/utils/zoneConstraints), (4) Zone constraints satisfied (use isWithinWallBoundary, isValidZoneDimensions from zoneConstraints.ts, checking against currentTemplate base_width_mm/base_height_mm), (5) Metadata complete (template name non-empty, description exists). Return validation results array and set currentStep to VALIDATION_RESULTS.",
+    "Implement generateMasterBom(templateId: string) action: calls fromTable('master_bom').insert({template_id, status:'GENERATED', engine_version:'1.0', rule_set_id:'default', generated_at: new Date().toISOString()}).select().single() to create a new master BOM record. Then fetches/stores the generated BOM and lines. Sets currentStep to BOM_GENERATED on success.",
+    "Implement approveMasterBom(bomId: string) action: calls fromTable('master_bom').update({status:'APPROVED', approved_by: authStore user id, approved_at: new Date().toISOString()}).eq('master_bom_id', bomId). Sets currentStep to BOM_APPROVED on success.",
+    "Implement publishTemplate(templateId: string) action: calls fromTable('template').update({status:'ACTIVE'}).eq('id', templateId). If the DB trigger (trg_template_before_activate / check_template_eligible) rejects, catch the error and set it in state with a user-friendly message. Sets currentStep to PUBLISHED on success.",
+    "Implement reset() action that resets all state to initial values.",
+    "Add canPublish computed helper: returns true only if currentStep is BOM_APPROVED.",
+    "Export usePublishStore and types (PublishState, PublishActions, PublishStore) from src/stores/index.ts."
+  ],
+  "acceptance_criteria": [
+    "publishStore exports usePublishStore with all defined actions and state",
+    "runValidation correctly identifies missing SKU assignments, zone overlaps, boundary violations, and missing metadata",
+    "generateMasterBom inserts a new master_bom record via Supabase",
+    "approveMasterBom updates master_bom status to APPROVED",
+    "publishTemplate updates template status to ACTIVE and handles trigger rejection errors",
+    "Store is exported from src/stores/index.ts",
+    "TypeScript compiles without errors"
+  ],
+  "verification": [
+    "Run: cd /projects/sandbox/Bom/frontend && unset NODE_OPTIONS && npx tsc --noEmit",
+    "Run: cd /projects/sandbox/Bom/frontend && unset NODE_OPTIONS && npx vitest run"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

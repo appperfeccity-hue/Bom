@@ -9,3 +9,6 @@ export type { CanvasState, CanvasActions, CanvasStore } from './canvasStore';
 
 export { useSkuStore } from './skuStore';
 export type { SkuState, SkuActions, SkuStore, SkuFilters } from './skuStore';
+
+export { usePublishStore, canPublish, PublishStep } from './publishStore';
+export type { PublishState, PublishActions, PublishStore, ValidationResult } from './publishStore';
