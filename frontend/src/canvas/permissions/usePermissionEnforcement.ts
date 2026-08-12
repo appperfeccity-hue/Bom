@@ -63,6 +63,15 @@ export function usePermissionEnforcement(): PermissionEnforcement {
     [getFieldPermission],
   );
 
+  /**
+   * Validates a field value against snapshot permissions.
+   *
+   * IMPORTANT: This must be called as the FIRST validation step before any
+   * generic measurement constraints (e.g., min/max clamping in UI components).
+   * Permission-specific ranges take priority over generic ranges. If a consumer
+   * applies generic validation after this function, it may incorrectly override
+   * the permission-defined boundaries.
+   */
   const validateField = useCallback(
     (parameterKey: string, value: unknown): ValidationResult => {
       const permission = getFieldPermission(parameterKey);
@@ -123,6 +132,12 @@ export function usePermissionEnforcement(): PermissionEnforcement {
     (zoneId: string): boolean => {
       // In DESIGNER mode or no snapshot, always allow
       if (mode !== CanvasMode.CONSULTANT || !currentSnapshot) {
+        return true;
+      }
+
+      // If zoneId is not a valid UUID, skip permission lookup and allow edit
+      const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (!UUID_REGEX.test(zoneId)) {
         return true;
       }
 

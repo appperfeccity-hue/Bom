@@ -25,13 +25,17 @@ export function MeasurementPanel() {
       // If field is locked, do not update
       if (isFieldLocked(field)) return;
 
-      // Validation
+      // Permission-specific validation takes priority over generic constraints
+      const permResult = validateField(field, numValue);
+      if (!permResult.valid) return;
+
+      // Generic measurement constraints (applied AFTER permission validation)
       if (field === 'wall_width_mm' && (numValue < 600 || numValue > 12000)) return;
       if (field === 'wall_height_mm' && (numValue < 300 || numValue > 6000)) return;
 
       void updateMeasurements({ [field]: numValue });
     },
-    [updateMeasurements, isFieldLocked],
+    [updateMeasurements, isFieldLocked, validateField],
   );
 
   const handleBlur = useCallback(

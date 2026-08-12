@@ -65,7 +65,7 @@ const mockSnapshot: ProjectSnapshot = {
       {
         permission_id: 'perm-5',
         template_id: 'tmpl-1',
-        parameter_key: 'zone_zone-locked',
+        parameter_key: 'zone_a1b2c3d4-e5f6-7890-abcd-ef1234567890',
         parameter_type: 'zone',
         edit_mode: 'LOCKED',
         min_value: null,
@@ -189,8 +189,8 @@ describe('usePermissionEnforcement', () => {
 
     const { result } = renderHook(() => usePermissionEnforcement());
 
-    expect(result.current.canEditZone('zone-locked')).toBe(false);
-    expect(result.current.canEditZone('zone-other')).toBe(true);
+    expect(result.current.canEditZone('a1b2c3d4-e5f6-7890-abcd-ef1234567890')).toBe(false);
+    expect(result.current.canEditZone('aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee')).toBe(true);
   });
 
   it('getFieldPermission returns the permission config for a given key', () => {
@@ -213,5 +213,52 @@ describe('usePermissionEnforcement', () => {
     const { result } = renderHook(() => usePermissionEnforcement());
 
     expect(result.current.getFieldPermission('unknown_field')).toBeNull();
+  });
+
+  it('canEditZone returns true for non-UUID zoneId strings', () => {
+    useCanvasStore.setState({ mode: CanvasMode.CONSULTANT });
+    useProjectStore.setState({ currentSnapshot: mockSnapshot });
+
+    const { result } = renderHook(() => usePermissionEnforcement());
+
+    // Non-UUID strings should always be allowed (skip permission lookup)
+    expect(result.current.canEditZone('not-a-uuid')).toBe(true);
+    expect(result.current.canEditZone('zone-locked')).toBe(true);
+    expect(result.current.canEditZone('abc')).toBe(true);
+    expect(result.current.canEditZone('')).toBe(true);
+  });
+
+  it('canEditZone checks permissions for valid UUID zoneId', () => {
+    // Add a permission for a valid UUID zone
+    const uuidZoneId = '12345678-1234-1234-1234-123456789abc';
+    const snapshotWithUuidZone: ProjectSnapshot = {
+      ...mockSnapshot,
+      snapshot_data: {
+        permissions: [
+          ...mockSnapshot.snapshot_data.permissions,
+          {
+            permission_id: 'perm-uuid',
+            template_id: 'tmpl-1',
+            parameter_key: `zone_${uuidZoneId}`,
+            parameter_type: 'zone',
+            edit_mode: 'LOCKED',
+            min_value: null,
+            max_value: null,
+            allowed_values: null,
+          },
+        ],
+      },
+    };
+
+    useCanvasStore.setState({ mode: CanvasMode.CONSULTANT });
+    useProjectStore.setState({ currentSnapshot: snapshotWithUuidZone });
+
+    const { result } = renderHook(() => usePermissionEnforcement());
+
+    // UUID zone with LOCKED permission should be blocked
+    expect(result.current.canEditZone(uuidZoneId)).toBe(false);
+
+    // Different valid UUID should be allowed (no matching permission)
+    expect(result.current.canEditZone('aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee')).toBe(true);
   });
 });

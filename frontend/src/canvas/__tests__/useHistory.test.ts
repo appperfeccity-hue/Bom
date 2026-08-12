@@ -189,4 +189,40 @@ describe('useHistory', () => {
     // Should get the original value, not the mutated one
     expect(undoResult![0].x_mm).toBe(0);
   });
+
+  it('resetHistory clears all state so canUndo is false', () => {
+    const { result } = renderHook(() => useHistory());
+
+    act(() => {
+      result.current.pushState([makeZone('z1', 0, 0)]);
+      result.current.pushState([makeZone('z1', 100, 0)]);
+    });
+
+    expect(result.current.canUndo).toBe(true);
+
+    act(() => {
+      resetHistory();
+    });
+
+    expect(result.current.canUndo).toBe(false);
+    expect(result.current.canRedo).toBe(false);
+  });
+
+  it('subscriber is cleaned up on unmount', () => {
+    const { result, unmount } = renderHook(() => useHistory());
+
+    act(() => {
+      result.current.pushState([makeZone('z1', 0, 0)]);
+      result.current.pushState([makeZone('z1', 100, 0)]);
+    });
+
+    expect(result.current.canUndo).toBe(true);
+
+    // Unmount should clean up the subscriber without errors
+    unmount();
+
+    // After unmount, calling resetHistory should not throw
+    // (it notifies subscribers, but the unmounted one should be removed)
+    expect(() => resetHistory()).not.toThrow();
+  });
 });

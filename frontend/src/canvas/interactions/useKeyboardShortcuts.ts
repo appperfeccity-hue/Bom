@@ -10,6 +10,17 @@ interface UseKeyboardShortcutsOptions {
   history: HistoryState;
 }
 
+/** Timestamp of the last arrow-nudge history push. Used to batch rapid nudges. */
+let lastNudgeTime = 0;
+
+/** Debounce interval in milliseconds for batching arrow nudge history entries. */
+const NUDGE_DEBOUNCE_MS = 300;
+
+/** Reset the nudge debounce timer (useful for testing). */
+export function resetNudgeTimer() {
+  lastNudgeTime = 0;
+}
+
 /**
  * Custom hook for handling keyboard shortcuts on the canvas.
  *
@@ -128,8 +139,12 @@ export function useKeyboardShortcuts({ history }: UseKeyboardShortcutsOptions) {
           return; // Cannot nudge - would overlap
         }
 
-        // Push current state to history before nudging
-        history.pushState(zones);
+        // Push current state to history before nudging (batched: skip if last nudge was within debounce window)
+        const now = Date.now();
+        if (now - lastNudgeTime > NUDGE_DEBOUNCE_MS) {
+          history.pushState(zones);
+        }
+        lastNudgeTime = now;
 
         const updatedZone: TemplateZone = {
           ...zone,

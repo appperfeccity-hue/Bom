@@ -12,6 +12,7 @@ import { useCanvasViewport } from './interactions/useCanvasViewport';
 import { useZoneCreate } from './interactions/useZoneCreate';
 import { useKeyboardShortcuts } from './interactions/useKeyboardShortcuts';
 import { useHistory } from './history/useHistory';
+import { resetHistory } from './history/useHistory';
 import { screenToCanvas } from '@/lib/coordinates';
 
 interface CanvasContainerProps {
@@ -99,6 +100,10 @@ export function CanvasContainer({ mode }: CanvasContainerProps) {
       if (!hasInitialized.current || templateChanged) {
         hasInitialized.current = true;
         lastTemplateId.current = currentTemplate.id;
+        // Clear history when switching templates/projects
+        if (templateChanged) {
+          resetHistory();
+        }
         fitToViewport(
           currentTemplate.base_width_mm,
           currentTemplate.base_height_mm,

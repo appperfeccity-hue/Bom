@@ -1,0 +1,27 @@
+{
+  "id": "FEAT-001",
+  "type": "fix",
+  "description": "Fix 5 follow-up issues from P0: (A) Clear history on template/project switch, (B) Batch arrow nudge history entries, (C) Clean subscriber on unmount, (D) Validate permission key naming, (E) Apply permission range before generic measurement range",
+  "status": "in_progress",
+  "steps": [
+    "A. In frontend/src/canvas/history/useHistory.ts: export resetHistory(). In frontend/src/canvas/CanvasContainer.tsx: call resetHistory() (imported directly) when currentTemplate changes (detect via template ID change in the existing useEffect that handles template changes, or add a new effect that calls resetHistory when currentTemplate.id changes).",
+    "B. In frontend/src/canvas/interactions/useKeyboardShortcuts.ts: batch arrow nudge history entries. Currently every arrow key press calls history.pushState(zones) before the nudge. Add debounce/batching: skip the pushState if the last pushState was also an arrow nudge within 300ms. Use a module-level lastNudgeTime variable. Only push state if Date.now() - lastNudgeTime > 300. Update lastNudgeTime on each nudge.",
+    "C. In frontend/src/canvas/history/useHistory.ts: the subscriber is added via useState initializer but never removed. Add a useEffect cleanup that removes the forceUpdate function from the subscribers Set on unmount: useEffect(() => { subscribers.add(forceUpdate); return () => { subscribers.delete(forceUpdate); }; }, [forceUpdate]);. Remove the useState initializer pattern that currently adds it.",
+    "D. In frontend/src/canvas/permissions/usePermissionEnforcement.ts canEditZone(): currently checks parameter_key === `zone_${zoneId}`. Add validation that zoneId matches UUID format before constructing the key. If zoneId does not match /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i, return true (allow edit, skip lookup).",
+    "E. In frontend/src/canvas/permissions/usePermissionEnforcement.ts validateField(): when edit_mode is RESTRICTED with numeric min/max, the permission-specific range should take priority. Currently it does (checks permission.min_value/max_value). The issue is: if a generic measurement constraint also exists elsewhere and is applied AFTER permission validation, it may override. Ensure validateField is called as the FIRST validation step in any consumer. Add a JSDoc comment to validateField making this explicit. Also in frontend/src/components/MeasurementPanel.tsx (if it calls validateField), ensure permission validation is applied before any generic min/max clamping.",
+    "Add/update tests in frontend/src/canvas/__tests__/useHistory.test.ts for: resetHistory clears on template switch (simulate by calling resetHistory and checking canUndo is false). Add test in useKeyboardShortcuts.test.ts for batched nudge (two rapid arrow presses should result in only one history entry). Add test in usePermissionEnforcement.test.ts for invalid UUID returning true from canEditZone."
+  ],
+  "acceptance_criteria": [
+    "resetHistory is exported and called when template/project changes in CanvasContainer",
+    "Rapid arrow nudges within 300ms do not create separate history entries for each keypress",
+    "useHistory hook cleans up subscriber on component unmount (useEffect with cleanup)",
+    "canEditZone returns true (allows edit) when given a non-UUID string",
+    "validateField JSDoc documents that it must be the first validation step applied",
+    "All existing 755 tests still pass plus new tests for the above behaviors"
+  ],
+  "verification": [
+    "cd /projects/sandbox/Bom/frontend && NODE_OPTIONS='' npx vitest --run"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

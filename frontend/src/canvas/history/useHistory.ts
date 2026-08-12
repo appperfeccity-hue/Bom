@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { TemplateZone } from '@/types/database';
 
 /** Maximum number of history entries to retain. */
@@ -54,14 +54,13 @@ export function useHistory(): HistoryState {
   // Subscribe this component instance to history changes from other components
   const forceUpdate = useCallback(() => setTick((t) => t + 1), []);
 
-  // Register/unregister subscriber on mount/unmount
-  // We use a simple pattern: register in the hook body (runs every render)
-  // but since the Set prevents duplicates of the same function ref, this is safe
-  // Actually, to avoid re-registering, we do it once via useState initializer trick:
-  useState(() => {
+  // Register subscriber on mount and clean up on unmount
+  useEffect(() => {
     subscribers.add(forceUpdate);
-    return null;
-  });
+    return () => {
+      subscribers.delete(forceUpdate);
+    };
+  }, [forceUpdate]);
 
   const canUndo = cursor > 0;
   const canRedo = cursor < stack.length - 1;
