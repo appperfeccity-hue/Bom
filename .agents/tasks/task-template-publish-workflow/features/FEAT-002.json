@@ -2,7 +2,7 @@
   "id": "FEAT-002",
   "type": "feat",
   "description": "Create PublishWorkflow UI components: a wizard-style panel with step indicator, ValidationResultsPanel, ApprovalStep with Master BOM preview, PublishConfirmation, and a 'Publish Template' button in the Toolbar. Integrate into App.tsx.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "Create src/components/PublishWorkflow/ directory with index.ts barrel export.",
     "Create PublishWorkflow.tsx: A fixed overlay panel (similar to BomPanel.tsx pattern) that shows when publishStore.currentStep !== IDLE. Contains a step indicator showing the 4 steps (Validate, Generate BOM, Approve BOM, Publish) with current step highlighted. Renders the appropriate sub-component based on currentStep. Has a close/cancel button that calls publishStore.reset().",
@@ -31,5 +31,5 @@
     "Run: cd /projects/sandbox/Bom/frontend && unset NODE_OPTIONS && npx vitest run"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All 145 tests pass. TypeScript compiles cleanly with --noEmit. Components follow BomPanel overlay pattern (fixed positioning, right-side panel, z-index 1001 to stack above BomPanel). Toolbar button conditionally renders for DESIGNER mode with DRAFT template. App.tsx conditionally renders the PublishWorkflow panel based on publishStore.currentStep !== IDLE."
 }
