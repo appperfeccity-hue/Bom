@@ -1,6 +1,7 @@
 import { Layer, Rect, Text } from 'react-konva';
 import { useCanvasStore } from '@/stores/canvasStore';
 import { useProjectStore } from '@/stores/projectStore';
+import { useBomStore } from '@/stores/bomStore';
 import { CanvasMode } from '@/types/database';
 import { CanvasLayer } from '@/types/canvas';
 import { useZoneValidation } from '@/canvas/utils/useZoneValidation';
@@ -21,6 +22,8 @@ export function ZonesLayer({ wallHeight }: ZonesLayerProps) {
   const selection = useCanvasStore((s) => s.selection);
   const selectZone = useCanvasStore((s) => s.selectZone);
   const toggleZoneSelection = useCanvasStore((s) => s.toggleZoneSelection);
+  const highlightedZoneIds = useCanvasStore((s) => s.highlightedZoneIds);
+  const setHighlightedBomLineIds = useCanvasStore((s) => s.setHighlightedBomLineIds);
   const zones = useProjectStore((s) => s.zones);
   const zoneSku = useProjectStore((s) => s.zoneSku);
   const zoom = useCanvasStore((s) => s.viewport.zoom);
@@ -39,6 +42,13 @@ export function ZonesLayer({ wallHeight }: ZonesLayerProps) {
       } else {
         selectZone(zone.id);
       }
+
+      // Highlight corresponding BOM lines for the clicked zone
+      const bomLines = useBomStore.getState().masterBomLines;
+      const matchingLineIds = bomLines
+        .filter((line) => line.source_zone_id === zone.id)
+        .map((line) => line.master_bom_line_id);
+      setHighlightedBomLineIds(matchingLineIds);
     }
   };
 
@@ -46,17 +56,20 @@ export function ZonesLayer({ wallHeight }: ZonesLayerProps) {
     <Layer>
       {zones.map((zone) => {
         const isSelected = selection.selectedZoneIds.includes(zone.id);
+        const isHighlighted = highlightedZoneIds.includes(zone.id);
         const hasErrors = validationMap.has(zone.id);
 
         // Convert from bottom-left origin to top-left (Konva)
         const screenY = wallHeight - zone.y_mm - zone.height_mm;
 
-        // Determine stroke color: red for invalid zones, blue for normal
+        // Determine stroke color: red for invalid, gold for highlighted, blue for selected
         const strokeColor = hasErrors
           ? '#f44336'
-          : isSelected
-            ? '#1976d2'
-            : '#90caf9';
+          : isHighlighted
+            ? '#ffc107'
+            : isSelected
+              ? '#1976d2'
+              : '#90caf9';
 
         return (
           <Rect
@@ -65,9 +78,9 @@ export function ZonesLayer({ wallHeight }: ZonesLayerProps) {
             y={screenY}
             width={zone.width_mm}
             height={zone.height_mm}
-            fill={isSelected ? '#bbdefb' : '#e3f2fd'}
+            fill={isHighlighted ? '#fff8e1' : isSelected ? '#bbdefb' : '#e3f2fd'}
             stroke={strokeColor}
-            strokeWidth={(isSelected || hasErrors ? 2 : 1) / zoom}
+            strokeWidth={(isHighlighted ? 3 : isSelected || hasErrors ? 2 : 1) / zoom}
             onClick={(e) => handleZoneClick(zone, e)}
             onTap={(e) => handleZoneClick(zone, e)}
             listening={isDesigner}

@@ -1,4 +1,5 @@
 import { ProductType } from '@/types/database';
+import { useCanvasStore } from '@/stores/canvasStore';
 
 interface Column {
   key: string;
@@ -25,6 +26,9 @@ function getProductTypeLabel(pt: string): string {
 }
 
 export function BomSectionTable({ lines, columns, productTypeField = 'product_type' }: BomSectionTableProps) {
+  const highlightedBomLineIds = useCanvasStore((s) => s.highlightedBomLineIds);
+  const setHighlightedZoneIds = useCanvasStore((s) => s.setHighlightedZoneIds);
+
   // Group lines by product_type
   const sections = new Map<string, Record<string, unknown>[]>();
   const sectionOrder = [ProductType.WALL_PANEL, ProductType.LIGHT, ProductType.FURNITURE];
@@ -50,6 +54,24 @@ export function BomSectionTable({ lines, columns, productTypeField = 'product_ty
       renderOrder.push(key);
     }
   }
+
+  const handleRowMouseEnter = (line: Record<string, unknown>) => {
+    const sourceZoneId = line['source_zone_id'] as string | null;
+    if (sourceZoneId) {
+      setHighlightedZoneIds([sourceZoneId]);
+    }
+  };
+
+  const handleRowMouseLeave = () => {
+    setHighlightedZoneIds([]);
+  };
+
+  const handleRowClick = (line: Record<string, unknown>) => {
+    const sourceZoneId = line['source_zone_id'] as string | null;
+    if (sourceZoneId) {
+      setHighlightedZoneIds([sourceZoneId]);
+    }
+  };
 
   return (
     <div data-testid="bom-section-table">
@@ -97,21 +119,36 @@ export function BomSectionTable({ lines, columns, productTypeField = 'product_ty
                 </tr>
               </thead>
               <tbody>
-                {sectionLines.map((line, idx) => (
-                  <tr key={idx}>
-                    {columns.map((col) => (
-                      <td
-                        key={col.key}
-                        style={{
-                          padding: '4px 8px',
-                          borderBottom: '1px solid #f5f5f5',
-                        }}
-                      >
-                        {String(line[col.key] ?? '')}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
+                {sectionLines.map((line, idx) => {
+                  const lineId = (line['master_bom_line_id'] ?? line['actual_bom_line_id'] ?? '') as string;
+                  const isHighlighted = highlightedBomLineIds.includes(lineId);
+
+                  return (
+                    <tr
+                      key={idx}
+                      onMouseEnter={() => handleRowMouseEnter(line)}
+                      onMouseLeave={handleRowMouseLeave}
+                      onClick={() => handleRowClick(line)}
+                      style={{
+                        backgroundColor: isHighlighted ? '#fff8e1' : undefined,
+                        cursor: line['source_zone_id'] ? 'pointer' : undefined,
+                      }}
+                      data-testid={isHighlighted ? 'bom-row-highlighted' : undefined}
+                    >
+                      {columns.map((col) => (
+                        <td
+                          key={col.key}
+                          style={{
+                            padding: '4px 8px',
+                            borderBottom: '1px solid #f5f5f5',
+                          }}
+                        >
+                          {String(line[col.key] ?? '')}
+                        </td>
+                      ))}
+                    </tr>
+                  );
+                })}
               </tbody>
               <tfoot>
                 <tr data-testid={`bom-section-totals-${pt.toLowerCase()}`}>

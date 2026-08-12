@@ -11,6 +11,7 @@ import {
   type ViewportState,
   type ZoneResizeHandle,
 } from '@/types/canvas';
+import { constrainToWall, hasOverlap } from '@/canvas/utils/zoneConstraints';
 
 export interface CanvasState {
   mode: CanvasMode;
@@ -20,6 +21,9 @@ export interface CanvasState {
   selection: SelectionState;
   saveStatus: SaveStatus;
   version: number;
+  clipboard: TemplateZone[] | null;
+  highlightedZoneIds: string[];
+  highlightedBomLineIds: string[];
 }
 
 export interface CanvasActions {
@@ -37,6 +41,21 @@ export interface CanvasActions {
   setResizeHandle: (handle: ZoneResizeHandle | null) => void;
   setSaveStatus: (status: SaveStatus) => void;
   incrementVersion: () => void;
+  copySelection: (zones: TemplateZone[]) => void;
+  pasteClipboard: (
+    zones: TemplateZone[],
+    wallWidth: number,
+    wallHeight: number,
+    pushHistory: (zones: TemplateZone[]) => void,
+  ) => TemplateZone[];
+  duplicateSelection: (
+    zones: TemplateZone[],
+    wallWidth: number,
+    wallHeight: number,
+    pushHistory: (zones: TemplateZone[]) => void,
+  ) => TemplateZone[];
+  setHighlightedZoneIds: (ids: string[]) => void;
+  setHighlightedBomLineIds: (ids: string[]) => void;
 }
 
 export type CanvasStore = CanvasState & CanvasActions;
@@ -88,7 +107,73 @@ const initialState: CanvasState = {
   },
   saveStatus: 'saved',
   version: 1,
+  clipboard: null,
+  highlightedZoneIds: [],
+  highlightedBomLineIds: [],
 };
+
+/** Shared paste logic used by both pasteClipboard and duplicateSelection. */
+function performPaste(
+  clipboard: TemplateZone[],
+  zones: TemplateZone[],
+  wallWidth: number,
+  wallHeight: number,
+  pushHistory: (zones: TemplateZone[]) => void,
+  setSelection: (selection: SelectionState) => void,
+): TemplateZone[] {
+  if (clipboard.length === 0) return [];
+
+  // Push history before mutation
+  pushHistory(zones);
+
+  const PASTE_OFFSET = 100;
+  const newZones: TemplateZone[] = [];
+
+  for (const zone of clipboard) {
+    let offsetX = zone.x_mm + PASTE_OFFSET;
+    let offsetY = zone.y_mm + PASTE_OFFSET;
+
+    // Constrain to wall
+    const constrained = constrainToWall(offsetX, offsetY, zone.width_mm, zone.height_mm, wallWidth, wallHeight);
+    offsetX = constrained.x;
+    offsetY = constrained.y;
+
+    // Check overlap and try additional offsets if needed
+    const allZones = [...zones, ...newZones];
+    let box: BoundingBox = { x: offsetX, y: offsetY, width: zone.width_mm, height: zone.height_mm };
+    let attempts = 0;
+    while (hasOverlap(box, allZones) && attempts < 10) {
+      offsetX += PASTE_OFFSET;
+      offsetY += PASTE_OFFSET;
+      const re = constrainToWall(offsetX, offsetY, zone.width_mm, zone.height_mm, wallWidth, wallHeight);
+      offsetX = re.x;
+      offsetY = re.y;
+      box = { x: offsetX, y: offsetY, width: zone.width_mm, height: zone.height_mm };
+      attempts++;
+    }
+
+    const newZone: TemplateZone = {
+      ...zone,
+      id: crypto.randomUUID(),
+      x_mm: offsetX,
+      y_mm: offsetY,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    newZones.push(newZone);
+  }
+
+  // Select the new zones
+  const newIds = newZones.map((z: TemplateZone) => z.id);
+  setSelection({
+    selectedZoneId: newIds[0] ?? null,
+    selectedZoneIds: newIds,
+    resizeHandle: null,
+    marqueeRect: null,
+  });
+
+  return newZones;
+}
 
 export const useCanvasStore = create<CanvasStore>((set) => ({
   ...initialState,
@@ -206,4 +291,50 @@ export const useCanvasStore = create<CanvasStore>((set) => ({
 
   incrementVersion: () =>
     set((state) => ({ version: state.version + 1 })),
+
+  copySelection: (zones: TemplateZone[]) =>
+    set((state) => {
+      const { selectedZoneIds } = state.selection;
+      if (selectedZoneIds.length === 0) return {};
+      const selectedZones = zones.filter((z) => selectedZoneIds.includes(z.id));
+      if (selectedZones.length === 0) return {};
+      // Deep copy
+      const clipboard = selectedZones.map((z) => ({ ...z }));
+      return { clipboard };
+    }),
+
+  pasteClipboard: (
+    zones: TemplateZone[],
+    wallWidth: number,
+    wallHeight: number,
+    pushHistory: (zones: TemplateZone[]) => void,
+  ): TemplateZone[] => {
+    const state = useCanvasStore.getState();
+    const { clipboard } = state;
+    if (!clipboard || clipboard.length === 0) return [];
+    return performPaste(clipboard, zones, wallWidth, wallHeight, pushHistory, (selection) => set({ selection }));
+  },
+
+  duplicateSelection: (
+    zones: TemplateZone[],
+    wallWidth: number,
+    wallHeight: number,
+    pushHistory: (zones: TemplateZone[]) => void,
+  ): TemplateZone[] => {
+    const state = useCanvasStore.getState();
+    const { selectedZoneIds } = state.selection;
+    if (selectedZoneIds.length === 0) return [];
+
+    const selectedZones = zones.filter((z: TemplateZone) => selectedZoneIds.includes(z.id));
+    if (selectedZones.length === 0) return [];
+
+    // Use the selected zones as clipboard directly
+    const clipboard = selectedZones.map((z: TemplateZone) => ({ ...z }));
+    set({ clipboard });
+    return performPaste(clipboard, zones, wallWidth, wallHeight, pushHistory, (selection) => set({ selection }));
+  },
+
+  setHighlightedZoneIds: (ids: string[]) => set({ highlightedZoneIds: ids }),
+
+  setHighlightedBomLineIds: (ids: string[]) => set({ highlightedBomLineIds: ids }),
 }));

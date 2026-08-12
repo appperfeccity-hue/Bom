@@ -63,6 +63,56 @@ export function useKeyboardShortcuts({ history }: UseKeyboardShortcutsOptions) {
         return;
       }
 
+      // Ctrl+C: Copy selected zones to clipboard (Designer mode only)
+      if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
+        if (mode !== CanvasMode.DESIGNER) return;
+        if (selection.selectedZoneIds.length === 0) return;
+        e.preventDefault();
+        useCanvasStore.getState().copySelection(zones);
+        return;
+      }
+
+      // Ctrl+V: Paste clipboard zones (Designer mode only)
+      if ((e.ctrlKey || e.metaKey) && e.key === 'v') {
+        if (mode !== CanvasMode.DESIGNER) return;
+        if (!currentTemplate) return;
+        e.preventDefault();
+        const wallWidth = currentTemplate.base_width_mm;
+        const wallHeight = currentTemplate.base_height_mm;
+        const newZones = useCanvasStore.getState().pasteClipboard(
+          zones,
+          wallWidth,
+          wallHeight,
+          history.pushState,
+        );
+        if (newZones.length > 0) {
+          // Add pasted zones to projectStore
+          useProjectStore.setState({ zones: [...zones, ...newZones] });
+        }
+        return;
+      }
+
+      // Ctrl+D: Duplicate selected zones (Designer mode only)
+      if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
+        if (mode !== CanvasMode.DESIGNER) return;
+        if (selection.selectedZoneIds.length === 0) return;
+        if (!currentTemplate) return;
+        e.preventDefault();
+        const wallWidth = currentTemplate.base_width_mm;
+        const wallHeight = currentTemplate.base_height_mm;
+        const newZones = useCanvasStore.getState().duplicateSelection(
+          zones,
+          wallWidth,
+          wallHeight,
+          history.pushState,
+        );
+        if (newZones.length > 0) {
+          // Add duplicated zones to projectStore
+          useProjectStore.setState({ zones: [...zones, ...newZones] });
+        }
+        return;
+      }
+
       // Delete / Backspace: Remove selected zone(s) (Designer mode only)
       if (e.key === 'Delete' || e.key === 'Backspace') {
         if (mode !== CanvasMode.DESIGNER) return;
