@@ -1,1 +1,1 @@
-{"root":["./src/App.tsx","./src/main.tsx","./src/test-setup.ts","./src/vite-env.d.ts"],"version":"5.9.3"}
+{"root":["./src/App.tsx","./src/main.tsx","./src/test-setup.ts","./src/vite-env.d.ts","./src/lib/autosave.ts","./src/lib/coordinates.ts","./src/lib/supabase.ts","./src/lib/__tests__/coordinates.test.ts","./src/stores/authStore.ts","./src/stores/canvasStore.ts","./src/stores/index.ts","./src/stores/projectStore.ts","./src/stores/__tests__/canvasStore.test.ts","./src/types/canvas.ts","./src/types/database.ts","./src/types/index.ts"],"version":"5.9.3"}

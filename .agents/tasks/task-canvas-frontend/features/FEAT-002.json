@@ -2,7 +2,7 @@
   "id": "FEAT-002",
   "type": "feat",
   "description": "Implement TypeScript types, Supabase client, auth store (Zustand), and canvas/project state stores. This provides the complete data layer for the canvas UI: types matching the DB schema, Supabase client configuration, auth state with role-based access, project store for template/project data, and canvas store for viewport/zoom/selection/mode state with autosave debounce.",
-  "status": "pending",
+  "status": "in_progress",
   "steps": [
     "Create src/types/database.ts with TypeScript interfaces matching the perfecity schema tables the frontend uses: Template, TemplateZone, TemplateZoneSku, TemplateLighting, TemplateFurniture, TemplateTrim, Project, ProjectSnapshot, ProjectMeasurement, ProjectConfiguration, SkuMaster, CatalogueEntry, WallGeometry (STRAIGHT/L_CORNER). Include enums for CanvasMode (DESIGNER/CONSULTANT), ZoneWidthStrategy, ZoneHeightStrategy, ZonePositionStrategy, TemplateStatus, ProjectStatus, AdaptationStrategy.",
     "Create src/types/canvas.ts with canvas-specific types: Point (x, y in mm), Dimensions (width, height in mm), BoundingBox, ViewportState (zoom, panX, panY), GridConfig (size: 100, snapEnabled), CanvasLayer enum (GRID, WALL_OUTLINE, ZONES, SKU_PLACEMENT, LIGHTING, FURNITURE, TRIMS, MEASUREMENTS, SELECTION, GRID_OVERLAY), LayerVisibility map, SelectionState (selectedZoneId, resizeHandle), SaveStatus ('saving'|'saved'|'unsaved'|'error'), ZoneResizeHandle type (8-point: nw, n, ne, e, se, s, sw, w).",
