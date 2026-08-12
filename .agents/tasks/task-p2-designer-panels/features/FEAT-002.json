@@ -1,0 +1,31 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "Trims UI - Designer can define physical trim SKUs per template with quantity rules (TRIM_BY_ZONE_PERIMETER, TRIM_BY_PANEL_EDGE, TRIM_BY_LENGTH, TRIM_FIXED) and fixed quantity values, per spec section 52.",
+  "status": "in_progress",
+  "steps": [
+    "Create directory frontend/src/components/Trims/ with files: TrimsPanel.tsx, AddTrimDialog.tsx, index.ts, and __tests__/ directory.",
+    "In TrimsPanel.tsx: Follow HiddenComponentsPanel.tsx pattern. Accept templateId prop. Check CanvasMode.DESIGNER. Fetch from 'template_trim' table using fromTable('template_trim').select('*').eq('template_id', templateId). Display each trim entry showing: sku_id (nullable - show 'Geometry only' if null), trim_type badge (GEOMETRY in grey, PHYSICAL in blue), quantity_rule, and fixed_quantity (only shown for TRIM_FIXED rule). Include 'Add Trim' button. Use data-testid='trims-panel', data-testid='add-trim-btn', data-testid='no-trims-msg', data-testid='trim-item-{id}', data-testid='trim-type-{id}'.",
+    "In AddTrimDialog.tsx: Follow AddHiddenComponentDialog pattern. Fields: SKU ID (text input, optional for GEOMETRY type), Trim Type (select: GEOMETRY, PHYSICAL), Quantity Rule (select: TRIM_BY_ZONE_PERIMETER, TRIM_BY_PANEL_EDGE, TRIM_BY_LENGTH, TRIM_FIXED), Fixed Quantity (number input, only shown when quantity_rule is TRIM_FIXED). Validation: if trim_type is PHYSICAL, sku_id is required. Insert into 'template_trim' table. Use data-testid='add-trim-dialog', data-testid='sku-id-input', data-testid='trim-type-select', data-testid='quantity-rule-select', data-testid='fixed-quantity-input', data-testid='confirm-btn', data-testid='cancel-btn', data-testid='write-error'.",
+    "In index.ts: Export TrimsPanel and AddTrimDialog.",
+    "Create __tests__/TrimsPanel.test.tsx following HiddenComponentsPanel.test.tsx pattern. Mock fromTable to return sample trim data with both trim types and multiple quantity rules. Test: renders in DESIGNER mode, hidden in CONSULTANT mode, displays items after fetch, shows correct trim type badges, shows fixed_quantity only for TRIM_FIXED, shows 'Geometry only' when sku_id is null, shows empty state, opens dialog on button click. Minimum 8 test cases."
+  ],
+  "acceptance_criteria": [
+    "TrimsPanel renders in DESIGNER mode and is hidden in CONSULTANT mode",
+    "Panel fetches and displays template_trim entries with trim_type, quantity_rule, sku_id, fixed_quantity",
+    "Trim type is shown as a color-coded badge (GEOMETRY/PHYSICAL)",
+    "Fixed quantity is only shown when quantity_rule is TRIM_FIXED",
+    "Null sku_id displays as 'Geometry only'",
+    "Add button opens AddTrimDialog which enforces: PHYSICAL requires sku_id, TRIM_FIXED shows fixed_quantity field",
+    "Dialog inserts into template_trim table with correct fields",
+    "All new tests pass along with existing tests",
+    "TypeScript strict mode passes with no errors"
+  ],
+  "verification": [
+    "cd frontend && unset NODE_OPTIONS && npx vitest --run src/components/Trims/__tests__/",
+    "cd frontend && unset NODE_OPTIONS && npx tsc --noEmit",
+    "cd frontend && unset NODE_OPTIONS && npx vitest --run"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}
