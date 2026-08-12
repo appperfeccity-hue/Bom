@@ -8,6 +8,9 @@ import { WallOutlineLayer } from './layers/WallOutlineLayer';
 import { ZonesLayer } from './layers/ZonesLayer';
 import { SkuPlacementLayer } from './layers/SkuPlacementLayer';
 import { ValidationOverlayLayer } from './layers/ValidationOverlayLayer';
+import { LightingLayer } from './layers/LightingLayer';
+import { FurnitureLayer } from './layers/FurnitureLayer';
+import { TrimLayer } from './layers/TrimLayer';
 import { SelectionLayer } from './layers/SelectionLayer';
 import { MeasurementsLayer } from './layers/MeasurementsLayer';
 import { useCanvasViewport } from './interactions/useCanvasViewport';
@@ -189,6 +192,9 @@ export function CanvasContainer({ mode }: CanvasContainerProps) {
         <ZonesLayer wallHeight={wallHeight} />
         <SkuPlacementLayer wallHeight={wallHeight} />
         <ValidationOverlayLayer wallHeight={wallHeight} />
+        <LightingLayer wallHeight={wallHeight} />
+        <FurnitureLayer wallHeight={wallHeight} />
+        <TrimLayer wallHeight={wallHeight} />
         <MeasurementsLayer wallWidth={wallWidth} wallHeight={wallHeight} />
         <SelectionLayer wallHeight={wallHeight} />
 

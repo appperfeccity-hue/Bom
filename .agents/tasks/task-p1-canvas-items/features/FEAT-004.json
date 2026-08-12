@@ -1,0 +1,28 @@
+{
+  "id": "FEAT-004",
+  "type": "feat",
+  "description": "P1-C: Canvas layers - Lighting (#22), Furniture (#24), and Trim (#26) layers. LED strips along edges color-coded by mounting type. Positioned rectangles with labels for furniture. Border lines (thick for physical, dashed for geometry) for trims.",
+  "status": "in_progress",
+  "steps": [
+    "1. Create frontend/src/canvas/layers/LightingLayer.tsx: Controlled by CanvasLayer.LIGHTING visibility. Reads lighting array from useProjectStore. For each TemplateLighting item, render LED strip as a Konva Line/Rect along the edge defined by x_mm, y_mm, width_mm, height_mm. Color-code by type field (use configuration.mounting_type or type field): e.g., 'CEILING' = warm white (#FFD700), 'WALL' = cool white (#87CEEB), 'UNDER_SHELF' = blue (#4FC3F7), default = white. Convert coordinates using wallHeight. listening={false}. Render in a <Layer>.",
+    "2. Create frontend/src/canvas/layers/FurnitureLayer.tsx: Controlled by CanvasLayer.FURNITURE visibility. Reads furniture array from useProjectStore. For each TemplateFurniture item, render a positioned Konva Rect at (x_mm, screenY) with width_mm x height_mm, filled with a light gray (#f0f0f0) with 1px border. Apply rotation_deg via Konva's rotation prop (rotate around center using offset). Add a Konva Text label with the furniture name centered in the rect. listening={false}.",
+    "3. Create frontend/src/canvas/layers/TrimLayer.tsx: Controlled by CanvasLayer.TRIMS visibility. Reads trims array from useProjectStore. For each TemplateTrim item, render a Konva Line following path_mm points (array of {x, y}). Convert each point y using wallHeight (screenY = wallHeight - point.y). Style based on type field: 'PHYSICAL' = thick solid line (strokeWidth 3/zoom, stroke #795548), 'GEOMETRY' = thin dashed line (strokeWidth 1/zoom, dash [6/zoom, 4/zoom], stroke #9e9e9e). Default to GEOMETRY style for unknown types.",
+    "4. Add all three layers to frontend/src/canvas/CanvasContainer.tsx in correct z-order: Grid > WallOutline > Zones > SkuPlacement > Lighting > Furniture > Trims > Measurements > Selection. Import LightingLayer, FurnitureLayer, TrimLayer. Render them with wallHeight (and wallWidth where needed) props.",
+    "5. Add tests: frontend/src/canvas/__tests__/LightingLayer.test.tsx - test renders Line/Rect for lighting items, respects visibility toggle, color-codes by type. frontend/src/canvas/__tests__/FurnitureLayer.test.tsx - test renders Rect+Text for furniture items, respects visibility and rotation. frontend/src/canvas/__tests__/TrimLayer.test.tsx - test renders Line for trim paths, thick vs dashed based on type, respects visibility."
+  ],
+  "acceptance_criteria": [
+    "LightingLayer renders LED strip representations for each lighting item, color-coded by mounting type",
+    "FurnitureLayer renders positioned/rotated rectangles with name labels for each furniture item",
+    "TrimLayer renders path-based lines: thick solid for PHYSICAL type, thin dashed for GEOMETRY type",
+    "All three layers respect their CanvasLayer visibility toggle",
+    "All three layers convert from bottom-left origin (mm) to Konva top-left using wallHeight",
+    "All three layers are added to CanvasContainer in correct z-order",
+    "No business logic in any layer component - they only consume store state",
+    "All tests pass"
+  ],
+  "verification": [
+    "cd /projects/sandbox/Bom/frontend && NODE_OPTIONS='' npx vitest --run"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}
