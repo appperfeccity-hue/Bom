@@ -75,11 +75,36 @@ git push origin db-v1.1.5-verified
 
 ## Post-Deployment Security
 
-Row Level Security (RLS) is **not** enabled by default. Before exposing the database to client applications:
+Row Level Security (RLS) is now enabled on all 34 tables in the `perfecity` schema with a comprehensive authority model.
 
-1. Enable RLS on all tables
-2. Create appropriate policies for each role (ADMIN, DESIGNER, CONSULTANT)
-3. Run `supabase db diff --linked` to verify no drift
+**Migration applied:** `migrations/v1.1.5_rls_policies.sql`
+
+This migration:
+- Enables RLS on all 34 tables
+- Creates 151 policies covering ADMIN, DESIGNER, CONSULTANT, and SYSTEM roles
+- Grants `USAGE` on the `perfecity` schema to the `authenticated` role
+- Grants `SELECT` on all tables to the `authenticated` role
+- Creates the `perfecity.current_user_role()` helper function (extracts role from JWT `app_metadata`)
+- Ensures `service_role` bypasses RLS for backend operations
+
+**Verification harness:** `tests/regression_rls.sql`
+
+After applying the RLS migration, run the regression harness to confirm:
+```bash
+psql -v ON_ERROR_STOP=1 -h <host> -U <user> -d <database> -f tests/regression_rls.sql
+```
+
+All tests (T-RLS-01 through T-RLS-05) must pass, verifying:
+- All tables have RLS enabled
+- The `authenticated` role has schema access
+- Every table has at least one policy
+- The `current_user_role()` helper function exists
+- Minimum policy count threshold is met
+
+To check for schema drift after deployment:
+```bash
+supabase db diff --linked
+```
 
 ## Troubleshooting
 
