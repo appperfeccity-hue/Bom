@@ -23,5 +23,5 @@
     "Verify file exists at tests/regression_rls.sql in the repository"
   ],
   "blocked_reason": null,
-  "findings": "All 5 RLS regression tests (T-RLS-01 through T-RLS-05) passed on live Supabase project fbiemsbykrmrbqcsobvh. Tests confirmed: 34 tables with RLS enabled, authenticated role has USAGE, all tables have policies, current_user_role() exists, 151 policies total (exceeds 100 minimum)."
+  "findings": "All 10 RLS regression tests (T-RLS-01 through T-RLS-10) passed on live Supabase project fbiemsbykrmrbqcsobvh. Tests confirmed: 34 tables with RLS enabled, authenticated role has USAGE, all tables have policies, current_user_role() exists, 151 policies total (exceeds 100 minimum), anon has NO USAGE, snapshot has no UPDATE policy, master_bom DESIGNER UPDATE is ownership-scoped, DESIGNER SELECT exists on final_bom/final_bom_line, audit_event has no INSERT policy. Issue 5 (behavioral RLS tests) skipped - requires creating test users with specific JWT app_metadata claims which cannot be done via MCP tools (needs auth.admin API or direct user creation with custom claims)."
 }

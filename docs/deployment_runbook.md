@@ -82,10 +82,20 @@ Row Level Security (RLS) is now enabled on all 34 tables in the `perfecity` sche
 This migration:
 - Enables RLS on all 34 tables
 - Creates 151 policies covering ADMIN, DESIGNER, CONSULTANT, and SYSTEM roles
-- Grants `USAGE` on the `perfecity` schema to the `authenticated` role
+- Grants `USAGE` on the `perfecity` schema to the `authenticated` role only (anon excluded)
 - Grants `SELECT` on all tables to the `authenticated` role
 - Creates the `perfecity.current_user_role()` helper function (extracts role from JWT `app_metadata`)
 - Ensures `service_role` bypasses RLS for backend operations
+- Scopes DESIGNER Master BOM approval to template ownership
+- DESIGNER can view final BOMs for projects using their templates
+- Audit event writes restricted to service_role only (prevents trail pollution)
+- Snapshot UPDATE explicitly excluded (immutability preserved at RLS layer)
+
+**FORCE ROW LEVEL SECURITY note:** Intentionally omitted because the table owner
+(`postgres`) and `service_role` already bypass RLS by design in Supabase. FORCE
+would only constrain the owner role, which Supabase uses for internal operations.
+All user-facing access routes through the `authenticated` role, which is always
+subject to RLS regardless of FORCE.
 
 **Verification harness:** `tests/regression_rls.sql`
 
@@ -94,12 +104,17 @@ After applying the RLS migration, run the regression harness to confirm:
 psql -v ON_ERROR_STOP=1 -h <host> -U <user> -d <database> -f tests/regression_rls.sql
 ```
 
-All tests (T-RLS-01 through T-RLS-05) must pass, verifying:
+All tests (T-RLS-01 through T-RLS-10) must pass, verifying:
 - All tables have RLS enabled
 - The `authenticated` role has schema access
 - Every table has at least one policy
 - The `current_user_role()` helper function exists
 - Minimum policy count threshold is met
+- `anon` role has NO access to perfecity schema
+- Snapshot has no UPDATE policy (immutability invariant)
+- Master BOM DESIGNER UPDATE is ownership-scoped
+- DESIGNER SELECT exists on final_bom and final_bom_line
+- Audit event has no INSERT policy (service_role-only writes)
 
 To check for schema drift after deployment:
 ```bash

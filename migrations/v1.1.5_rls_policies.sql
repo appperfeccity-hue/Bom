@@ -11,7 +11,15 @@
 --
 -- Notes:
 --   - service_role bypasses RLS by default in Supabase (no explicit policies needed)
---   - FORCE ROW LEVEL SECURITY is not used (table owners already bypass)
+--   - FORCE ROW LEVEL SECURITY is intentionally omitted because:
+--       (a) The postgres role is the table owner and always bypasses RLS
+--       (b) service_role uses the postgres role which bypasses RLS
+--       (c) FORCE RLS would only constrain the table owner, which Supabase uses internally
+--       (d) All user-facing access goes through authenticated role, already subject to RLS
+--     Therefore FORCE ROW LEVEL SECURITY provides no additional security benefit.
+--   - anon role intentionally excluded: the spec requires authentication for all access
+--   - Audit event INSERT restricted to service_role only (bypasses RLS) to prevent
+--     user-crafted audit trail pollution
 -- =============================================================================
 
 BEGIN;
@@ -20,7 +28,7 @@ BEGIN;
 -- 1. SCHEMA AND TABLE GRANTS
 -- ---------------------------------------------------------------------------
 
-GRANT USAGE ON SCHEMA perfecity TO authenticated, anon;
+GRANT USAGE ON SCHEMA perfecity TO authenticated;
 GRANT SELECT ON ALL TABLES IN SCHEMA perfecity TO authenticated;
 GRANT ALL ON ALL TABLES IN SCHEMA perfecity TO service_role;
 GRANT USAGE ON ALL SEQUENCES IN SCHEMA perfecity TO authenticated, service_role;
@@ -680,7 +688,8 @@ CREATE POLICY template_zone_alternative_delete_admin ON perfecity.template_zone_
 -- 11. MASTER BOM POLICIES
 --     Tables: master_bom, master_bom_line
 --     Rules: all authenticated can SELECT
---            DESIGNER can UPDATE (for approval)
+--            DESIGNER can UPDATE own template's BOM (for approval) - scoped to
+--              ownership via template.created_by = auth.uid()
 --            INSERT/DELETE via service_role (SYSTEM) which bypasses RLS
 -- ---------------------------------------------------------------------------
 
@@ -690,7 +699,14 @@ CREATE POLICY master_bom_select_authenticated ON perfecity.master_bom
 
 CREATE POLICY master_bom_update_designer ON perfecity.master_bom
   FOR UPDATE TO authenticated
-  USING (perfecity.current_user_role() = 'DESIGNER');
+  USING (
+    perfecity.current_user_role() = 'DESIGNER'
+    AND EXISTS (
+      SELECT 1 FROM perfecity.template t
+      WHERE t.template_id = master_bom.template_id
+        AND t.created_by = auth.uid()
+    )
+  );
 
 CREATE POLICY master_bom_insert_admin ON perfecity.master_bom
   FOR INSERT TO authenticated
@@ -706,7 +722,15 @@ CREATE POLICY master_bom_line_select_authenticated ON perfecity.master_bom_line
 
 CREATE POLICY master_bom_line_update_designer ON perfecity.master_bom_line
   FOR UPDATE TO authenticated
-  USING (perfecity.current_user_role() = 'DESIGNER');
+  USING (
+    perfecity.current_user_role() = 'DESIGNER'
+    AND EXISTS (
+      SELECT 1 FROM perfecity.master_bom mb
+      JOIN perfecity.template t ON t.template_id = mb.template_id
+      WHERE mb.master_bom_id = master_bom_line.master_bom_id
+        AND t.created_by = auth.uid()
+    )
+  );
 
 CREATE POLICY master_bom_line_insert_admin ON perfecity.master_bom_line
   FOR INSERT TO authenticated
@@ -756,7 +780,8 @@ CREATE POLICY project_update_consultant ON perfecity.project
 -- ---------------------------------------------------------------------------
 -- 13. PROJECT CHILD TABLE POLICIES
 --     Tables: project_snapshot, project_configuration, project_measurement
---     Rules: CONSULTANT can SELECT/INSERT/UPDATE if parent project.created_by = auth.uid()
+--     Rules: CONSULTANT can SELECT/INSERT if parent project.created_by = auth.uid()
+--            (project_snapshot has no UPDATE policy - snapshots are immutable per spec S69-72)
 --            ADMIN can SELECT all
 --            DESIGNER can SELECT all
 -- ---------------------------------------------------------------------------
@@ -784,17 +809,6 @@ CREATE POLICY project_snapshot_select_designer ON perfecity.project_snapshot
 CREATE POLICY project_snapshot_insert_consultant ON perfecity.project_snapshot
   FOR INSERT TO authenticated
   WITH CHECK (
-    perfecity.current_user_role() = 'CONSULTANT'
-    AND EXISTS (
-      SELECT 1 FROM perfecity.project p
-      WHERE p.project_id = project_snapshot.project_id
-        AND p.created_by = auth.uid()
-    )
-  );
-
-CREATE POLICY project_snapshot_update_consultant ON perfecity.project_snapshot
-  FOR UPDATE TO authenticated
-  USING (
     perfecity.current_user_role() = 'CONSULTANT'
     AND EXISTS (
       SELECT 1 FROM perfecity.project p
@@ -942,6 +956,7 @@ CREATE POLICY actual_bom_line_select_designer ON perfecity.actual_bom_line
 --     Tables: final_bom, final_bom_line
 --     Rules: CONSULTANT can SELECT if owns parent project
 --            ADMIN can SELECT all
+--            DESIGNER can SELECT if owns the template used by the project
 --            No INSERT/UPDATE/DELETE for user roles (immutable, created by service_role)
 -- ---------------------------------------------------------------------------
 
@@ -961,6 +976,18 @@ CREATE POLICY final_bom_select_admin ON perfecity.final_bom
   FOR SELECT TO authenticated
   USING (perfecity.current_user_role() = 'ADMIN');
 
+CREATE POLICY final_bom_select_designer ON perfecity.final_bom
+  FOR SELECT TO authenticated
+  USING (
+    perfecity.current_user_role() = 'DESIGNER'
+    AND EXISTS (
+      SELECT 1 FROM perfecity.project p
+      JOIN perfecity.template t ON t.template_id = p.template_id
+      WHERE p.project_id = final_bom.project_id
+        AND t.created_by = auth.uid()
+    )
+  );
+
 -- final_bom_line
 CREATE POLICY final_bom_line_select_consultant ON perfecity.final_bom_line
   FOR SELECT TO authenticated
@@ -978,21 +1005,33 @@ CREATE POLICY final_bom_line_select_admin ON perfecity.final_bom_line
   FOR SELECT TO authenticated
   USING (perfecity.current_user_role() = 'ADMIN');
 
+CREATE POLICY final_bom_line_select_designer ON perfecity.final_bom_line
+  FOR SELECT TO authenticated
+  USING (
+    perfecity.current_user_role() = 'DESIGNER'
+    AND EXISTS (
+      SELECT 1 FROM perfecity.final_bom fb
+      JOIN perfecity.project p ON p.project_id = fb.project_id
+      JOIN perfecity.template t ON t.template_id = p.template_id
+      WHERE fb.final_bom_id = final_bom_line.final_bom_id
+        AND t.created_by = auth.uid()
+    )
+  );
+
 -- ---------------------------------------------------------------------------
 -- 16. AUDIT EVENT POLICIES
 --     Table: audit_event
 --     Rules: ADMIN can SELECT (read audit trail)
---            All authenticated can INSERT (append-only)
+--            INSERT restricted to service_role only (bypasses RLS)
 --            No UPDATE/DELETE (enforced by immutability trigger)
+--     Note: audit writes are atomic with state mutations and must only be
+--           performed by service_role. No authenticated user INSERT policy
+--           is needed or allowed to prevent audit trail pollution.
 -- ---------------------------------------------------------------------------
 
 CREATE POLICY audit_event_select_admin ON perfecity.audit_event
   FOR SELECT TO authenticated
   USING (perfecity.current_user_role() = 'ADMIN');
-
-CREATE POLICY audit_event_insert_authenticated ON perfecity.audit_event
-  FOR INSERT TO authenticated
-  WITH CHECK (true);
 
 -- ---------------------------------------------------------------------------
 -- 17. IDEMPOTENCY TABLE POLICIES

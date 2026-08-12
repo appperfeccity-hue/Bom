@@ -112,13 +112,128 @@ END;
 $$;
 
 -- ============================================================================
+-- T-RLS-06: Verify anon role has NO USAGE on perfecity schema
+-- (Review Issue 1: anon must not access perfecity schema)
+-- ============================================================================
+DO $$
+DECLARE
+    v_has_usage BOOLEAN;
+BEGIN
+    SELECT has_schema_privilege('anon', 'perfecity', 'USAGE') INTO v_has_usage;
+
+    IF NOT v_has_usage THEN
+        RAISE NOTICE 'PASS: T-RLS-06 - anon role does NOT have USAGE on perfecity schema';
+    ELSE
+        RAISE EXCEPTION 'FAIL: T-RLS-06 - anon role has USAGE on perfecity schema (security risk)';
+    END IF;
+END;
+$$;
+
+-- ============================================================================
+-- T-RLS-07: Verify project_snapshot has NO UPDATE policy
+-- (Review Issue 2: snapshots are immutable, UPDATE policy contradicts invariant)
+-- ============================================================================
+DO $$
+DECLARE
+    v_update_count INTEGER;
+BEGIN
+    SELECT count(*) INTO v_update_count
+    FROM pg_policies
+    WHERE schemaname = 'perfecity'
+      AND tablename = 'project_snapshot'
+      AND cmd = 'UPDATE';
+
+    IF v_update_count = 0 THEN
+        RAISE NOTICE 'PASS: T-RLS-07 - project_snapshot has no UPDATE policy (immutability preserved)';
+    ELSE
+        RAISE EXCEPTION 'FAIL: T-RLS-07 - project_snapshot has % UPDATE policy(ies) (should be 0)', v_update_count;
+    END IF;
+END;
+$$;
+
+-- ============================================================================
+-- T-RLS-08: Verify master_bom DESIGNER UPDATE policy is ownership-scoped
+-- (Review Issue 3: DESIGNER can only approve own template's Master BOM)
+-- ============================================================================
+DO $$
+DECLARE
+    v_qual TEXT;
+BEGIN
+    SELECT qual INTO v_qual
+    FROM pg_policies
+    WHERE schemaname = 'perfecity'
+      AND tablename = 'master_bom'
+      AND policyname = 'master_bom_update_designer';
+
+    IF v_qual IS NULL THEN
+        RAISE EXCEPTION 'FAIL: T-RLS-08 - master_bom_update_designer policy not found';
+    ELSIF v_qual LIKE '%template%' AND v_qual LIKE '%created_by%' AND v_qual LIKE '%auth.uid()%' THEN
+        RAISE NOTICE 'PASS: T-RLS-08 - master_bom_update_designer is ownership-scoped via template';
+    ELSE
+        RAISE EXCEPTION 'FAIL: T-RLS-08 - master_bom_update_designer lacks ownership scope. qual=%', v_qual;
+    END IF;
+END;
+$$;
+
+-- ============================================================================
+-- T-RLS-09: Verify final_bom and final_bom_line have DESIGNER SELECT policies
+-- (Review Issue 4: Designers can view projects using their own templates)
+-- ============================================================================
+DO $$
+DECLARE
+    v_fb_designer BOOLEAN;
+    v_fbl_designer BOOLEAN;
+BEGIN
+    SELECT EXISTS (
+        SELECT 1 FROM pg_policies
+        WHERE schemaname = 'perfecity' AND tablename = 'final_bom'
+          AND policyname = 'final_bom_select_designer' AND cmd = 'SELECT'
+    ) INTO v_fb_designer;
+
+    SELECT EXISTS (
+        SELECT 1 FROM pg_policies
+        WHERE schemaname = 'perfecity' AND tablename = 'final_bom_line'
+          AND policyname = 'final_bom_line_select_designer' AND cmd = 'SELECT'
+    ) INTO v_fbl_designer;
+
+    IF v_fb_designer AND v_fbl_designer THEN
+        RAISE NOTICE 'PASS: T-RLS-09 - DESIGNER SELECT policies exist on final_bom and final_bom_line';
+    ELSE
+        RAISE EXCEPTION 'FAIL: T-RLS-09 - Missing DESIGNER SELECT: final_bom=%, final_bom_line=%', v_fb_designer, v_fbl_designer;
+    END IF;
+END;
+$$;
+
+-- ============================================================================
+-- T-RLS-10: Verify audit_event has NO INSERT policy for authenticated
+-- (Review Issue 6: audit writes restricted to service_role only)
+-- ============================================================================
+DO $$
+DECLARE
+    v_insert_count INTEGER;
+BEGIN
+    SELECT count(*) INTO v_insert_count
+    FROM pg_policies
+    WHERE schemaname = 'perfecity'
+      AND tablename = 'audit_event'
+      AND cmd = 'INSERT';
+
+    IF v_insert_count = 0 THEN
+        RAISE NOTICE 'PASS: T-RLS-10 - audit_event has no INSERT policy (service_role-only writes)';
+    ELSE
+        RAISE EXCEPTION 'FAIL: T-RLS-10 - audit_event has % INSERT policy(ies) (should be 0)', v_insert_count;
+    END IF;
+END;
+$$;
+
+-- ============================================================================
 -- Final summary
 -- ============================================================================
 DO $$
 BEGIN
     RAISE NOTICE '=================================================================';
     RAISE NOTICE 'RLS Authorization Model Regression Test Harness COMPLETE.';
-    RAISE NOTICE 'If no exceptions were raised, all tests (T-RLS-01 to T-RLS-05) PASSED.';
+    RAISE NOTICE 'If no exceptions were raised, all tests (T-RLS-01 to T-RLS-10) PASSED.';
     RAISE NOTICE 'RLS migration may be declared Execution-Verified.';
     RAISE NOTICE '=================================================================';
 END;
