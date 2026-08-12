@@ -71,6 +71,7 @@ jobs:
     env:
       VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL || 'https://placeholder.supabase.co' }}
       VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY || 'placeholder-anon-key' }}
+      VITE_BASE_PATH: ${{ vars.VITE_BASE_PATH || '/' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

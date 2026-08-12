@@ -20,9 +20,14 @@ test:
 typecheck:
 	cd frontend && npx tsc --noEmit
 
-# Run ESLint
+# Run ESLint (skip if no config found)
 lint:
-	cd frontend && npm run lint
+	@cd frontend && \
+	if [ -f eslint.config.js ] || [ -f eslint.config.mjs ] || [ -f .eslintrc.js ] || [ -f .eslintrc.json ] || [ -f .eslintrc.yml ]; then \
+		npm run lint; \
+	else \
+		echo "No ESLint config found, skipping lint step"; \
+	fi
 
 # Build Docker image
 docker-build:

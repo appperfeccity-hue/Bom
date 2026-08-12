@@ -3,8 +3,12 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        - VITE_SUPABASE_URL=${VITE_SUPABASE_URL:-https://placeholder.supabase.co}
+        - VITE_SUPABASE_ANON_KEY=${VITE_SUPABASE_ANON_KEY:-placeholder-anon-key}
+        - VITE_BASE_PATH=${VITE_BASE_PATH:-/}
     ports:
       - "8080:80"
-    env_file:
-      - ./frontend/.env
+    # Note: Vite embeds env vars at build time. To change VITE_* values,
+    # you must rebuild the image: docker compose build --no-cache
     restart: unless-stopped
