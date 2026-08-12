@@ -1,0 +1,30 @@
+{
+  "project_type": "React 18 + TypeScript (strict) SPA with Vite bundler, Konva canvas, Zustand stores, Supabase backend",
+  "language": "TypeScript",
+  "build_system": "Vite with tsc for type-checking. npm scripts: build, test, typecheck, lint",
+  "test_framework": "Vitest with @testing-library/react, jsdom environment, vi.mock for supabase module mocking",
+  "build_command": "cd /projects/sandbox/Bom/frontend && NODE_OPTIONS='' npx tsc --noEmit",
+  "test_command": "cd /projects/sandbox/Bom/frontend && NODE_OPTIONS='' npx vitest run",
+  "verification_instructions": "1. Run typecheck: NODE_OPTIONS='' npx tsc --noEmit in frontend/. 2. Run tests: NODE_OPTIONS='' npx vitest run in frontend/. 3. Confirm all 228+ tests pass.",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "cd /projects/sandbox/Bom/frontend && npm install (already done)",
+  "environment_constraints": "COMMON_DEPENDENCIES network. NODE_OPTIONS must be cleared (NODE_OPTIONS='') when running npx/vitest due to sandbox preload. No Docker daemon available.",
+  "contribution_requirements": "TypeScript strict mode (noUnusedLocals, noUnusedParameters). Path alias @/ maps to src/. Zustand v5. Supabase queries via fromTable() helper. Tests mock @/lib/supabase module.",
+  "key_patterns": "Stores: Zustand create() with State/Actions/Store types. Components: function components with data-testid attrs. Tests: vi.mock supabase, makeTemplate helpers, beforeEach reset. Existing TemplateStatus enum has DRAFT/ACTIVE/ARCHIVED (spec says RETIRED but code says ARCHIVED). Status badge colors follow pattern in TemplateCard.tsx. Store barrel export in stores/index.ts.",
+  "relevant_files": [
+    "frontend/src/stores/projectCreationStore.ts",
+    "frontend/src/stores/publishStore.ts",
+    "frontend/src/stores/projectStore.ts",
+    "frontend/src/stores/authStore.ts",
+    "frontend/src/stores/canvasStore.ts",
+    "frontend/src/stores/index.ts",
+    "frontend/src/types/database.ts",
+    "frontend/src/lib/supabase.ts",
+    "frontend/src/App.tsx",
+    "frontend/src/components/ProjectCreation/TemplateCard.tsx",
+    "frontend/src/components/ProjectCreation/DesignLibrary.tsx",
+    "frontend/src/components/ProjectCreation/__tests__/ProjectCreationWizard.test.tsx",
+    "frontend/src/stores/__tests__/projectCreationStore.test.ts"
+  ],
+  "directory_structure": "frontend/src/stores/ - Zustand stores with __tests__/ subfolder. frontend/src/components/ - UI components grouped by feature (ProjectCreation/, BomPanel/, etc) with __tests__/ subfolders. frontend/src/types/ - TypeScript interfaces. frontend/src/lib/ - Utilities (supabase.ts, autosave.ts, snapshotBuilder.ts). frontend/src/canvas/ - Konva canvas components."
+}

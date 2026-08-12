@@ -1,0 +1,14 @@
+{
+  "task_id": "task-template-management",
+  "task_description": "Template Management - Create/edit/retire templates list view for Designer role. Includes store, components (list, filters, create dialog, retire dialog, status badges), 'My Templates' header button, and comprehensive tests.",
+  "status": "completed",
+  "feature_order": ["FEAT-001"],
+  "blocked_reason": null,
+  "verification": {
+    "build": "pass",
+    "tests": "pass",
+    "test_quality": "pass",
+    "docker_build": "skipped",
+    "summary": "TypeScript strict mode passes (tsc --noEmit). All 291 tests pass (228 existing + 63 new). Tests cover store actions (fetch, filter, create, retire, duplicate, edit, error paths) and component interactions (button clicks, form validation, dialog lifecycle). Semantic review v2 APPROVED."
+  }
+}
