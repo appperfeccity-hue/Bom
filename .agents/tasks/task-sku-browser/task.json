@@ -9,6 +9,6 @@
     "tests": "pass",
     "test_quality": "pass",
     "docker_build": "skipped",
-    "summary": "Build (tsc -b && vite build) passes. All 105 tests pass (6 test files). Review fixes applied: debounce on filter fetch, ilike for material/colour, or-filter for search covering sku_code+material, adjusted pagination count for catalogue filter, deduplicated isSelectable."
+    "summary": "Build (tsc -b && vite build) passes. All 107 tests pass (6 test files). V2 review fixes applied: (1) PostgREST meta-characters escaped in .or() search filter, (2) pagination uses hasNextPage with fetch-one-extra approach for catalogue status filter, (3) debounce split - immediate for dropdown filters, 300ms debounce for text inputs only."
   }
 }
