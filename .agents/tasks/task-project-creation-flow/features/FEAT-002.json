@@ -1,0 +1,27 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "Comprehensive tests for the project creation store, snapshot builder, and ProjectCreationWizard components",
+  "status": "in_progress",
+  "steps": [
+    "Step 1 - Create src/stores/__tests__/projectCreationStore.test.ts following the pattern in publishStore.test.ts. Mock @/lib/supabase (both fromTable and supabase.rpc). Test: initial state is IDLE, fetchAvailableTemplates populates templates list, selectTemplate updates selectedTemplate and advances to PROJECT_DETAILS step, setCustomerReference/setSiteReference update state, createProject calls supabase.rpc with correct params (verify p_template_id, p_user_id, p_idempotency_key, p_snapshot_data, p_snapshot_hash), createProject success transitions to CREATED step with project id, createProject error transitions to ERROR step with error message, reset returns to initial state.",
+    "Step 2 - Create src/lib/__tests__/snapshotBuilder.test.ts. Test: buildSnapshotData returns correctly structured object with all frozen fields (wall_geometry, zones with sku data, lighting, furniture, trims), computeSnapshotHash returns consistent hex string for same input, computeSnapshotHash returns different values for different inputs, snapshot data includes zone SKU freeze data when zoneSku map has entries.",
+    "Step 3 - Create src/components/ProjectCreation/__tests__/ProjectCreationWizard.test.tsx following the pattern in BomPanel.test.tsx. Mock @/lib/supabase. Test: wizard does not render when step is IDLE, wizard renders DesignLibrary when step is BROWSE_TEMPLATES, wizard renders ProjectDetailsForm when step is PROJECT_DETAILS, template cards are displayed when templates are loaded, clicking Select on a template card advances to PROJECT_DETAILS, filling in details and clicking Create calls createProject, error state shows error message and retry button, New Project button only shows for CONSULTANT role."
+  ],
+  "acceptance_criteria": [
+    "Store tests at src/stores/__tests__/projectCreationStore.test.ts cover all actions and state transitions",
+    "Snapshot builder tests at src/lib/__tests__/snapshotBuilder.test.ts verify data assembly and hashing",
+    "Component tests at src/components/ProjectCreation/__tests__/ProjectCreationWizard.test.tsx verify UI rendering and interactions",
+    "All new tests pass: vitest run reports no failures",
+    "All existing 175 tests continue to pass",
+    "Tests exercise actual code paths - not just static assertions"
+  ],
+  "verification": [
+    "cd /projects/sandbox/Bom/frontend && unset NODE_OPTIONS && npx vitest run",
+    "cd /projects/sandbox/Bom/frontend && unset NODE_OPTIONS && npx vitest run src/stores/__tests__/projectCreationStore.test.ts",
+    "cd /projects/sandbox/Bom/frontend && unset NODE_OPTIONS && npx vitest run src/lib/__tests__/snapshotBuilder.test.ts",
+    "cd /projects/sandbox/Bom/frontend && unset NODE_OPTIONS && npx vitest run src/components/ProjectCreation/__tests__/ProjectCreationWizard.test.tsx"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}
