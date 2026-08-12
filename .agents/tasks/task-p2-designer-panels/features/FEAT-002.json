@@ -2,7 +2,7 @@
   "id": "FEAT-002",
   "type": "feat",
   "description": "Trims UI - Designer can define physical trim SKUs per template with quantity rules (TRIM_BY_ZONE_PERIMETER, TRIM_BY_PANEL_EDGE, TRIM_BY_LENGTH, TRIM_FIXED) and fixed quantity values, per spec section 52.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "Create directory frontend/src/components/Trims/ with files: TrimsPanel.tsx, AddTrimDialog.tsx, index.ts, and __tests__/ directory.",
     "In TrimsPanel.tsx: Follow HiddenComponentsPanel.tsx pattern. Accept templateId prop. Check CanvasMode.DESIGNER. Fetch from 'template_trim' table using fromTable('template_trim').select('*').eq('template_id', templateId). Display each trim entry showing: sku_id (nullable - show 'Geometry only' if null), trim_type badge (GEOMETRY in grey, PHYSICAL in blue), quantity_rule, and fixed_quantity (only shown for TRIM_FIXED rule). Include 'Add Trim' button. Use data-testid='trims-panel', data-testid='add-trim-btn', data-testid='no-trims-msg', data-testid='trim-item-{id}', data-testid='trim-type-{id}'.",
@@ -27,5 +27,5 @@
     "cd frontend && unset NODE_OPTIONS && npx vitest --run"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All 13 new tests pass. Full suite: 700 tests pass. TypeScript strict mode clean. TrimType and TrimQuantityRule types exported from TrimsPanel.tsx for reuse by AddTrimDialog."
 }
