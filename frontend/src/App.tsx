@@ -6,6 +6,7 @@ import { useBomStore } from '@/stores/bomStore';
 import { usePublishStore } from '@/stores/publishStore';
 import { PublishStep } from '@/stores/publishStore';
 import { useProjectCreationStore, CreationStep } from '@/stores/projectCreationStore';
+import { useTemplateManagementStore } from '@/stores/templateManagementStore';
 import { CanvasMode } from '@/types/database';
 import { CanvasContainer } from '@/canvas/CanvasContainer';
 import { Toolbar } from '@/components/Toolbar';
@@ -15,6 +16,7 @@ import { SkuBrowser } from '@/components/SkuBrowser';
 import { BomPanel } from '@/components/BomPanel';
 import { PublishWorkflow } from '@/components/PublishWorkflow';
 import { ProjectCreationWizard } from '@/components/ProjectCreation';
+import { TemplateManagementPanel } from '@/components/TemplateManagement';
 
 function App() {
   const mode = useCanvasStore((s) => s.mode);
@@ -27,6 +29,8 @@ function App() {
   const publishStep = usePublishStore((s) => s.currentStep);
   const role = useAuthStore((s) => s.role);
   const creationStep = useProjectCreationStore((s) => s.step);
+  const isPanelVisible = useTemplateManagementStore((s) => s.isPanelVisible);
+  const openPanel = useTemplateManagementStore((s) => s.openPanel);
 
   // Subscribe to Supabase auth state changes on mount
   useEffect(() => {
@@ -123,6 +127,23 @@ function App() {
               New Project
             </button>
           )}
+          {role === 'DESIGNER' && (
+            <button
+              onClick={openPanel}
+              style={{
+                padding: '4px 12px',
+                fontSize: '13px',
+                fontWeight: 500,
+                backgroundColor: '#ede7f6',
+                border: '1px solid #ccc',
+                borderRadius: '4px',
+                cursor: 'pointer',
+              }}
+              data-testid="my-templates-btn"
+            >
+              My Templates
+            </button>
+          )}
         </div>
       </header>
 
@@ -152,6 +173,9 @@ function App() {
 
       {/* Project Creation Wizard overlay */}
       {creationStep !== CreationStep.IDLE && <ProjectCreationWizard />}
+
+      {/* Template Management Panel overlay */}
+      {isPanelVisible && <TemplateManagementPanel />}
     </div>
   );
 }

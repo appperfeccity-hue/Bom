@@ -15,3 +15,6 @@ export type { PublishState, PublishActions, PublishStore, ValidationResult } fro
 
 export { useProjectCreationStore, CreationStep } from './projectCreationStore';
 export type { ProjectCreationState, ProjectCreationActions, ProjectCreationStore } from './projectCreationStore';
+
+export { useTemplateManagementStore } from './templateManagementStore';
+export type { TemplateManagementState, TemplateManagementActions, TemplateManagementStore, TemplateFilters as TemplateManagementFilters } from './templateManagementStore';

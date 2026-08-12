@@ -1,0 +1,39 @@
+{
+  "id": "FEAT-001",
+  "type": "feat",
+  "description": "Create templateManagementStore with list/filter/create/retire/duplicate actions, plus the TemplateManagement UI components (list view, create dialog, retire dialog, status badges) and a 'My Templates' button in the app header for DESIGNER role. Includes comprehensive tests for both store and components.",
+  "status": "in_progress",
+  "steps": [
+    "Step 1 - Create the templateManagementStore at frontend/src/stores/templateManagementStore.ts following the pattern of projectCreationStore.ts. State: templates (Template[]), filteredTemplates (Template[]), filters (status, search, wallGeometry), isLoading, error, selectedTemplateForAction (for retire/duplicate confirm), showCreateDialog, showRetireDialog. Actions: fetchMyTemplates() - fetch all templates where created_by = current user (SELECT * from template where created_by = auth.uid()), applyFilters(), setStatusFilter(status | null), setSearchFilter(text), setWallGeometryFilter(geometry | null), createTemplate(data) - INSERT into template table with status DRAFT, retireTemplate(id) - UPDATE status to 'ARCHIVED' (using the existing TemplateStatus.ARCHIVED enum value), duplicateAsNewDraft(id) - SELECT template by id, then INSERT new copy with status DRAFT and name suffixed ' (Copy)', editTemplate(id) - load template into projectStore and switch to DESIGNER mode, openCreateDialog(), closeCreateDialog(), openRetireDialog(template), closeRetireDialog(), reset(). Use fromTable() helper for all DB queries. Use useAuthStore.getState().user?.id for the created_by filter.",
+    "Step 2 - Create frontend/src/components/TemplateManagement/TemplateStatusBadge.tsx. A small component that renders a colored badge span based on template status: DRAFT=gray (#9e9e9e bg, white text), ACTIVE=green (#e8f5e9 bg, #2e7d32 text), ARCHIVED=orange/red (#fff3e0 bg, #e65100 text). Props: status: TemplateStatus. data-testid='template-status-badge'.",
+    "Step 3 - Create frontend/src/components/TemplateManagement/TemplateListItem.tsx. Renders a single template row in the list view. Shows: name, status badge (using TemplateStatusBadge), wall_geometry, base_width_mm x base_height_mm, updated_at formatted. Action buttons per status: DRAFT: 'Edit' (calls editTemplate), 'Delete' (only if template has no zones/dependencies - for now just show button, actual dependency check is future). ACTIVE: 'Create Draft Copy' (calls openRetireDialog... no, calls duplicateAsNewDraft), 'Retire' (calls openRetireDialog), 'View' (calls editTemplate in read-only - for now same as edit). ARCHIVED: 'Create Draft Copy' (calls duplicateAsNewDraft), 'View'. data-testid='template-list-item'.",
+    "Step 4 - Create frontend/src/components/TemplateManagement/TemplateFilters.tsx. A filter bar with: text search input (data-testid='template-search-input'), status dropdown/buttons (All / DRAFT / ACTIVE / ARCHIVED) (data-testid='template-status-filter'), wall geometry filter (All / STRAIGHT / L_CORNER) (data-testid='template-geometry-filter'). Calls setStatusFilter, setSearchFilter, setWallGeometryFilter on the store.",
+    "Step 5 - Create frontend/src/components/TemplateManagement/CreateTemplateDialog.tsx. A modal/dialog overlay (similar to ProjectCreationWizard overlay pattern) with form fields: name (required), description, wall_geometry (STRAIGHT/L_CORNER select), base_width_mm (number, required), base_height_mm (number, required), adaptation_strategy (SCALE/REFLOW/CLIP select). On submit calls createTemplate(). data-testid='create-template-dialog'. Has Cancel and Create buttons. Create is disabled if required fields empty.",
+    "Step 6 - Create frontend/src/components/TemplateManagement/RetireTemplateDialog.tsx. A confirmation modal: 'Are you sure you want to retire [template name]? Existing projects using this template will not be affected.' Confirm button calls retireTemplate(id). Cancel closes dialog. data-testid='retire-template-dialog'.",
+    "Step 7 - Create frontend/src/components/TemplateManagement/TemplateManagementPanel.tsx. The main panel component that orchestrates everything: renders TemplateFilters at top, a 'Create New Template' button, then the list of TemplateListItem components. Calls fetchMyTemplates() on mount. Shows loading/error/empty states. Conditionally renders CreateTemplateDialog and RetireTemplateDialog when showCreateDialog/showRetireDialog are true. data-testid='template-management-panel'.",
+    "Step 8 - Create frontend/src/components/TemplateManagement/index.ts barrel export file exporting TemplateManagementPanel and other components.",
+    "Step 9 - Update frontend/src/stores/index.ts to export useTemplateManagementStore and its types.",
+    "Step 10 - Update frontend/src/App.tsx to add a 'My Templates' button in the header that is only visible when role === 'DESIGNER'. Clicking it opens the TemplateManagementPanel as an overlay (similar to how ProjectCreationWizard works). Add state tracking: when templateManagementStore has a flag like isOpen or isPanelOpen, render the overlay. Add a simple isPanelVisible boolean to the store for this purpose, toggled by openPanel()/closePanel().",
+    "Step 11 - Create frontend/src/stores/__tests__/templateManagementStore.test.ts following the pattern of projectCreationStore.test.ts. Mock @/lib/supabase. Test: initial state, fetchMyTemplates success/failure, applyFilters with status filter, applyFilters with search filter, createTemplate success/failure, retireTemplate success/failure, duplicateAsNewDraft success, editTemplate calls projectStore.loadTemplate and canvasStore.setMode(DESIGNER), reset returns to initial state, openPanel/closePanel.",
+    "Step 12 - Create frontend/src/components/TemplateManagement/__tests__/TemplateManagement.test.tsx following the pattern of ProjectCreationWizard.test.tsx. Mock @/lib/supabase. Test: TemplateManagementPanel renders list of templates, shows loading state, shows error state, shows empty state. TemplateStatusBadge renders correct colors for each status. TemplateFilters: search input updates store, status filter buttons work. CreateTemplateDialog: renders form fields, Create button disabled when name empty, calls createTemplate on submit. RetireTemplateDialog: shows template name, calls retireTemplate on confirm. TemplateListItem: shows correct action buttons per status, calls correct handlers. 'My Templates' button visible only for DESIGNER role."
+  ],
+  "acceptance_criteria": [
+    "A new templateManagementStore exists with fetchMyTemplates, createTemplate, retireTemplate, duplicateAsNewDraft, editTemplate, and filter actions",
+    "TemplateManagementPanel renders a filterable list of the current Designer's templates with status badges",
+    "Templates can be filtered by status (DRAFT/ACTIVE/ARCHIVED), search text, and wall geometry",
+    "Create Template dialog allows creating a new DRAFT template with required fields",
+    "Retire Template dialog confirms retirement and updates template status to ARCHIVED",
+    "Duplicate as New Draft copies an ACTIVE or ARCHIVED template as a new DRAFT",
+    "Edit Template loads the template into projectStore and switches to DESIGNER canvas mode",
+    "'My Templates' button appears in app header for DESIGNER role only",
+    "All new code passes TypeScript strict type checking (tsc --noEmit)",
+    "New tests cover store actions and component rendering/interactions",
+    "All existing 228 tests continue to pass"
+  ],
+  "verification": [
+    "cd /projects/sandbox/Bom/frontend && NODE_OPTIONS='' npx tsc --noEmit",
+    "cd /projects/sandbox/Bom/frontend && NODE_OPTIONS='' npx vitest run"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}
