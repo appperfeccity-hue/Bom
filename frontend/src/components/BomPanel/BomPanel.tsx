@@ -1,5 +1,7 @@
+import { useEffect } from 'react';
 import { useBomStore } from '@/stores/bomStore';
 import { useCanvasStore } from '@/stores/canvasStore';
+import { useProjectStore } from '@/stores/projectStore';
 import { CanvasMode } from '@/types/database';
 import { MasterBomTable } from './MasterBomTable';
 import { ActualBomTable } from './ActualBomTable';
@@ -16,11 +18,28 @@ export function BomPanel() {
   const closeBomPanel = useBomStore((s) => s.closeBomPanel);
   const isLoading = useBomStore((s) => s.isLoading);
   const error = useBomStore((s) => s.error);
+  const fetchMasterBom = useBomStore((s) => s.fetchMasterBom);
+  const fetchActualBom = useBomStore((s) => s.fetchActualBom);
+  const fetchFinalBom = useBomStore((s) => s.fetchFinalBom);
   const mode = useCanvasStore((s) => s.mode);
-
-  if (!isBomPanelOpen) return null;
+  const currentTemplate = useProjectStore((s) => s.currentTemplate);
+  const currentProject = useProjectStore((s) => s.currentProject);
 
   const isDesigner = mode === CanvasMode.DESIGNER;
+
+  // Trigger data fetching when the panel opens based on mode and loaded template/project
+  useEffect(() => {
+    if (!isBomPanelOpen) return;
+
+    if (isDesigner && currentTemplate) {
+      fetchMasterBom(currentTemplate.id);
+    } else if (!isDesigner && currentProject) {
+      fetchActualBom(currentProject.id);
+      fetchFinalBom(currentProject.id);
+    }
+  }, [isBomPanelOpen, isDesigner, currentTemplate, currentProject, fetchMasterBom, fetchActualBom, fetchFinalBom]);
+
+  if (!isBomPanelOpen) return null;
 
   return (
     <div

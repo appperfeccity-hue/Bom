@@ -33,5 +33,5 @@
     "Run: cd /projects/sandbox/Bom/frontend && unset NODE_OPTIONS && npx vitest run"
   ],
   "blocked_reason": null,
-  "findings": "All 144 tests pass (107 existing + 37 new). TypeScript compiles cleanly with zero errors. Used neq() for status filtering in fetchActualBom. The BomSectionTable component uses a generic Record<string, unknown>[] for lines to work with all BOM line types."
+  "findings": "All 145 tests pass (107 existing + 38 new). TypeScript compiles cleanly with zero errors. Review fixes applied: (1) BomPanel useEffect triggers fetches on open based on mode/template/project from projectStore, (2) BomSectionTable renders unknown product types in an 'Other' section by iterating all map keys, (3) reconciliation uses Math.abs tolerance of 0.001 for float quantity comparison, (4) separate isMasterBomLoading/isActualBomLoading/isFinalBomLoading flags prevent concurrent fetch race on shared isLoading."
 }

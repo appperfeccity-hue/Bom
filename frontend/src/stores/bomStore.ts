@@ -19,6 +19,9 @@ export interface BomState {
   finalBom: FinalBom | null;
   finalBomLines: FinalBomLine[];
   reconciliation: ReconciliationLine[];
+  isMasterBomLoading: boolean;
+  isActualBomLoading: boolean;
+  isFinalBomLoading: boolean;
   isLoading: boolean;
   error: string | null;
   isBomPanelOpen: boolean;
@@ -44,6 +47,9 @@ const initialState: BomState = {
   finalBom: null,
   finalBomLines: [],
   reconciliation: [],
+  isMasterBomLoading: false,
+  isActualBomLoading: false,
+  isFinalBomLoading: false,
   isLoading: false,
   error: null,
   isBomPanelOpen: false,
@@ -53,7 +59,7 @@ export const useBomStore = create<BomStore>((set, get) => ({
   ...initialState,
 
   fetchMasterBom: async (templateId: string) => {
-    set({ isLoading: true, error: null });
+    set({ isMasterBomLoading: true, isLoading: true, error: null });
     try {
       // Fetch the approved master BOM for the template
       const { data: bomData, error: bomErr } = await fromTable('master_bom')
@@ -65,7 +71,13 @@ export const useBomStore = create<BomStore>((set, get) => ({
 
       if (bomErr) throw bomErr;
       if (!bomData) {
-        set({ masterBom: null, masterBomLines: [], isLoading: false });
+        const { isActualBomLoading, isFinalBomLoading } = get();
+        set({
+          masterBom: null,
+          masterBomLines: [],
+          isMasterBomLoading: false,
+          isLoading: isActualBomLoading || isFinalBomLoading,
+        });
         return;
       }
 
@@ -79,18 +91,25 @@ export const useBomStore = create<BomStore>((set, get) => ({
 
       if (lineErr) throw lineErr;
 
+      const { isActualBomLoading, isFinalBomLoading } = get();
       set({
         masterBom,
         masterBomLines: (lineData ?? []) as unknown as MasterBomLine[],
-        isLoading: false,
+        isMasterBomLoading: false,
+        isLoading: isActualBomLoading || isFinalBomLoading,
       });
     } catch (err) {
-      set({ error: (err as Error).message, isLoading: false });
+      const { isActualBomLoading, isFinalBomLoading } = get();
+      set({
+        error: (err as Error).message,
+        isMasterBomLoading: false,
+        isLoading: isActualBomLoading || isFinalBomLoading,
+      });
     }
   },
 
   fetchActualBom: async (projectId: string) => {
-    set({ isLoading: true, error: null });
+    set({ isActualBomLoading: true, isLoading: true, error: null });
     try {
       // Fetch the most recent non-superseded actual BOM
       const { data: bomData, error: bomErr } = await fromTable('actual_bom')
@@ -103,7 +122,13 @@ export const useBomStore = create<BomStore>((set, get) => ({
 
       if (bomErr) throw bomErr;
       if (!bomData) {
-        set({ actualBom: null, actualBomLines: [], isLoading: false });
+        const { isMasterBomLoading, isFinalBomLoading } = get();
+        set({
+          actualBom: null,
+          actualBomLines: [],
+          isActualBomLoading: false,
+          isLoading: isMasterBomLoading || isFinalBomLoading,
+        });
         return;
       }
 
@@ -117,18 +142,25 @@ export const useBomStore = create<BomStore>((set, get) => ({
 
       if (lineErr) throw lineErr;
 
+      const { isMasterBomLoading, isFinalBomLoading } = get();
       set({
         actualBom,
         actualBomLines: (lineData ?? []) as unknown as ActualBomLine[],
-        isLoading: false,
+        isActualBomLoading: false,
+        isLoading: isMasterBomLoading || isFinalBomLoading,
       });
     } catch (err) {
-      set({ error: (err as Error).message, isLoading: false });
+      const { isMasterBomLoading, isFinalBomLoading } = get();
+      set({
+        error: (err as Error).message,
+        isActualBomLoading: false,
+        isLoading: isMasterBomLoading || isFinalBomLoading,
+      });
     }
   },
 
   fetchFinalBom: async (projectId: string) => {
-    set({ isLoading: true, error: null });
+    set({ isFinalBomLoading: true, isLoading: true, error: null });
     try {
       // Fetch the final BOM (unique per project)
       const { data: bomData, error: bomErr } = await fromTable('final_bom')
@@ -138,7 +170,13 @@ export const useBomStore = create<BomStore>((set, get) => ({
 
       if (bomErr) throw bomErr;
       if (!bomData) {
-        set({ finalBom: null, finalBomLines: [], isLoading: false });
+        const { isMasterBomLoading, isActualBomLoading } = get();
+        set({
+          finalBom: null,
+          finalBomLines: [],
+          isFinalBomLoading: false,
+          isLoading: isMasterBomLoading || isActualBomLoading,
+        });
         return;
       }
 
@@ -152,13 +190,20 @@ export const useBomStore = create<BomStore>((set, get) => ({
 
       if (lineErr) throw lineErr;
 
+      const { isMasterBomLoading, isActualBomLoading } = get();
       set({
         finalBom,
         finalBomLines: (lineData ?? []) as unknown as FinalBomLine[],
-        isLoading: false,
+        isFinalBomLoading: false,
+        isLoading: isMasterBomLoading || isActualBomLoading,
       });
     } catch (err) {
-      set({ error: (err as Error).message, isLoading: false });
+      const { isMasterBomLoading, isActualBomLoading } = get();
+      set({
+        error: (err as Error).message,
+        isFinalBomLoading: false,
+        isLoading: isMasterBomLoading || isActualBomLoading,
+      });
     }
   },
 
@@ -198,8 +243,8 @@ export const useBomStore = create<BomStore>((set, get) => ({
         });
         // Remove from map so we don't double-count
         actualByMasterLineId.delete(masterLine.master_bom_line_id);
-      } else if (actualLine.quantity !== masterLine.default_quantity) {
-        // Quantity changed
+      } else if (Math.abs(actualLine.quantity - masterLine.default_quantity) > 0.001) {
+        // Quantity changed (using tolerance for floating-point comparison)
         reconciliation.push({
           master_line: masterLine,
           actual_line: actualLine,

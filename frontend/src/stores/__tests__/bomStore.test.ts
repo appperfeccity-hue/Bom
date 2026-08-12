@@ -35,6 +35,9 @@ describe('bomStore', () => {
       finalBom: null,
       finalBomLines: [],
       reconciliation: [],
+      isMasterBomLoading: false,
+      isActualBomLoading: false,
+      isFinalBomLoading: false,
       isLoading: false,
       error: null,
       isBomPanelOpen: false,
@@ -51,6 +54,9 @@ describe('bomStore', () => {
       expect(state.finalBom).toBeNull();
       expect(state.finalBomLines).toEqual([]);
       expect(state.reconciliation).toEqual([]);
+      expect(state.isMasterBomLoading).toBe(false);
+      expect(state.isActualBomLoading).toBe(false);
+      expect(state.isFinalBomLoading).toBe(false);
       expect(state.isLoading).toBe(false);
       expect(state.error).toBeNull();
       expect(state.isBomPanelOpen).toBe(false);
@@ -360,6 +366,18 @@ describe('bomStore', () => {
       const rec = useBomStore.getState().reconciliation;
       expect(rec).toHaveLength(1);
       expect(rec[0].result_type).toBe(ReconciliationResultType.QUANTITY_CHANGED);
+    });
+
+    it('should classify UNCHANGED when quantity difference is within tolerance', () => {
+      useBomStore.setState({
+        masterBomLines: [makeMasterLine({ default_quantity: 5 })],
+        actualBomLines: [makeActualLine({ quantity: 5.0000001 })],
+      });
+
+      useBomStore.getState().computeReconciliation();
+      const rec = useBomStore.getState().reconciliation;
+      expect(rec).toHaveLength(1);
+      expect(rec[0].result_type).toBe(ReconciliationResultType.UNCHANGED);
     });
 
     it('should classify SKU_CHANGED when sku_id differs', () => {

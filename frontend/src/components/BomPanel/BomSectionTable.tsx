@@ -43,9 +43,17 @@ export function BomSectionTable({ lines, columns, productTypeField = 'product_ty
     }
   }
 
+  // Build the final render order: known types first, then any additional types
+  const renderOrder: string[] = [...sectionOrder];
+  for (const key of sections.keys()) {
+    if (!renderOrder.includes(key)) {
+      renderOrder.push(key);
+    }
+  }
+
   return (
     <div data-testid="bom-section-table">
-      {sectionOrder.map((pt) => {
+      {renderOrder.map((pt) => {
         const sectionLines = sections.get(pt) ?? [];
         if (sectionLines.length === 0) return null;
 
