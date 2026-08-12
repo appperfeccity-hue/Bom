@@ -55,7 +55,7 @@ async function computeSha256(input: string): Promise<string> {
   return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
-export const useFinalizationStore = create<FinalizationStore>((set) => ({
+export const useFinalizationStore = create<FinalizationStore>((set, get) => ({
   ...initialState,
 
   startFinalization: () => {
@@ -63,6 +63,9 @@ export const useFinalizationStore = create<FinalizationStore>((set) => ({
   },
 
   confirmFinalization: async (projectId: string, finalizationKey: string) => {
+    // Guard: prevent double-submit while already finalizing
+    if (get().finalizationStep === FinalizationStep.FINALIZING) return;
+
     set({ finalizationStep: FinalizationStep.FINALIZING, isLoading: true, error: null });
 
     try {
@@ -83,7 +86,17 @@ export const useFinalizationStore = create<FinalizationStore>((set) => ({
 
       if (error) throw error;
 
-      const finalBomId = data as string;
+      // Validate RPC response shape
+      if (!data || typeof data !== 'string') {
+        throw new Error('Unexpected response from finalize_project');
+      }
+
+      const finalBomId = data;
+
+      // Use the client-computed timestamp as the approximate finalized_at.
+      // The server records its own `now()` for the authoritative value;
+      // this client timestamp is for immediate display only.
+      const finalizedAt = timestamp;
 
       // Update the project status in projectStore to FINALIZED
       const projectState = useProjectStore.getState();
@@ -100,7 +113,7 @@ export const useFinalizationStore = create<FinalizationStore>((set) => ({
         finalizationStep: FinalizationStep.SUCCESS,
         finalBomId,
         finalBomHash: computedHash,
-        finalizedAt: timestamp,
+        finalizedAt,
         isLoading: false,
       });
     } catch (err) {

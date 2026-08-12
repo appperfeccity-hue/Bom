@@ -163,6 +163,9 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   },
 
   updateZone: async (zone: TemplateZone) => {
+    // Guard: prevent mutations on a finalized project
+    if (get().currentProject?.status === 'FINALIZED') return;
+
     // Optimistic update
     const prevZones = get().zones;
     set({
@@ -197,6 +200,9 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   },
 
   addZone: async (zone) => {
+    // Guard: prevent mutations on a finalized project
+    if (get().currentProject?.status === 'FINALIZED') return;
+
     try {
       const { data, error } = await fromTable('template_zone')
         .insert(zone)
@@ -210,6 +216,9 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   },
 
   removeZone: async (id: string) => {
+    // Guard: prevent mutations on a finalized project
+    if (get().currentProject?.status === 'FINALIZED') return;
+
     const prevZones = get().zones;
     set({ zones: prevZones.filter((z) => z.id !== id) });
 
@@ -226,6 +235,9 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   },
 
   assignSku: async (zoneId: string, skuId: string) => {
+    // Guard: prevent mutations on a finalized project
+    if (get().currentProject?.status === 'FINALIZED') return;
+
     try {
       // Upsert zone-sku mapping
       const { error: zsErr } = await fromTable('template_zone_sku')
@@ -248,6 +260,9 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   },
 
   updateMeasurements: async (measurements: Partial<ProjectMeasurement>) => {
+    // Guard: prevent mutations on a finalized project
+    if (get().currentProject?.status === 'FINALIZED') return;
+
     const prev = get().measurements;
     const updated = { ...prev, ...measurements } as ProjectMeasurement;
     set({ measurements: updated });

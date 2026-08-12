@@ -208,6 +208,50 @@ describe('finalizationStore', () => {
       expect(secondState.finalizationStep).toBe(FinalizationStep.SUCCESS);
       expect(secondState.finalBomId).toBe('final-bom-uuid-123');
     });
+
+    it('guards against double-submit when step is already FINALIZING', async () => {
+      const { supabase } = await import('@/lib/supabase');
+      const mockRpc = vi.fn().mockResolvedValue({ data: 'final-bom-uuid-123', error: null });
+      vi.mocked(supabase.schema).mockReturnValue({ rpc: mockRpc } as never);
+
+      // Set state to FINALIZING to simulate in-flight call
+      useFinalizationStore.setState({ finalizationStep: FinalizationStep.FINALIZING, isLoading: true });
+
+      await useFinalizationStore.getState().confirmFinalization('proj-1', 'fin-key-2');
+
+      // Should not have called RPC
+      expect(mockRpc).not.toHaveBeenCalled();
+      // State should remain unchanged
+      const state = useFinalizationStore.getState();
+      expect(state.finalizationStep).toBe(FinalizationStep.FINALIZING);
+      expect(state.isLoading).toBe(true);
+    });
+
+    it('transitions to ERROR when RPC returns null data', async () => {
+      const { supabase } = await import('@/lib/supabase');
+      const mockRpc = vi.fn().mockResolvedValue({ data: null, error: null });
+      vi.mocked(supabase.schema).mockReturnValue({ rpc: mockRpc } as never);
+
+      await useFinalizationStore.getState().confirmFinalization('proj-1', 'fin-key-1');
+
+      const state = useFinalizationStore.getState();
+      expect(state.finalizationStep).toBe(FinalizationStep.ERROR);
+      expect(state.error).toBe('Unexpected response from finalize_project');
+      expect(state.finalBomId).toBeNull();
+    });
+
+    it('transitions to ERROR when RPC returns non-string data', async () => {
+      const { supabase } = await import('@/lib/supabase');
+      const mockRpc = vi.fn().mockResolvedValue({ data: { id: 'obj' }, error: null });
+      vi.mocked(supabase.schema).mockReturnValue({ rpc: mockRpc } as never);
+
+      await useFinalizationStore.getState().confirmFinalization('proj-1', 'fin-key-1');
+
+      const state = useFinalizationStore.getState();
+      expect(state.finalizationStep).toBe(FinalizationStep.ERROR);
+      expect(state.error).toBe('Unexpected response from finalize_project');
+      expect(state.finalBomId).toBeNull();
+    });
   });
 
   describe('cancelFinalization', () => {
