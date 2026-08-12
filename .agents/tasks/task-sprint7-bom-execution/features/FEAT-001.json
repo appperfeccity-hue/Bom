@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "feat",
   "description": "Create the error catalogue, validation engine, and BOM pipeline orchestration - the core execution layer for Sprint 7",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "Create src/engines/errorCatalogue.ts with all structured error codes: 19 geometry errors (GEO_ZONE_OVERLAP, GEO_ZONE_OUTSIDE_WALL, GEO_ZONE_TOO_SMALL, GEO_ZONE_TOO_LARGE, GEO_ZONE_NEGATIVE_DIMENSION, GEO_ZONE_INVALID_POSITION, GEO_ZONE_EXCEEDS_WALL, GEO_GAP_TOO_SMALL, GEO_GAP_TOO_LARGE, GEO_PANEL_TOO_SMALL, GEO_PANEL_TOO_LARGE, GEO_RETAINED_BELOW_MIN, GEO_TRIM_EXCEEDS_PANEL, GEO_TOTAL_WIDTH_MISMATCH, GEO_TOTAL_HEIGHT_MISMATCH, GEO_ZONE_COUNT_EXCEEDED, GEO_ZONE_ASPECT_RATIO, GEO_WALL_DIMENSION_INVALID, GEO_ZONE_MIN_DIMENSION), 3 construction errors (CONST_MISSING_REQUIRED_COMPONENT, CONST_INVALID_MOUNTING, CONST_STRUCTURE_REQUIRED), 2 compatibility errors (COMPAT_INCOMPATIBLE_SKUS, COMPAT_MISSING_REQUIRED), 3 permission errors (PERM_LOCKED_PARAMETER, PERM_VALUE_OUT_OF_RANGE, PERM_INVALID_SKU_SELECTION), 1 quantity error (QTY_PANEL_NO_VALID_ARRANGEMENT). Each error has code, severity (BLOCKING/WARNING), category, and messageTemplate. Export PipelineError interface and createPipelineError helper.",
     "Create src/engines/validationEngine.ts implementing 5 validation functions: validatePermissions(snapshotPermissions, consultantActions) - checks against template_consultant_permission rules; checkCompatibility(skuPairs, compatibilityRules) - checks sku_compatibility relationships; validateGeometry(zones, wallDimensions) - implements 19 geometry rules; validateConstruction(bomLines, mountingRules) - checks mounting and structure; validateBom(finalLines) - final coherence checks. Each returns { passed: boolean, errors: PipelineError[], warnings: PipelineError[] }.",
@@ -25,5 +25,5 @@
     "cd frontend && unset NODE_OPTIONS && npx vitest --run"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All 589 tests pass (517 existing + 72 new). TypeScript strict mode passes cleanly. The siteAdaptationEngine throws EngineError on invalid wall dimensions (e.g., width=0), so bomPipeline wraps the adaptation step in a try/catch to convert it to a BLOCKED pipeline result with GEO_WALL_DIMENSION_INVALID error code. The reconcileBomLines function merges lines by SKU+calculationRule key."
 }
