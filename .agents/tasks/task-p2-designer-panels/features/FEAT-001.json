@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "feat",
   "description": "Mounting/Construction Rules UI - Designer can configure mounting types (DIRECT/PROFILE/COVE) per template lighting entry, with gap values and structure requirements displayed per spec section 55.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "Create directory frontend/src/components/MountingRules/ with files: MountingRulesPanel.tsx, AddMountingRuleDialog.tsx, index.ts, and __tests__/ directory.",
     "In MountingRulesPanel.tsx: Follow the exact pattern from HiddenComponentsPanel.tsx. Accept templateId prop. Check CanvasMode.DESIGNER to hide in consultant mode. Fetch from 'template_lighting' table using fromTable('template_lighting').select('*').eq('template_id', templateId). Display each lighting entry showing: sku_id, edge_selection, mounting_type (with color-coded badge like trigger-type badges), and computed gap/structure info based on mounting_type: DIRECT (gap=0mm, no structure required), PROFILE (gap=0mm, no structure required), COVE (gap=10mm, structure required). Include an 'Add Mounting Rule' button that opens the dialog. Use data-testid='mounting-rules-panel', data-testid='add-mounting-rule-btn', data-testid='no-mounting-rules-msg', data-testid='mounting-rule-item-{id}', data-testid='mounting-type-{id}'.",
@@ -25,5 +25,5 @@
     "cd frontend && unset NODE_OPTIONS && npx vitest --run"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All 14 new tests pass. Full suite: 687 tests pass. TypeScript strict mode clean. getMountingInfo helper exported from MountingRulesPanel.tsx for reuse by AddMountingRuleDialog."
 }
