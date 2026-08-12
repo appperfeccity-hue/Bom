@@ -1,0 +1,37 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "Implement TypeScript types, Supabase client, auth store (Zustand), and canvas/project state stores. This provides the complete data layer for the canvas UI: types matching the DB schema, Supabase client configuration, auth state with role-based access, project store for template/project data, and canvas store for viewport/zoom/selection/mode state with autosave debounce.",
+  "status": "pending",
+  "steps": [
+    "Create src/types/database.ts with TypeScript interfaces matching the perfecity schema tables the frontend uses: Template, TemplateZone, TemplateZoneSku, TemplateLighting, TemplateFurniture, TemplateTrim, Project, ProjectSnapshot, ProjectMeasurement, ProjectConfiguration, SkuMaster, CatalogueEntry, WallGeometry (STRAIGHT/L_CORNER). Include enums for CanvasMode (DESIGNER/CONSULTANT), ZoneWidthStrategy, ZoneHeightStrategy, ZonePositionStrategy, TemplateStatus, ProjectStatus, AdaptationStrategy.",
+    "Create src/types/canvas.ts with canvas-specific types: Point (x, y in mm), Dimensions (width, height in mm), BoundingBox, ViewportState (zoom, panX, panY), GridConfig (size: 100, snapEnabled), CanvasLayer enum (GRID, WALL_OUTLINE, ZONES, SKU_PLACEMENT, LIGHTING, FURNITURE, TRIMS, MEASUREMENTS, SELECTION, GRID_OVERLAY), LayerVisibility map, SelectionState (selectedZoneId, resizeHandle), SaveStatus ('saving'|'saved'|'unsaved'|'error'), ZoneResizeHandle type (8-point: nw, n, ne, e, se, s, sw, w).",
+    "Create src/lib/supabase.ts - Initialize Supabase client using VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY env vars. Export the client and typed helper functions for common queries.",
+    "Create src/lib/coordinates.ts - Utility functions for coordinate transforms: canvasToScreen(point, viewport), screenToCanvas(point, viewport), snapToGrid(point, gridSize), mmToPixels(mm, zoom), pixelsToMm(px, zoom). The key transform: canvas Y origin is bottom-left but Konva Y origin is top-left, so screenY = wallHeight - canvasY.",
+    "Create src/stores/authStore.ts - Zustand store: user (from Supabase auth), role (extracted from JWT app_metadata.role: ADMIN|DESIGNER|CONSULTANT), isAuthenticated, signIn(), signOut(), subscribeToAuthChanges(). Use supabase.auth.onAuthStateChange for reactive auth.",
+    "Create src/stores/projectStore.ts - Zustand store: currentTemplate (Template | null), currentProject (Project | null), currentSnapshot (ProjectSnapshot | null), zones (TemplateZone[]), zoneSku (Map<zoneId, SkuMaster>), lighting (TemplateLighting[]), furniture (TemplateFurniture[]), trims (TemplateTrim[]), measurements (ProjectMeasurement | null), wallGeometry (WallGeometry). Actions: loadTemplate(id), loadProject(id), updateZone(zone), addZone(zone), removeZone(id), assignSku(zoneId, skuId), updateMeasurements(). All actions call Supabase and update local state optimistically.",
+    "Create src/stores/canvasStore.ts - Zustand store: mode (DESIGNER|CONSULTANT), viewport (zoom, panX, panY with default zoom fit-to-viewport), gridConfig (size:100, snapEnabled:true), layerVisibility (all layers visible by default), selection (selectedZoneId, activeHandle), saveStatus ('saved'), version (for optimistic locking). Actions: setMode(), setZoom(level, clamp 0.25-4.0), pan(dx, dy), toggleLayer(layer), selectZone(id), clearSelection(), setResizeHandle(handle), setSaveStatus(). Include a debouncedSave action that sets status to 'saving', calls persist, then sets 'saved' or 'error'. Debounce 2000ms.",
+    "Create src/lib/autosave.ts - Debounce utility (2000ms) that wraps Supabase upsert calls. Manages save status transitions: unsaved -> saving -> saved/error. Uses version column for optimistic locking (include version in UPDATE WHERE clause, retry on conflict).",
+    "Create src/stores/index.ts - Re-export all stores for clean imports.",
+    "Write unit tests in src/stores/__tests__/canvasStore.test.ts testing: zoom clamping (min 0.25, max 4.0), snap to grid calculation, coordinate transforms (bottom-left to top-left conversion), layer visibility toggling.",
+    "Write unit tests in src/lib/__tests__/coordinates.test.ts testing: canvasToScreen with known values, screenToCanvas roundtrip, snapToGrid at boundaries.",
+    "Run npm run build and npm run typecheck to confirm everything compiles",
+    "Run npm run test to confirm tests pass"
+  ],
+  "acceptance_criteria": [
+    "All TypeScript types compile with strict mode (npm run typecheck passes)",
+    "Supabase client initializes correctly with env vars",
+    "canvasStore correctly clamps zoom between 0.25 and 4.0",
+    "coordinates.ts correctly transforms bottom-left origin to top-left origin",
+    "snapToGrid(150, 100) returns 200, snapToGrid(149, 100) returns 100",
+    "All unit tests pass (npm run test)",
+    "npm run build succeeds"
+  ],
+  "verification": [
+    "cd /projects/sandbox/Bom/frontend && npm run typecheck",
+    "cd /projects/sandbox/Bom/frontend && npm run test -- --run",
+    "cd /projects/sandbox/Bom/frontend && npm run build"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

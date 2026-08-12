@@ -1,0 +1,32 @@
+{
+  "id": "FEAT-001",
+  "type": "chore",
+  "description": "Scaffold Vite + React + TypeScript app in /frontend with all core dependencies: react, react-dom, react-konva, konva, zustand, @supabase/supabase-js. Configure TypeScript strict mode, Vite aliases, and add vitest for testing. Include npm scripts: dev, build, test, typecheck, lint.",
+  "status": "in_progress",
+  "steps": [
+    "Create /frontend directory and initialize with: npm create vite@latest . -- --template react-ts (or equivalent manual setup)",
+    "Install production dependencies: react, react-dom, react-konva, konva, zustand, @supabase/supabase-js",
+    "Install dev dependencies: vitest, @testing-library/react, @testing-library/jest-dom, jsdom, @types/react, @types/react-dom, eslint, typescript",
+    "Configure tsconfig.json with strict mode, path aliases (@/ -> src/), target ES2022",
+    "Configure vite.config.ts with path aliases and vitest integration",
+    "Create src/ directory structure: components/, stores/, lib/, types/, hooks/, canvas/, canvas/layers/",
+    "Add npm scripts in package.json: dev, build, preview, test, typecheck (tsc --noEmit), lint",
+    "Create a minimal src/App.tsx that renders a placeholder div to verify the scaffold works",
+    "Create src/main.tsx entry point",
+    "Create src/vite-env.d.ts for Vite type declarations",
+    "Run npm run build to verify the scaffold compiles cleanly",
+    "Run npm run typecheck to verify TypeScript has no errors"
+  ],
+  "acceptance_criteria": [
+    "npm run build completes without errors in /frontend",
+    "npm run typecheck completes with 0 errors",
+    "All listed dependencies are in package.json",
+    "Directory structure src/components, src/stores, src/lib, src/types, src/hooks, src/canvas, src/canvas/layers exists"
+  ],
+  "verification": [
+    "cd /projects/sandbox/Bom/frontend && npm run build",
+    "cd /projects/sandbox/Bom/frontend && npm run typecheck"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

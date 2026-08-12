@@ -1,0 +1,21 @@
+{
+  "project_type": "React + TypeScript SPA with Konva 2D Canvas, backed by Supabase PostgreSQL",
+  "language": "TypeScript",
+  "build_system": "Vite with npm",
+  "test_framework": "Vitest with React Testing Library",
+  "build_command": "cd /projects/sandbox/Bom/frontend && npm run build",
+  "test_command": "cd /projects/sandbox/Bom/frontend && npm run test -- --run",
+  "verification_instructions": "1. npm run build must succeed with no errors. 2. npm run test must pass all tests. 3. TypeScript compilation must have zero errors (npm run typecheck).",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "cd /projects/sandbox/Bom/frontend && npm install",
+  "environment_constraints": "Node.js 22.23.2 available. npm available. Network mode: COMMON_DEPENDENCIES (can install from npm registry). No pnpm available. Supabase anon key not available at build time - use env variable VITE_SUPABASE_ANON_KEY.",
+  "contribution_requirements": "Database schema is frozen (v1.1.5). Frontend must query via Supabase client against perfecity schema. Auth uses JWT with app_metadata.role (ADMIN, DESIGNER, CONSULTANT). All runtime queries use snapshot_id not template_id for projects.",
+  "key_patterns": "Canvas uses integer millimetres as unit. Origin bottom-left (0,0) requires Y-axis flip for Konva (top-left origin). Grid size 100mm. Zoom 25%-400%. One Zone = One SKU. Two modes: DESIGNER (editable) and CONSULTANT (read-only reference from snapshot). Autosave debounced 2s with optimistic locking via version column.",
+  "relevant_files": [
+    "baseline/v1.1.5_baseline.sql",
+    "migrations/v1.1.5_rls_policies.sql",
+    "docs/erd.md",
+    "docs/onboarding_guide.md"
+  ],
+  "directory_structure": "Existing repo has: baseline/, migrations/, tests/, docs/, ci/. New /frontend will be created with standard Vite React TS structure: src/components/, src/stores/, src/lib/, src/types/, src/hooks/, src/canvas/"
+}

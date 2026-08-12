@@ -1,0 +1,46 @@
+{
+  "id": "FEAT-003",
+  "type": "feat",
+  "description": "Build the Konva Canvas component with dual-mode architecture (Designer/Consultant), all canvas layers, zone CRUD for Designer mode, measurement entry for Consultant mode, and wire Supabase persistence with autosave. This is the core visual canvas implementation.",
+  "status": "pending",
+  "steps": [
+    "Create src/canvas/CanvasContainer.tsx - Main canvas wrapper component. Accepts mode prop (DESIGNER/CONSULTANT). Sets up the Konva Stage with responsive sizing (fills parent container). Handles wheel zoom (ctrl+scroll), pan (middle-click drag or space+drag). Renders layers in correct z-order: GRID -> WALL_OUTLINE -> ZONES -> SKU_PLACEMENT -> LIGHTING -> FURNITURE -> TRIMS -> MEASUREMENTS -> SELECTION -> GRID_OVERLAY. Each layer only renders if visible in canvasStore.layerVisibility.",
+    "Create src/canvas/layers/GridLayer.tsx - Renders the 100mm grid using Konva Lines. Grid lines are light gray (#e0e0e0), major grid lines (every 500mm) slightly darker. Accounts for current viewport zoom and pan. Uses coordinate transform from lib/coordinates.ts to handle bottom-left origin.",
+    "Create src/canvas/layers/WallOutlineLayer.tsx - Renders wall boundary based on template.wall_geometry JSONB. Supports STRAIGHT (single rectangle) and L_CORNER (two connected rectangles at 90 degrees). Wall outline is a thick black stroke (2px at 100% zoom). All zone operations are constrained within this boundary.",
+    "Create src/canvas/layers/ZonesLayer.tsx - Renders all zones from projectStore.zones as Konva Rects. Each zone shows: fill color (based on assigned SKU category or default light blue), border stroke, zone label (zone index or SKU code). In DESIGNER mode: zones are draggable and resizable. In CONSULTANT mode: zones are not interactive (read-only from snapshot). Selected zone gets highlight outline (blue, 2px).",
+    "Create src/canvas/layers/SelectionLayer.tsx - Renders selection UI for the currently selected zone. Shows 8-point resize handles (nw, n, ne, e, se, s, sw, w) as small squares at corners and edge midpoints of the selected zone's bounding box. Handles are only shown in DESIGNER mode. Each handle cursor matches its resize direction.",
+    "Create src/canvas/layers/MeasurementsLayer.tsx - In CONSULTANT mode, renders dimension annotations: wall width/height as dimension lines with values in mm. Shows measurement input indicators where the consultant can enter actual site measurements.",
+    "Create src/canvas/interactions/useZoneDrag.ts - Custom hook for zone drag interaction (DESIGNER mode only). On drag start: records initial position. On drag: calculates new position snapped to grid, constrains within wall boundary (zone cannot extend past wall edges). On drag end: updates projectStore.updateZone() which triggers autosave.",
+    "Create src/canvas/interactions/useZoneResize.ts - Custom hook for zone resize via handles (DESIGNER mode only). On resize start: records which handle and initial zone bounds. On resize: calculates new dimensions based on handle direction, enforces min 200x200mm and max 3000x2700mm constraints, snaps to grid, constrains within wall boundary. On resize end: updates projectStore.updateZone() triggering autosave.",
+    "Create src/canvas/interactions/useZoneCreate.ts - Custom hook for creating new zones (DESIGNER mode only). On click-drag on empty canvas area: creates a new zone rectangle. Enforces min size 200x200mm. Snaps to grid. Constrains within wall boundary. Max 12 zones per wall. On complete: calls projectStore.addZone() triggering autosave.",
+    "Create src/canvas/interactions/useCanvasViewport.ts - Custom hook managing zoom and pan. Wheel zoom (ctrl+scroll): zoom in/out centered on cursor position, clamped 0.25-4.0. Pan: middle-click drag or space+left-click drag. Fit-to-viewport: calculates zoom level to fit entire wall within Stage bounds with padding.",
+    "Create src/components/Toolbar.tsx - Top toolbar with: mode indicator (DESIGNER/CONSULTANT badge), zoom controls (zoom in, zoom out, fit to viewport, zoom percentage display), grid snap toggle, layer visibility dropdown. In DESIGNER mode: shows zone tools (create zone, delete selected zone). Shows save status indicator (Saving.../Saved/Unsaved changes/Error saving).",
+    "Create src/components/MeasurementPanel.tsx - Side panel for CONSULTANT mode. Shows form fields for actual site measurements: wall_width_mm, wall_height_mm, segment_a_width_mm (for L_CORNER), segment_b_width_mm (for L_CORNER). Input validation: wall width 600-12000mm, wall height 300-6000mm. On change: updates projectStore.updateMeasurements() with autosave.",
+    "Create src/components/ZonePropertiesPanel.tsx - Side panel for DESIGNER mode when a zone is selected. Shows: zone dimensions (width x height in mm), position (x, y in mm), width_strategy selector, height_strategy selector, assigned SKU display (code + name), 'Assign SKU' button placeholder. All editable fields update via projectStore.updateZone() with autosave.",
+    "Update src/App.tsx - Compose the full application: Header with mode selector and auth info, main content area with CanvasContainer taking full available height, conditional side panels (ZonePropertiesPanel in DESIGNER mode when zone selected, MeasurementPanel in CONSULTANT mode), Toolbar at the top.",
+    "Write integration tests in src/canvas/__tests__/CanvasContainer.test.tsx - Test: canvas renders without crashing, canvas renders grid layer, canvas renders wall outline, zone click selects zone (updates canvasStore.selection), mode switch disables zone interactions in CONSULTANT mode.",
+    "Write tests for zone constraints in src/canvas/__tests__/zoneConstraints.test.ts - Test: zone cannot be smaller than 200x200mm, zone cannot be larger than 3000x2700mm, zone cannot exceed wall boundary, max 12 zones enforced, zones cannot overlap.",
+    "Run npm run build, npm run typecheck, and npm run test to confirm everything works"
+  ],
+  "acceptance_criteria": [
+    "npm run build succeeds with all canvas components",
+    "npm run typecheck passes with zero errors",
+    "All tests pass (npm run test)",
+    "CanvasContainer renders Konva Stage with all layer components",
+    "Grid renders at 100mm intervals",
+    "Zones render as rectangles with correct dimensions from store",
+    "Zone drag is constrained within wall boundary",
+    "Zone resize enforces min 200x200mm and max 3000x2700mm",
+    "Zoom clamps between 25% and 400%",
+    "Mode switch disables zone editing in CONSULTANT mode",
+    "Save status displays correctly (Saving/Saved/Unsaved/Error)",
+    "Measurement panel validates wall_width 600-12000, wall_height 300-6000"
+  ],
+  "verification": [
+    "cd /projects/sandbox/Bom/frontend && npm run typecheck",
+    "cd /projects/sandbox/Bom/frontend && npm run test -- --run",
+    "cd /projects/sandbox/Bom/frontend && npm run build"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

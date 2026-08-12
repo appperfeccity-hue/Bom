@@ -1,0 +1,7 @@
+{
+  "task_id": "task-canvas-frontend",
+  "task_description": "Build the PERFECCITY Konva-based Designer/Consultant Canvas UI as a React+TypeScript+Vite application in /frontend. Implements the dual-mode canvas with zone CRUD, measurement entry, Supabase persistence, and autosave - completing the stack: PostgreSQL/RLS -> Supabase API -> React/Zustand -> Konva 2D Canvas.",
+  "status": "in_progress",
+  "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003"],
+  "blocked_reason": null
+}
