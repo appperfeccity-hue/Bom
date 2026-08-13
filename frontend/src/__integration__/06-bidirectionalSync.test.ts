@@ -9,7 +9,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { runBomPipeline } from '@/engines/bomPipeline';
-import type { BomPipelineInput, SnapshotZone } from '@/engines/bomPipeline';
+import type { BomPipelineInput } from '@/engines/bomPipeline';
 import {
   createStraightWallPipelineInput,
   createMultiZoneMultiSkuPipelineInput,

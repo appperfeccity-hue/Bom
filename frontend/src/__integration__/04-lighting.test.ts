@@ -14,7 +14,6 @@ import { calculateLights } from '@/engines/lightEngine';
 import { validateConstruction } from '@/engines/validationEngine';
 import { ErrorCode } from '@/engines/errorCatalogue';
 import { runBomPipeline } from '@/engines/bomPipeline';
-import type { BomPipelineInput } from '@/engines/bomPipeline';
 import { createStraightWallPipelineInput } from './helpers/fixtures';
 
 describe('Integration Area 4: Lighting', () => {

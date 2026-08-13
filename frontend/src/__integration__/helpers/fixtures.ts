@@ -4,7 +4,7 @@
  */
 
 import type { BomPipelineInput, SnapshotData } from '@/engines/bomPipeline';
-import type { PermissionRule, CompatibilityRule } from '@/engines/validationEngine';
+import type { PermissionRule } from '@/engines/validationEngine';
 
 /**
  * Creates a straight wall snapshot with 2 zones, panels 600x1200, 3mm gaps, 5% waste.

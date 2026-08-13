@@ -7,7 +7,7 @@
  * - Undo does not corrupt state (push two states, undo, verify previous state matches)
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { buildSnapshotData, computeSnapshotHash } from '@/lib/snapshotBuilder';
 import { runBomPipeline } from '@/engines/bomPipeline';

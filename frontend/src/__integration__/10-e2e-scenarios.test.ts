@@ -14,9 +14,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { runBomPipeline } from '@/engines/bomPipeline';
-import type { BomPipelineInput } from '@/engines/bomPipeline';
 import { assignSegment } from '@/canvas/utils/segmentAssignment';
-import { calculateLights } from '@/engines/lightEngine';
 import { calculateWallPanels } from '@/engines/wallPanelEngine';
 import { ErrorCode } from '@/engines/errorCatalogue';
 import {
