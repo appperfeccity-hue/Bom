@@ -2,7 +2,7 @@
   "id": "FEAT-004-review-fixes",
   "type": "fix",
   "description": "Address 7 issues found during semantic code review (2026-08-13-071700-review.md). Fix consultant_permissions snapshot shape mismatch, remove @ts-nocheck from test files, add rounding strategy to wallConfigEngine, remove DELETE policy from generated_panel_frame, add store sync between wallConfigStore and projectStore, fix BOM test comment, document obstruction boundary semantics.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "1. Fix Issue 7: consultant_permissions snapshot shape mismatch - usePermissionEnforcement reads as array but snapshotBuilder writes as object. Convert the object to array in the hook.",
     "2. Fix Issue 1: Remove @ts-nocheck from all 16 test files and fix any type errors properly.",
@@ -28,5 +28,5 @@
     "unset NODE_OPTIONS && cd frontend && npx vitest run"
   ],
   "blocked_reason": null,
-  "findings": null
+  "findings": "All 7 review issues addressed. TypeScript typecheck passes (only pre-existing ValidationOverlayLayer unused variable). All 1094 tests pass across 77 test files. The rounding strategy uses Math.round with sum-correction (distribute residual to widest panels). The initWallConfigStoreSync function must be called at app initialization to activate the store sync. The consultant_permissions hook now handles both object and array formats from the snapshot."
 }
