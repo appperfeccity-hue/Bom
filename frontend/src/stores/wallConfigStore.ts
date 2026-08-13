@@ -53,10 +53,21 @@ interface HistoryEntry {
 }
 
 export interface WallConfigState {
-  /** Current wall configuration */
+  /**
+   * AUTHORITATIVE INPUTS — these are the source of truth.
+   * Any change to config triggers frame regeneration.
+   * The BOM pipeline always recomputes frames from these inputs.
+   */
   config: WallConfigInput;
-  /** Generated panel frames from current config */
+
+  /**
+   * DERIVED STATE — cached for UI rendering performance only.
+   * NEVER authoritative. Always regenerable from config.
+   * Rule: generatePanelFrames(config) ALWAYS wins over this cache.
+   * The BOM pipeline ignores this and recomputes from config directly.
+   */
   panelFrames: PanelFrame[];
+
   /** Consultant permissions per parameter */
   permissions: ConsultantWallPermissions;
   /** Whether frame generation encountered an error */

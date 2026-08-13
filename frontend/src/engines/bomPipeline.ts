@@ -4,6 +4,12 @@
  * Executes the full BOM generation pipeline in 8 sequential steps.
  * If any step produces BLOCKING errors, the pipeline stops and returns BLOCKED.
  * Warnings accumulate across all steps.
+ *
+ * CRITICAL ARCHITECTURE RULE:
+ * This pipeline ALWAYS computes panel frames from inputs (wall config + measurements).
+ * It NEVER reads pre-cached/derived frames from the store or configuration_data._derived.
+ * Rule: generatePanelFrames(inputs) is the sole authority for frame geometry.
+ * Any cached frames in stores or snapshots are UI performance caches only.
  */
 
 import { ErrorCode, PipelineError, createPipelineError } from './errorCatalogue';
