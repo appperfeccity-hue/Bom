@@ -29,6 +29,8 @@ export function CreateTemplateDialog() {
       name: name.trim(),
       description: description.trim() || undefined,
       wall_geometry: wallGeometry,
+      base_width_mm: baseWidthMm as number,
+      base_height_mm: baseHeightMm as number,
       adaptation_strategy: adaptationStrategy,
       design_family_id: designFamilyId,
       wall_application: wallApplication,

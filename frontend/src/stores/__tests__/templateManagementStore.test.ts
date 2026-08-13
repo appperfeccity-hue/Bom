@@ -340,6 +340,8 @@ describe('templateManagementStore', () => {
         description: 'A new one',
         design_family_id: 'fam-1',
         wall_geometry: 'STRAIGHT',
+        base_width_mm: 3000,
+        base_height_mm: 2700,
         wall_application: 'WALL_PANEL', waste_factor: 0.05,
         adaptation_strategy: AdaptationStrategy.PROPORTIONAL,
       });
@@ -370,6 +372,8 @@ describe('templateManagementStore', () => {
         name: 'Fail',
         design_family_id: 'fam-1',
         wall_geometry: 'STRAIGHT',
+        base_width_mm: 3000,
+        base_height_mm: 2700,
         wall_application: 'WALL_PANEL', waste_factor: 0.05,
         adaptation_strategy: AdaptationStrategy.PROPORTIONAL,
       });

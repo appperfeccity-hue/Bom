@@ -375,6 +375,8 @@ describe('CreateTemplateDialog', () => {
       name: 'New One',
       description: undefined,
       wall_geometry: 'L_CORNER',
+      base_width_mm: 4000,
+      base_height_mm: 2500,
       adaptation_strategy: 'FIXED',
       design_family_id: 'default-family',
       wall_application: 'WALL_PANEL',

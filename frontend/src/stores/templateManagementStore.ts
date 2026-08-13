@@ -38,6 +38,8 @@ export interface TemplateManagementActions {
     name: string;
     description?: string;
     wall_geometry: WallGeometryType;
+    base_width_mm: number;
+    base_height_mm: number;
     adaptation_strategy: AdaptationStrategy;
     design_family_id: string;
     design_subfamily_id?: string;
@@ -161,7 +163,11 @@ export const useTemplateManagementStore = create<TemplateManagementStore>((set, 
           name: data.name,
           description: data.description ?? null,
           status: TemplateStatus.DRAFT,
-          wall_geometry: data.wall_geometry,
+          wall_geometry: {
+            type: data.wall_geometry,
+            base_width_mm: data.base_width_mm,
+            base_height_mm: data.base_height_mm,
+          },
           adaptation_strategy: data.adaptation_strategy,
           design_family_id: data.design_family_id,
           design_subfamily_id: data.design_subfamily_id ?? null,
