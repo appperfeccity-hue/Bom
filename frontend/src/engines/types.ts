@@ -211,6 +211,10 @@ export interface WallConfigInput {
   segment_a_width_mm?: number;
   /** Segment B width for L_CORNER walls (optional) */
   segment_b_width_mm?: number;
+  /** Left edge margin in mm (space between wall left edge and first panel) */
+  edge_margin_left_mm?: number;
+  /** Right edge margin in mm (space between last panel and wall right edge) */
+  edge_margin_right_mm?: number;
 }
 
 /** A generated panel frame. */

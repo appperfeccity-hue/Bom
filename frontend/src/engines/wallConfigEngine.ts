@@ -43,6 +43,8 @@ function hashConfig(config: WallConfigInput): string {
     config.panel_gap_mm,
     config.fit_algorithm,
     config.fit_intensity_percent,
+    config.edge_margin_left_mm ?? 0,
+    config.edge_margin_right_mm ?? 0,
   ].join('-');
 
   // Simple hash function (djb2)
@@ -95,7 +97,8 @@ function validateInput(config: WallConfigInput): void {
   }
 
   // Check if gaps exceed available space
-  const totalHorizontalGap = (config.columns - 1) * config.panel_gap_mm;
+  const edgeMargins = (config.edge_margin_left_mm ?? 0) + (config.edge_margin_right_mm ?? 0);
+  const totalHorizontalGap = (config.columns - 1) * config.panel_gap_mm + edgeMargins;
   const totalVerticalGap = (config.rows - 1) * config.panel_gap_mm;
 
   if (totalHorizontalGap >= config.total_width_mm) {
@@ -464,9 +467,11 @@ export function generatePanelFrames(config: WallConfigInput): PanelFrame[] {
 
   const configHash = hashConfig(config);
   const { rows, columns, panel_gap_mm, total_width_mm, total_height_mm, obstructions } = config;
+  const edgeMarginLeft = config.edge_margin_left_mm ?? 0;
+  const edgeMarginRight = config.edge_margin_right_mm ?? 0;
 
-  // Calculate available space after gaps
-  const availableWidth = total_width_mm - (columns - 1) * panel_gap_mm;
+  // Calculate available space after gaps and edge margins
+  const availableWidth = total_width_mm - (columns - 1) * panel_gap_mm - edgeMarginLeft - edgeMarginRight;
   const availableHeight = total_height_mm - (rows - 1) * panel_gap_mm;
 
   // Calculate row heights (equal distribution for rows) with sum-correction rounding
@@ -509,7 +514,7 @@ export function generatePanelFrames(config: WallConfigInput): PanelFrame[] {
       y += rowHeights[r] + panel_gap_mm;
     }
 
-    let x = 0;
+    let x = edgeMarginLeft;
     for (let col = 0; col < columns; col++) {
       const width = columnWidths[col];
       const height = rowHeights[row];

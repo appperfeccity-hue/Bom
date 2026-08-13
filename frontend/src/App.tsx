@@ -9,6 +9,7 @@ import { CanvasMode } from '@/types/database';
 import { CanvasContainer } from '@/canvas/CanvasContainer';
 import { Toolbar } from '@/components/Toolbar';
 import { ZonePropertiesPanel } from '@/components/ZonePropertiesPanel';
+import { WallConfigPanel } from '@/components/WallConfigPanel';
 import { MeasurementPanel } from '@/components/MeasurementPanel';
 import { SkuBrowser } from '@/components/SkuBrowser';
 import { BomPanel } from '@/components/BomPanel';
@@ -54,6 +55,7 @@ function App() {
         </div>
 
         {/* Side panels */}
+        {isDesigner && <WallConfigPanel />}
         {showZonePanel && <ZonePropertiesPanel />}
         {showMeasurementPanel && <MeasurementPanel />}
       </div>
