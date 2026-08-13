@@ -17,6 +17,7 @@ import { PublishWorkflow } from '@/components/PublishWorkflow';
 import { ProjectCreationWizard } from '@/components/ProjectCreation';
 import { TemplateManagementPanel } from '@/components/TemplateManagement';
 import { Navigation } from '@/components/Navigation';
+import { AppShell } from '@/components/Layout';
 
 function App() {
   const mode = useCanvasStore((s) => s.mode);
@@ -32,15 +33,7 @@ function App() {
   const showMeasurementPanel = mode === CanvasMode.CONSULTANT;
 
   return (
-    <div
-      id="app"
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        height: '100vh',
-        overflow: 'hidden',
-      }}
-    >
+    <AppShell>
       {/* Navigation Header */}
       <Navigation />
 
@@ -74,7 +67,7 @@ function App() {
 
       {/* Template Management Panel overlay */}
       {isPanelVisible && <TemplateManagementPanel />}
-    </div>
+    </AppShell>
   );
 }
 

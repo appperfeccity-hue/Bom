@@ -1,0 +1,150 @@
+/**
+ * Perfeccity Layout System
+ * CSS Grid shell: icon rail | top bar | panels | canvas | status bar
+ */
+
+/* ─── App Shell Grid ─── */
+.app-shell {
+  display: grid;
+  grid-template-columns: var(--icon-rail-width) 1fr;
+  grid-template-rows: var(--top-bar-height) 1fr var(--status-bar-height);
+  grid-template-areas:
+    "rail topbar"
+    "rail main"
+    "rail statusbar";
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  background-color: var(--color-canvas);
+}
+
+/* ─── Icon Rail ─── */
+.icon-rail {
+  grid-area: rail;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: var(--icon-rail-width);
+  background-color: var(--color-surface);
+  border-right: 1px solid var(--color-hairline);
+  padding-top: var(--space-2);
+  overflow-y: auto;
+  z-index: 10;
+}
+
+.icon-rail__item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 48px;
+  border: none;
+  background: transparent;
+  color: var(--color-ink-secondary);
+  cursor: pointer;
+  border-left: 2px solid transparent;
+  transition: background-color var(--transition-fast), color var(--transition-fast);
+  padding: 0;
+  font-size: var(--text-xs);
+}
+
+.icon-rail__item:hover {
+  background-color: var(--color-nav-active-bg);
+}
+
+.icon-rail__item--active {
+  border-left-color: var(--color-accent);
+  background-color: var(--color-nav-active-bg);
+  color: var(--color-ink-primary);
+}
+
+/* ─── Tooltip ─── */
+.icon-rail__tooltip {
+  position: absolute;
+  left: calc(100% + 8px);
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 4px 8px;
+  background-color: var(--color-ink-primary);
+  color: var(--color-surface);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+  z-index: 100;
+}
+
+.icon-rail__item:hover .icon-rail__tooltip--visible {
+  opacity: 1;
+}
+
+/* ─── Top Bar ─── */
+.top-bar {
+  grid-area: topbar;
+  display: flex;
+  align-items: center;
+  height: var(--top-bar-height);
+  padding: 0 var(--space-4);
+  background-color: var(--color-surface);
+  border-bottom: 1px solid var(--color-hairline);
+  gap: var(--space-3);
+  z-index: 9;
+}
+
+/* ─── Main Content Area ─── */
+.main-area {
+  grid-area: main;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+/* ─── Status Bar ─── */
+.status-bar {
+  grid-area: statusbar;
+  display: flex;
+  align-items: center;
+  height: var(--status-bar-height);
+  padding: 0 var(--space-3);
+  background-color: var(--color-surface);
+  border-top: 1px solid var(--color-hairline);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--color-ink-secondary);
+  gap: var(--space-4);
+  z-index: 9;
+}
+
+.status-bar__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+/* ─── Panel Areas ─── */
+.panel-left {
+  width: var(--left-panel-width);
+  background-color: var(--color-surface);
+  border-right: 1px solid var(--color-hairline);
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+.panel-right {
+  width: var(--right-panel-width);
+  background-color: var(--color-surface);
+  border-left: 1px solid var(--color-hairline);
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+.canvas-area {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
