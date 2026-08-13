@@ -2,7 +2,7 @@
   "id": "FEAT-006-wall-config-panel",
   "type": "feat",
   "description": "Create WallConfigPanel component for Designer canvas and wire it into App.tsx. Panel shows wall configuration, panel layout, spacing, and mounting sections. Always visible in DESIGNER mode.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "1. Create frontend/src/components/WallConfigPanel.tsx with wall configuration, panel layout, spacing, and mounting sections using wallConfigStore",
     "2. Update frontend/src/App.tsx to import and render WallConfigPanel in DESIGNER mode (replace conditional ZonePropertiesPanel)"
@@ -24,5 +24,5 @@
     "unset NODE_OPTIONS && cd frontend && npx vitest run"
   ],
   "blocked_reason": null,
-  "findings": null
+  "findings": "All 1094 tests pass. TypeScript typecheck clean (only pre-existing ValidationOverlayLayer unused var). Added edge_margin_left_mm and edge_margin_right_mm as optional fields to WallConfigInput type. The wallConfigEngine now subtracts edge margins from available width and offsets panel x positions by the left margin. The WallConfigPanel uses wallConfigStore.setWallConfig() for all changes. Panel is always visible in DESIGNER mode alongside the conditional ZonePropertiesPanel (which still shows when a zone is selected)."
 }
