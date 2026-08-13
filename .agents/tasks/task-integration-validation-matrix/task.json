@@ -1,0 +1,7 @@
+{
+  "task_id": "task-integration-validation-matrix",
+  "task_description": "Create an MVP Integration Validation Matrix test suite in frontend/src/__integration__/ that validates the complete production chain as a single deterministic flow across all 10 areas: template integrity, canvas rules, SKU integrity, lighting, BOM generation, bidirectional sync, validation/errors, permissions, persistence, and end-to-end scenarios.",
+  "status": "in_progress",
+  "feature_order": ["FEAT-001"],
+  "blocked_reason": null
+}

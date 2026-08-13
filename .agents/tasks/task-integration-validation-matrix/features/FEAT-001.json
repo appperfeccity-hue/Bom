@@ -1,0 +1,38 @@
+{
+  "id": "FEAT-001",
+  "type": "feat",
+  "description": "Create the comprehensive integration test suite in frontend/src/__integration__/ covering all 10 areas of the MVP Integration Validation Matrix. Tests exercise the full production chain: Template -> Canvas Snapshot -> Wall/Zone Validation -> Construction + Mounting Rules -> SKU Assignment/Compatibility -> Lighting/Trim/Furniture -> BOM Calculation -> BOM<->Canvas Consistency -> Finalisation. Tests use realistic mock data and directly call the pure engine functions and test store states.",
+  "status": "in_progress",
+  "steps": [
+    "Create directory frontend/src/__integration__/ for the integration test files.",
+    "Create frontend/src/__integration__/helpers/fixtures.ts with shared realistic mock data factories: createStraightWallSnapshot (3000x2400 wall, 2 zones, panels 600x1200, gaps 3mm, waste 5%), createLCornerSnapshot (L-corner wall with segment_a 2000mm and segment_b 1500mm, 3 zones with correct segment assignments), createMultiZoneMultiSkuSnapshot (4 zones, different SKUs, various panel sizes), createConsultantModeInput (permissions with LOCKED/RESTRICTED/FREE fields and consultant actions), createFinalisationInput (full pipeline input that passes all validation).",
+    "Create frontend/src/__integration__/helpers/pipelineHelpers.ts with helper functions: buildPipelineInput(snapshotData, measurements, config, permissions, compatRules) that assembles BomPipelineInput from parts; assertBomConsistency(bomOutput, snapshotData) that verifies every physical zone/light/furniture from snapshot has a corresponding BOM line.",
+    "Create frontend/src/__integration__/01-templateIntegrity.test.ts testing area 1 (Template Integrity): (a) Published template immutability - buildSnapshotData produces identical output for same inputs, (b) computeSnapshotHash returns same hash for identical data (determinism), (c) Dimensions propagate correctly - snapshot zone dimensions match template zone dimensions exactly.",
+    "Create frontend/src/__integration__/02-canvasRules.test.ts testing area 2 (Canvas -> Rules): (a) Valid geometry passes validateGeometry with zones within wall bounds, (b) Mounting rules are deterministic - same construction input always produces same validation result, (c) L-corner segments are correctly assigned via assignSegment, (d) doesZoneCrossCorner detects straddling zone.",
+    "Create frontend/src/__integration__/03-skuIntegrity.test.ts testing area 3 (SKU Integrity): (a) checkCompatibility blocks incompatible SKU pairs (ALTERNATIVE_TO), (b) checkCompatibility blocks when mandatory REQUIRES companion is missing, (c) Removing a required SKU from pairs correctly triggers COMPAT_MISSING_REQUIRED error, (d) Consultant restricted SKU selections blocked by validatePermissions.",
+    "Create frontend/src/__integration__/04-lighting.test.ts testing area 4 (Lighting): (a) PROFILE mounting adds 5mm offset per edge, (b) COVE mounting adds 10mm offset per edge, (c) COVE with frame requirement triggers CONST_STRUCTURE_REQUIRED if no structure, (d) LED/driver/wiring calculations: driverCount = ceil(totalLength/5000), wireLength = totalLength + 2000, (e) DISCRETE mode quantity = ceil(totalLength/unitLength).",
+    "Create frontend/src/__integration__/05-bomGeneration.test.ts testing area 5 (BOM Generation): (a) Every physical zone in snapshot produces a WALL_PANEL BOM line, (b) Every lighting component produces a LIGHT BOM line, (c) Every furniture item (quantity > 0) produces a FURNITURE BOM line, (d) Hidden components with met trigger conditions produce HIDDEN_COMPONENT lines, (e) No orphan BOM lines - every lineId traces back to a snapshot component, (f) Quantities reconcile: procurementQuantity = ceil(requiredQuantity * (1 + wasteFactor)).",
+    "Create frontend/src/__integration__/06-bidirectionalSync.test.ts testing area 6 (Bidirectional Synchronization): (a) BOM output lines map 1:1 to snapshot zones+lighting+furniture+hidden, (b) Modifying snapshot data (adding/removing a zone) and re-running pipeline produces updated BOM lines with no stale references, (c) Running pipeline twice with identical input produces identical output (idempotency).",
+    "Create frontend/src/__integration__/07-validationErrors.test.ts testing area 7 (Validation/Error Handling): (a) Invalid geometry (zone outside wall) blocks pipeline with GEO_ZONE_EXCEEDS_WALL, (b) Invalid SKU compatibility blocks with COMPAT_INCOMPATIBLE_SKUS, (c) 50mm minimum retained width enforced - calculateWallPanels throws EngineError when retained < 50mm, (d) Errors are deterministic - same invalid input always produces same error code.",
+    "Create frontend/src/__integration__/08-permissions.test.ts testing area 8 (Permissions): (a) Designer mode (no consultant actions) passes permissions step, (b) Consultant trying to modify LOCKED parameter blocks with PERM_LOCKED_PARAMETER, (c) Consultant setting value outside permitted range blocks with PERM_VALUE_OUT_OF_RANGE, (d) No bypass - providing empty permissions array still allows valid actions.",
+    "Create frontend/src/__integration__/09-persistence.test.ts testing area 9 (Persistence): (a) buildSnapshotData -> computeSnapshotHash -> buildSnapshotData from same inputs -> computeSnapshotHash produces identical hash (save->reload identical), (b) Snapshot -> runBomPipeline is reproducible (same snapshot always yields same BOM), (c) Undo does not corrupt state - push two history states, undo, verify previous state matches original zone data exactly.",
+    "Create frontend/src/__integration__/10-e2e-scenarios.test.ts testing area 10 (End-to-End Scenarios): (a) Straight wall E2E: build snapshot for 3000x2400 straight wall with 2 zones + lighting + furniture -> run full pipeline -> verify SUCCESS with correct BOM line count and quantities, (b) L-corner E2E: build L-corner snapshot with zones in both segments -> run pipeline -> verify zones are validated per-segment and BOM is correct, (c) Multi-zone multi-SKU E2E: 4 zones with 4 different SKUs + mixed lighting (PROFILE/COVE) + furniture + hidden components -> pipeline SUCCESS, (d) Consultant mode E2E: permissions restrict certain parameters, consultant actions within bounds -> pipeline SUCCESS, consultant actions violating bounds -> pipeline BLOCKED, (e) Finalisation E2E: run full pipeline to SUCCESS -> verify output can serve as final BOM basis (all lines have quantity > 0, no errors, reproducible hash).",
+    "Verify all new tests pass alongside existing 901 tests by running 'unset NODE_OPTIONS && cd /projects/sandbox/Bom/frontend && npx vitest --run'."
+  ],
+  "acceptance_criteria": [
+    "Directory frontend/src/__integration__/ exists with test files covering all 10 areas",
+    "At least 1 straight wall E2E test passes end-to-end through runBomPipeline",
+    "At least 1 L-corner E2E test validates segment assignment and pipeline SUCCESS",
+    "At least 1 multi-zone multi-SKU E2E test passes with mixed components",
+    "At least 1 consultant mode E2E test validates permission enforcement",
+    "At least 1 finalisation E2E test confirms pipeline produces reproducible valid output",
+    "Tests validate the critical invariant: Canvas state, rule-engine state, BOM state and persisted snapshot describe the same physical wall",
+    "All new integration tests pass alongside the existing 901 tests",
+    "Each test follows the pattern: Scenario -> Initial State -> Actions -> Expected Rules -> Expected BOM -> Expected Validation -> PASS/FAIL"
+  ],
+  "verification": [
+    "Run 'unset NODE_OPTIONS && cd /projects/sandbox/Bom/frontend && npx vitest --run' and confirm all tests pass (901 existing + new integration tests)"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}
