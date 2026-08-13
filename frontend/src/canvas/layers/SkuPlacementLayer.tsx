@@ -82,19 +82,19 @@ export function SkuPlacementLayer({ wallHeight }: SkuPlacementLayerProps) {
   return (
     <Layer listening={false}>
       {zones.map((zone) => {
-        const sku = zoneSku.get(zone.id);
+        const sku = zoneSku.get(zone.zone_id);
         if (!sku) return null;
 
         const screenY = wallHeight - zone.y_mm - zone.height_mm;
-        const url = renderUrls.get(zone.id);
-        const img = url ? loadedImages.get(zone.id) : null;
+        const url = renderUrls.get(zone.zone_id);
+        const img = url ? loadedImages.get(zone.zone_id) : null;
         const hasFailed = url ? failedUrls.has(url) : false;
 
         // Render image if loaded
         if (img) {
           return (
             <Image
-              key={`sku-img-${zone.id}`}
+              key={`sku-img-${zone.zone_id}`}
               x={zone.x_mm}
               y={screenY}
               width={zone.width_mm}
@@ -109,7 +109,7 @@ export function SkuPlacementLayer({ wallHeight }: SkuPlacementLayerProps) {
         if (!url || hasFailed) {
           return (
             <Text
-              key={`sku-text-${zone.id}`}
+              key={`sku-text-${zone.zone_id}`}
               x={zone.x_mm}
               y={screenY + zone.height_mm / 2 - 7}
               width={zone.width_mm}

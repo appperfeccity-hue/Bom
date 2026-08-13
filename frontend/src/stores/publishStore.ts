@@ -81,7 +81,7 @@ export const usePublishStore = create<PublishStore>((set) => ({
       const results: ValidationResult[] = [];
 
       // Gate 1: All zones have a primary SKU assigned
-      const zonesWithoutSku = zones.filter((z) => !zoneSku.has(z.id));
+      const zonesWithoutSku = zones.filter((z) => !zoneSku.has(z.zone_id));
       results.push({
         gate: 'Zone SKU Assignment',
         passed: zonesWithoutSku.length === 0,
@@ -148,7 +148,7 @@ export const usePublishStore = create<PublishStore>((set) => ({
           width: zone.width_mm,
           height: zone.height_mm,
         };
-        if (hasOverlap(box, zones, zone.id)) {
+        if (hasOverlap(box, zones, zone.zone_id)) {
           overlapDetected = true;
           break;
         }
@@ -162,8 +162,8 @@ export const usePublishStore = create<PublishStore>((set) => ({
       });
 
       // Gate 4: Zone constraints (within wall boundary and valid dimensions)
-      const wallWidth = currentTemplate?.base_width_mm ?? 0;
-      const wallHeight = currentTemplate?.base_height_mm ?? 0;
+      const wallWidth = currentTemplate?.wall_geometry.base_width_mm ?? 0;
+      const wallHeight = currentTemplate?.wall_geometry.base_height_mm ?? 0;
       const constraintViolations: string[] = [];
 
       for (const zone of zones) {
@@ -174,10 +174,10 @@ export const usePublishStore = create<PublishStore>((set) => ({
           height: zone.height_mm,
         };
         if (!isWithinWallBoundary(box, wallWidth, wallHeight)) {
-          constraintViolations.push(`Zone "${zone.name}" exceeds wall boundary`);
+          constraintViolations.push(`Zone "${zone.zone_id}" exceeds wall boundary`);
         }
         if (!isValidZoneDimensions(zone.width_mm, zone.height_mm)) {
-          constraintViolations.push(`Zone "${zone.name}" has invalid dimensions`);
+          constraintViolations.push(`Zone "${zone.zone_id}" has invalid dimensions`);
         }
       }
 
@@ -307,7 +307,7 @@ export const usePublishStore = create<PublishStore>((set) => ({
     try {
       const { error } = await fromTable('template')
         .update({ status: 'ACTIVE' })
-        .eq('id', templateId);
+        .eq('template_id', templateId);
 
       if (error) {
         set({
@@ -321,7 +321,7 @@ export const usePublishStore = create<PublishStore>((set) => ({
       // Sync local projectStore state so the UI reflects the template is now ACTIVE.
       // This prevents the "Publish Template" button from remaining visible after publish.
       const projectState = useProjectStore.getState();
-      if (projectState.currentTemplate?.id === templateId) {
+      if (projectState.currentTemplate?.template_id === templateId) {
         useProjectStore.setState({
           currentTemplate: {
             ...projectState.currentTemplate,

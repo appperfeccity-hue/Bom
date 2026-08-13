@@ -15,8 +15,6 @@ vi.mock('@/lib/supabase', () => ({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockResolvedValue({
             data: [
-              { id: 'zone-1', template_id: 'tpl-1', name: 'Zone A', x_mm: 0, y_mm: 0, width_mm: 600, height_mm: 2400, width_strategy: 'FIXED', height_strategy: 'FIXED', position_strategy: 'ABSOLUTE', z_index: 0, created_at: '2024-01-01', updated_at: '2024-01-01' },
-              { id: 'zone-2', template_id: 'tpl-1', name: 'Zone B', x_mm: 600, y_mm: 0, width_mm: 600, height_mm: 2400, width_strategy: 'FIXED', height_strategy: 'FIXED', position_strategy: 'ABSOLUTE', z_index: 1, created_at: '2024-01-01', updated_at: '2024-01-01' },
             ],
             error: null,
           }),
@@ -63,13 +61,11 @@ describe('PromotedAlternativesPanel', () => {
             zone_id: 'zone-1',
             sku_id: 'sku-001',
             sku_master: { sku_code: 'WP-OAK-001', product_type: 'WALL_PANEL' },
-            template_zone: { name: 'Zone A' },
           },
           {
             zone_id: 'zone-2',
             sku_id: 'sku-002',
             sku_master: { sku_code: 'WP-BIRCH-002', product_type: 'WALL_PANEL' },
-            template_zone: { name: 'Zone B' },
           },
         ],
         error: null,

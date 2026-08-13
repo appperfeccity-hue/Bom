@@ -77,8 +77,8 @@ export function useKeyboardShortcuts({ history }: UseKeyboardShortcutsOptions) {
         if (mode !== CanvasMode.DESIGNER) return;
         if (!currentTemplate) return;
         e.preventDefault();
-        const wallWidth = currentTemplate.base_width_mm;
-        const wallHeight = currentTemplate.base_height_mm;
+        const wallWidth = currentTemplate.wall_geometry.base_width_mm;
+        const wallHeight = currentTemplate.wall_geometry.base_height_mm;
         const newZones = useCanvasStore.getState().pasteClipboard(
           zones,
           wallWidth,
@@ -98,8 +98,8 @@ export function useKeyboardShortcuts({ history }: UseKeyboardShortcutsOptions) {
         if (selection.selectedZoneIds.length === 0) return;
         if (!currentTemplate) return;
         e.preventDefault();
-        const wallWidth = currentTemplate.base_width_mm;
-        const wallHeight = currentTemplate.base_height_mm;
+        const wallWidth = currentTemplate.wall_geometry.base_width_mm;
+        const wallHeight = currentTemplate.wall_geometry.base_height_mm;
         const newZones = useCanvasStore.getState().duplicateSelection(
           zones,
           wallWidth,
@@ -147,7 +147,7 @@ export function useKeyboardShortcuts({ history }: UseKeyboardShortcutsOptions) {
         e.preventDefault();
 
         const nudgeAmount = gridConfig.snapEnabled ? gridConfig.size : 1;
-        const selectedZones = zones.filter((z) => selectedIds.includes(z.id));
+        const selectedZones = zones.filter((z) => selectedIds.includes(z.zone_id));
         if (selectedZones.length === 0) return;
 
         let dx = 0;
@@ -168,8 +168,8 @@ export function useKeyboardShortcuts({ history }: UseKeyboardShortcutsOptions) {
             break;
         }
 
-        const wallWidth = currentTemplate.base_width_mm;
-        const wallHeight = currentTemplate.base_height_mm;
+        const wallWidth = currentTemplate.wall_geometry.base_width_mm;
+        const wallHeight = currentTemplate.wall_geometry.base_height_mm;
 
         // Compute group bounding box to constrain as a unit
         const groupMinX = Math.min(...selectedZones.map((z) => z.x_mm));
@@ -196,7 +196,7 @@ export function useKeyboardShortcuts({ history }: UseKeyboardShortcutsOptions) {
         if (actualDx === 0 && actualDy === 0) return;
 
         // Check for overlap: each moved zone against non-selected zones
-        const nonSelectedZones = zones.filter((z) => !selectedIds.includes(z.id));
+        const nonSelectedZones = zones.filter((z) => !selectedIds.includes(z.zone_id));
         for (const zone of selectedZones) {
           const newBox = {
             x: zone.x_mm + actualDx,

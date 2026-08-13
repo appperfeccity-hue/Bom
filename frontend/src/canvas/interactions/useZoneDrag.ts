@@ -32,7 +32,7 @@ export function useZoneDrag(history?: HistoryState) {
     (zone: TemplateZone, _e: unknown) => {
       if (!canDrag) return;
       // In CONSULTANT mode, check if zone is editable via permissions
-      if (mode === CanvasMode.CONSULTANT && !canEditZone(zone.id)) return;
+      if (mode === CanvasMode.CONSULTANT && !canEditZone(zone.zone_id)) return;
       dragStartPos.current = { x: zone.x_mm, y: zone.y_mm };
     },
     [canDrag, mode, canEditZone],
@@ -44,15 +44,15 @@ export function useZoneDrag(history?: HistoryState) {
         return { x: zone.x_mm, y: zone.y_mm };
       }
       // In CONSULTANT mode, check zone-level permission
-      if (mode === CanvasMode.CONSULTANT && !canEditZone(zone.id)) {
+      if (mode === CanvasMode.CONSULTANT && !canEditZone(zone.zone_id)) {
         return { x: zone.x_mm, y: zone.y_mm };
       }
 
-      const wallWidth = currentTemplate.base_width_mm;
-      const wallHeight = currentTemplate.base_height_mm;
+      const wallWidth = currentTemplate.wall_geometry.base_width_mm;
+      const wallHeight = currentTemplate.wall_geometry.base_height_mm;
       const selection = useCanvasStore.getState().selection;
       const selectedIds = selection.selectedZoneIds;
-      const isMultiDrag = selectedIds.length > 1 && selectedIds.includes(zone.id);
+      const isMultiDrag = selectedIds.length > 1 && selectedIds.includes(zone.zone_id);
 
       // Snap to grid if enabled
       let x = gridConfig.snapEnabled ? snapToGrid(newX, gridConfig.size) : Math.round(newX);
@@ -61,7 +61,7 @@ export function useZoneDrag(history?: HistoryState) {
       if (isMultiDrag) {
         // For multi-drag, constrain the group bounding box
         const allZones = useProjectStore.getState().zones;
-        const selectedZones = allZones.filter((z) => selectedIds.includes(z.id));
+        const selectedZones = allZones.filter((z) => selectedIds.includes(z.zone_id));
         const dx = x - zone.x_mm;
         const dy = y - zone.y_mm;
 
@@ -81,7 +81,7 @@ export function useZoneDrag(history?: HistoryState) {
         y = zone.y_mm + constrainedDy;
 
         // Apply edge snapping to the group bounding box
-        const nonSelectedZones = allZones.filter((z) => !selectedIds.includes(z.id));
+        const nonSelectedZones = allZones.filter((z) => !selectedIds.includes(z.zone_id));
         const candidates = getSnapCandidates(nonSelectedZones, wallWidth, wallHeight);
         const constrainedGroupX = constrained.x;
         const constrainedGroupY = constrained.y;
@@ -105,7 +105,7 @@ export function useZoneDrag(history?: HistoryState) {
 
         // Apply edge snapping
         const allZones = useProjectStore.getState().zones;
-        const otherZones = allZones.filter((z) => z.id !== zone.id);
+        const otherZones = allZones.filter((z) => z.zone_id !== zone.zone_id);
         const candidates = getSnapCandidates(otherZones, wallWidth, wallHeight);
         const snapResult = snapToEdges(x, y, zone.width_mm, zone.height_mm, candidates, SNAP_THRESHOLD);
         x = snapResult.x;
@@ -126,14 +126,14 @@ export function useZoneDrag(history?: HistoryState) {
     (zone: TemplateZone, finalX: number, finalY: number) => {
       if (!canDrag) return;
       // In CONSULTANT mode, check zone-level permission
-      if (mode === CanvasMode.CONSULTANT && !canEditZone(zone.id)) return;
+      if (mode === CanvasMode.CONSULTANT && !canEditZone(zone.zone_id)) return;
 
       // Clear snap lines on drag end
       useCanvasStore.getState().clearActiveSnapLines();
 
       const selection = useCanvasStore.getState().selection;
       const selectedIds = selection.selectedZoneIds;
-      const isMultiDrag = selectedIds.length > 1 && selectedIds.includes(zone.id);
+      const isMultiDrag = selectedIds.length > 1 && selectedIds.includes(zone.zone_id);
 
       if (isMultiDrag) {
         // Batch move all selected zones by the same delta
@@ -146,8 +146,8 @@ export function useZoneDrag(history?: HistoryState) {
         }
 
         const allZones = useProjectStore.getState().zones;
-        const selectedZones = allZones.filter((z) => selectedIds.includes(z.id));
-        const nonSelectedZones = allZones.filter((z) => !selectedIds.includes(z.id));
+        const selectedZones = allZones.filter((z) => selectedIds.includes(z.zone_id));
+        const nonSelectedZones = allZones.filter((z) => !selectedIds.includes(z.zone_id));
 
         // Check for overlap of each moved zone against non-selected zones
         for (const sz of selectedZones) {
@@ -206,7 +206,7 @@ export function useZoneDrag(history?: HistoryState) {
       } else {
         // Single zone drag
         const newBox = { x: finalX, y: finalY, width: zone.width_mm, height: zone.height_mm };
-        if (hasOverlap(newBox, zones, zone.id)) {
+        if (hasOverlap(newBox, zones, zone.zone_id)) {
           // Revert to start position (cancel the drag)
           if (dragStartPos.current) {
             const revertedZone: TemplateZone = {

@@ -5,11 +5,11 @@ import type {
   TemplateFurniture,
   TemplateTrim,
   SkuMaster,
+  WallGeometry,
 } from '@/types/database';
 
 export interface SnapshotZone {
-  id: string;
-  name: string;
+  zone_id: string;
   x_mm: number;
   y_mm: number;
   width_mm: number;
@@ -17,13 +17,12 @@ export interface SnapshotZone {
   width_strategy: string;
   height_strategy: string;
   position_strategy: string;
-  z_index: number;
   primary_sku: SkuMaster | null;
   alternatives: unknown[];
 }
 
 export interface SnapshotData {
-  wall_geometry: string;
+  wall_geometry: WallGeometry;
   base_dimensions: {
     width_mm: number;
     height_mm: number;
@@ -50,8 +49,7 @@ export function buildSnapshotData(
   zoneSku: Map<string, SkuMaster>,
 ): SnapshotData {
   const snapshotZones: SnapshotZone[] = zones.map((zone) => ({
-    id: zone.id,
-    name: zone.name,
+    zone_id: zone.zone_id,
     x_mm: zone.x_mm,
     y_mm: zone.y_mm,
     width_mm: zone.width_mm,
@@ -59,16 +57,15 @@ export function buildSnapshotData(
     width_strategy: zone.width_strategy,
     height_strategy: zone.height_strategy,
     position_strategy: zone.position_strategy,
-    z_index: zone.z_index,
-    primary_sku: zoneSku.get(zone.id) ?? null,
+    primary_sku: zoneSku.get(zone.zone_id) ?? null,
     alternatives: [],
   }));
 
   return {
     wall_geometry: template.wall_geometry,
     base_dimensions: {
-      width_mm: template.base_width_mm,
-      height_mm: template.base_height_mm,
+      width_mm: template.wall_geometry.base_width_mm,
+      height_mm: template.wall_geometry.base_height_mm,
     },
     zones: snapshotZones,
     lighting,

@@ -139,7 +139,7 @@ function performPaste(
 
   const PASTE_OFFSET = 100;
   const newZones: TemplateZone[] = [];
-  const clipboardIds = new Set(clipboard.map((z) => z.id));
+  const clipboardIds = new Set(clipboard.map((z) => z.zone_id));
 
   for (const zone of clipboard) {
     let offsetX = zone.x_mm + PASTE_OFFSET;
@@ -168,7 +168,7 @@ function performPaste(
     // Overlap with only the source clipboard zones is acceptable (e.g., wall boundary forces
     // the paste back to the source position).
     if (hasOverlap(box, allZones)) {
-      const nonSourceZones = allZones.filter((z) => !clipboardIds.has(z.id));
+      const nonSourceZones = allZones.filter((z) => !clipboardIds.has(z.zone_id));
       if (hasOverlap(box, nonSourceZones)) {
         continue;
       }
@@ -176,17 +176,16 @@ function performPaste(
 
     const newZone: TemplateZone = {
       ...zone,
-      id: crypto.randomUUID(),
+      zone_id: crypto.randomUUID(),
       x_mm: offsetX,
       y_mm: offsetY,
       created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
     };
     newZones.push(newZone);
   }
 
   // Select the new zones
-  const newIds = newZones.map((z: TemplateZone) => z.id);
+  const newIds = newZones.map((z: TemplateZone) => z.zone_id);
   setSelection({
     selectedZoneId: newIds[0] ?? null,
     selectedZoneIds: newIds,
@@ -275,7 +274,7 @@ export const useCanvasStore = create<CanvasStore>((set) => ({
           rect.y + rect.height > zoneBox.y
         );
       });
-      const ids = selected.map((z) => z.id);
+      const ids = selected.map((z) => z.zone_id);
       return {
         selection: {
           selectedZoneId: ids.length > 0 ? ids[0] : null,
@@ -318,7 +317,7 @@ export const useCanvasStore = create<CanvasStore>((set) => ({
     set((state) => {
       const { selectedZoneIds } = state.selection;
       if (selectedZoneIds.length === 0) return {};
-      const selectedZones = zones.filter((z) => selectedZoneIds.includes(z.id));
+      const selectedZones = zones.filter((z) => selectedZoneIds.includes(z.zone_id));
       if (selectedZones.length === 0) return {};
       // Deep copy
       const clipboard = selectedZones.map((z) => ({ ...z }));
@@ -347,7 +346,7 @@ export const useCanvasStore = create<CanvasStore>((set) => ({
     const { selectedZoneIds } = state.selection;
     if (selectedZoneIds.length === 0) return [];
 
-    const selectedZones = zones.filter((z: TemplateZone) => selectedZoneIds.includes(z.id));
+    const selectedZones = zones.filter((z: TemplateZone) => selectedZoneIds.includes(z.zone_id));
     if (selectedZones.length === 0) return [];
 
     // Use the selected zones as clipboard directly

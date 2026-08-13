@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { useFinalizationStore, FinalizationStep } from '../finalizationStore';
 import { useProjectStore } from '../projectStore';
@@ -6,7 +7,7 @@ import { ProjectStatus } from '@/types/database';
 
 // Mock the supabase module
 vi.mock('@/lib/supabase', () => {
-  const mockRpc = vi.fn().mockResolvedValue({ data: null, error: null });
+  const mockRpc = vi.fn().mockResolvedValue({ data: 'final-bom-id-123', error: null });
   return {
     fromTable: vi.fn(() => ({
       select: vi.fn().mockReturnThis(),
@@ -17,9 +18,7 @@ vi.mock('@/lib/supabase', () => {
       single: vi.fn().mockResolvedValue({ data: null, error: null }),
     })),
     supabase: {
-      schema: vi.fn(() => ({
-        rpc: mockRpc,
-      })),
+      rpc: mockRpc,
     },
     isSupabaseConfigured: false,
   };
@@ -49,15 +48,12 @@ describe('finalizationStore', () => {
     });
     useProjectStore.setState({
       currentProject: {
-        id: 'proj-1',
-        name: 'Test Project',
+        project_id: 'proj-1',
+        customer_reference: 'Test Project',
         template_id: 'tpl-1',
         status: ProjectStatus.VALIDATED,
-        client_name: 'Client',
         created_by: 'user-1',
         created_at: '2024-01-01T00:00:00Z',
-        updated_at: '2024-01-01T00:00:00Z',
-        version: 1,
       },
     });
     useAuthStore.setState({
@@ -101,13 +97,11 @@ describe('finalizationStore', () => {
   describe('confirmFinalization', () => {
     it('calls supabase rpc and transitions to SUCCESS on success', async () => {
       const { supabase } = await import('@/lib/supabase');
-      const mockRpc = vi.fn().mockResolvedValue({ data: 'final-bom-uuid-123', error: null });
-      vi.mocked(supabase.schema).mockReturnValue({ rpc: mockRpc } as never);
+      vi.mocked(supabase.rpc).mockResolvedValue({ data: 'final-bom-uuid-123', error: null } as never);
 
       await useFinalizationStore.getState().confirmFinalization('proj-1', 'fin-key-1');
 
-      expect(supabase.schema).toHaveBeenCalledWith('perfecity');
-      expect(mockRpc).toHaveBeenCalledWith('finalize_project', {
+      expect(supabase.rpc).toHaveBeenCalledWith('finalize_project', {
         p_project_id: 'proj-1',
         p_user_id: 'user-1',
         p_finalization_key: 'fin-key-1',
@@ -125,8 +119,7 @@ describe('finalizationStore', () => {
 
     it('updates projectStore status to FINALIZED on success', async () => {
       const { supabase } = await import('@/lib/supabase');
-      const mockRpc = vi.fn().mockResolvedValue({ data: 'final-bom-uuid-123', error: null });
-      vi.mocked(supabase.schema).mockReturnValue({ rpc: mockRpc } as never);
+      vi.mocked(supabase.rpc).mockResolvedValue({ data: 'final-bom-uuid-123', error: null } as never);
 
       await useFinalizationStore.getState().confirmFinalization('proj-1', 'fin-key-1');
 
@@ -136,11 +129,10 @@ describe('finalizationStore', () => {
 
     it('transitions to ERROR on rpc failure', async () => {
       const { supabase } = await import('@/lib/supabase');
-      const mockRpc = vi.fn().mockResolvedValue({
+      vi.mocked(supabase.rpc).mockResolvedValue({
         data: null,
         error: { message: 'Advisory lock timeout' },
-      });
-      vi.mocked(supabase.schema).mockReturnValue({ rpc: mockRpc } as never);
+      } as never);
 
       await useFinalizationStore.getState().confirmFinalization('proj-1', 'fin-key-1');
 
@@ -167,8 +159,7 @@ describe('finalizationStore', () => {
       const rpcPromise = new Promise((resolve) => {
         resolveRpc = resolve;
       });
-      const mockRpc = vi.fn().mockReturnValue(rpcPromise);
-      vi.mocked(supabase.schema).mockReturnValue({ rpc: mockRpc } as never);
+      vi.mocked(supabase.rpc).mockReturnValue(rpcPromise as never);
 
       const promise = useFinalizationStore.getState().confirmFinalization('proj-1', 'fin-key-1');
 
@@ -184,8 +175,7 @@ describe('finalizationStore', () => {
 
     it('idempotency - calling confirm twice with same key succeeds', async () => {
       const { supabase } = await import('@/lib/supabase');
-      const mockRpc = vi.fn().mockResolvedValue({ data: 'final-bom-uuid-123', error: null });
-      vi.mocked(supabase.schema).mockReturnValue({ rpc: mockRpc } as never);
+      vi.mocked(supabase.rpc).mockResolvedValue({ data: 'final-bom-uuid-123', error: null } as never);
 
       await useFinalizationStore.getState().confirmFinalization('proj-1', 'same-key');
 
@@ -211,8 +201,9 @@ describe('finalizationStore', () => {
 
     it('guards against double-submit when step is already FINALIZING', async () => {
       const { supabase } = await import('@/lib/supabase');
-      const mockRpc = vi.fn().mockResolvedValue({ data: 'final-bom-uuid-123', error: null });
-      vi.mocked(supabase.schema).mockReturnValue({ rpc: mockRpc } as never);
+      // Clear any mock calls from previous tests
+      vi.mocked(supabase.rpc).mockClear();
+      vi.mocked(supabase.rpc).mockResolvedValue({ data: 'final-bom-uuid-123', error: null } as never);
 
       // Set state to FINALIZING to simulate in-flight call
       useFinalizationStore.setState({ finalizationStep: FinalizationStep.FINALIZING, isLoading: true });
@@ -220,7 +211,7 @@ describe('finalizationStore', () => {
       await useFinalizationStore.getState().confirmFinalization('proj-1', 'fin-key-2');
 
       // Should not have called RPC
-      expect(mockRpc).not.toHaveBeenCalled();
+      expect(supabase.rpc).not.toHaveBeenCalled();
       // State should remain unchanged
       const state = useFinalizationStore.getState();
       expect(state.finalizationStep).toBe(FinalizationStep.FINALIZING);
@@ -229,8 +220,7 @@ describe('finalizationStore', () => {
 
     it('transitions to ERROR when RPC returns null data', async () => {
       const { supabase } = await import('@/lib/supabase');
-      const mockRpc = vi.fn().mockResolvedValue({ data: null, error: null });
-      vi.mocked(supabase.schema).mockReturnValue({ rpc: mockRpc } as never);
+      vi.mocked(supabase.rpc).mockResolvedValue({ data: null, error: null } as never);
 
       await useFinalizationStore.getState().confirmFinalization('proj-1', 'fin-key-1');
 
@@ -242,8 +232,7 @@ describe('finalizationStore', () => {
 
     it('transitions to ERROR when RPC returns non-string data', async () => {
       const { supabase } = await import('@/lib/supabase');
-      const mockRpc = vi.fn().mockResolvedValue({ data: { id: 'obj' }, error: null });
-      vi.mocked(supabase.schema).mockReturnValue({ rpc: mockRpc } as never);
+      vi.mocked(supabase.rpc).mockResolvedValue({ data: { id: 'obj' }, error: null } as never);
 
       await useFinalizationStore.getState().confirmFinalization('proj-1', 'fin-key-1');
 

@@ -93,7 +93,7 @@ export const useProjectCreationStore = create<ProjectCreationStore>((set, get) =
     set({ step: CreationStep.CREATING, isLoading: true, error: null });
 
     try {
-      const templateId = selectedTemplate.id;
+      const templateId = selectedTemplate.template_id;
 
       // Get current user id
       const userId = useAuthStore.getState().user?.id;
@@ -130,7 +130,7 @@ export const useProjectCreationStore = create<ProjectCreationStore>((set, get) =
 
       // Load zone SKU mappings
       const typedZones = (zonesResult.data ?? []) as TemplateZone[];
-      const zoneIds = typedZones.map((z) => z.id);
+      const zoneIds = typedZones.map((z) => z.zone_id);
       const zoneSku = new Map<string, SkuMaster>();
 
       if (zoneIds.length > 0) {

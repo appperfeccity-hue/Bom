@@ -1,0 +1,52 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "Build the Wall Configuration Engine (wallConfigEngine.ts) with 8 Panel Fit algorithms, obstruction handling, and deterministic panel frame generation. Remove manual zone creation/drag/resize interactions. Update CanvasContainer and SelectionLayer to remove zone manipulation. Add new error codes E-WALL-001 through E-FIT-002 to error catalogue.",
+  "status": "pending",
+  "steps": [
+    "1. Create frontend/src/engines/wallConfigEngine.ts with: WallConfigInput type (wall_type: STRAIGHT|L_CORNER, total_width_mm, total_height_mm, rows, columns, panel_gap_mm, fit_algorithm: EQUAL|ADJUST_END_PANELS|SPREAD_LEFT|SPREAD_RIGHT|SPREAD_BOTH_ENDS|CENTRE_FOCUS|OUTER_FOCUS|ALTERNATING, fit_intensity_percent: 0-100, mounting_type, obstructions array, segment_a_width_mm optional, segment_b_width_mm optional)",
+    "2. Implement generatePanelFrames(config: WallConfigInput): PanelFrame[] - deterministic pure function that computes panel frame positions and dimensions from wall config parameters. Each PanelFrame has: frame_id (deterministic UUID based on row/col/config hash), row_index, col_index, x_mm, y_mm, width_mm, height_mm, segment (SEGMENT_A|SEGMENT_B|null), is_edge_panel boolean",
+    "3. Implement EQUAL fit algorithm: divide wall width equally by number of columns, minus gaps. All panels get identical width. Panel width = (total_width - (columns-1)*panel_gap) / columns",
+    "4. Implement ADJUST_END_PANELS: center panels use standard size, end panels absorb remainder. End panel sizes adjusted based on fit_intensity (0%=equal, 100%=max adjustment to ends)",
+    "5. Implement SPREAD_LEFT: leftmost panels narrower, progressive widening to right. Intensity controls how much spread",
+    "6. Implement SPREAD_RIGHT: rightmost panels narrower, progressive widening to left",
+    "7. Implement SPREAD_BOTH_ENDS: both end panels narrower, center panels wider. Symmetric",
+    "8. Implement CENTRE_FOCUS: center panels wider, outer panels narrower",
+    "9. Implement OUTER_FOCUS: outer panels wider, center panels narrower",
+    "10. Implement ALTERNATING: alternating wide/narrow panels based on intensity",
+    "11. Implement obstruction handling: each obstruction is {x_mm, y_mm, width_mm, height_mm, type: WINDOW|DOOR|PILLAR|CUSTOM}. Panels that would overlap an obstruction are excluded from generation. Apply Rule 69: minimum retained panel dimension is 50mm",
+    "12. Implement row logic: total_height divided by rows minus vertical gaps. Panel height = (total_height - (rows-1)*panel_gap) / rows",
+    "13. Apply Rule 63: panel_gap_mm is independent from SKU joint gaps (gh_mm/gv_mm). The gap in this engine is the structural spacing between frames, not the SKU joint gap",
+    "14. Apply Rule 69: if any generated panel frame dimension is below 50mm, throw EngineError",
+    "15. Remove frontend/src/canvas/interactions/useZoneCreate.ts (delete file)",
+    "16. Remove frontend/src/canvas/interactions/useZoneDrag.ts (delete file)",
+    "17. Remove frontend/src/canvas/interactions/useZoneResize.ts (delete file)",
+    "18. Update frontend/src/canvas/CanvasContainer.tsx: remove useZoneCreate import and usage, remove zone creation preview rectangle, remove zone creation from mouse handlers. Keep marquee select for viewing.",
+    "19. Update frontend/src/canvas/layers/SelectionLayer.tsx: remove 8-point resize handles entirely (no useZoneResize import, no handles array/rendering). Keep selection outline and marquee rect for viewing selected zones.",
+    "20. Update frontend/src/canvas/interactions/useKeyboardShortcuts.ts: remove Delete/Backspace handler for zone deletion (Rule 65 - Designer cannot delete zones). Keep Escape for deselect, keep Ctrl+Z/Ctrl+Shift+Z for undo/redo (now applies to wall config changes). Remove Ctrl+C/V/D copy/paste/duplicate for zones. Remove arrow key nudge.",
+    "21. Update frontend/src/canvas/layers/ZonesLayer.tsx: keep the rendering but zones are now read-only in both DESIGNER and CONSULTANT mode. Remove the click-to-select in DESIGNER mode for editing purposes (keep selection for SKU viewing). Add a visual indicator that zones are system-generated.",
+    "22. Add new error codes to frontend/src/engines/errorCatalogue.ts: E_WALL_NO_DIMENSIONS ('E-WALL-001'), E_WALL_INVALID_GEOMETRY ('E-WALL-002'), E_WALL_GAP_EXCEEDS_SPACE ('E-WALL-003'), E_FIT_PANEL_BELOW_MIN ('E-FIT-001'), E_FIT_INTENSITY_INVALID ('E-FIT-002')",
+    "23. Create frontend/src/engines/__tests__/wallConfigEngine.test.ts with comprehensive tests: test all 8 fit algorithms, test obstruction exclusion, test minimum 50mm rule, test deterministic output (same input = same output), test L_CORNER with segments, test edge cases (1 column, 1 row, max columns)",
+    "24. Update frontend/src/engines/index.ts to export wallConfigEngine"
+  ],
+  "acceptance_criteria": [
+    "wallConfigEngine.ts exports generatePanelFrames function that deterministically produces PanelFrame arrays",
+    "All 8 fit algorithms are implemented and produce valid panel layouts",
+    "Obstructions correctly exclude overlapping panels",
+    "Rule 69 enforced: panels below 50mm throw EngineError",
+    "Rule 63 respected: panel_gap_mm is the frame-level gap, separate from SKU gh_mm/gv_mm",
+    "useZoneCreate.ts, useZoneDrag.ts, useZoneResize.ts files are deleted",
+    "CanvasContainer no longer has zone creation interaction",
+    "SelectionLayer no longer has resize handles",
+    "Keyboard shortcuts no longer include Delete for zones or arrow nudge",
+    "TypeScript typecheck passes",
+    "All new tests pass",
+    "Existing tests that relied on deleted interactions are updated or removed"
+  ],
+  "verification": [
+    "unset NODE_OPTIONS && cd frontend && npx tsc --noEmit",
+    "unset NODE_OPTIONS && cd frontend && npx vitest run"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

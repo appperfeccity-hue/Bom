@@ -1,4 +1,4 @@
-import { Layer, Line } from 'react-konva';
+import { Layer, Rect } from 'react-konva';
 import { useCanvasStore } from '@/stores/canvasStore';
 import { useProjectStore } from '@/stores/projectStore';
 import { CanvasLayer } from '@/types/canvas';
@@ -8,11 +8,10 @@ interface TrimLayerProps {
 }
 
 /**
- * Renders path-based lines for each trim item.
- * PHYSICAL type: thick solid line (strokeWidth 3/zoom, stroke #795548).
- * GEOMETRY type: thin dashed line (strokeWidth 1/zoom, dash [6/zoom, 4/zoom], stroke #9e9e9e).
- * Unknown types default to GEOMETRY style.
- * Converts from bottom-left origin (mm) to Konva top-left using wallHeight.
+ * Renders trim items as indicators.
+ * PHYSICAL type: brown indicator.
+ * GEOMETRY type: grey indicator.
+ * Since trims no longer have path_mm coordinates, renders as colored bars.
  */
 export function TrimLayer({ wallHeight }: TrimLayerProps) {
   const visible = useCanvasStore((s) => s.layerVisibility[CanvasLayer.TRIMS]);
@@ -23,24 +22,23 @@ export function TrimLayer({ wallHeight }: TrimLayerProps) {
 
   return (
     <Layer listening={false}>
-      {trims.map((item) => {
-        // Flatten path_mm points with y-coordinate conversion
-        const points = item.path_mm.flatMap((point) => [
-          point.x,
-          wallHeight - point.y,
-        ]);
-
-        const isPhysical = item.type === 'PHYSICAL';
+      {trims.map((item, index) => {
+        const isPhysical = item.trim_type === 'PHYSICAL';
+        const barHeight = 10;
+        const yPos = wallHeight - (index + 1) * (barHeight + 5);
 
         return (
-          <Line
-            key={item.id}
-            points={points}
-            stroke={isPhysical ? '#795548' : '#9e9e9e'}
-            strokeWidth={isPhysical ? 3 / zoom : 1 / zoom}
-            dash={isPhysical ? undefined : [6 / zoom, 4 / zoom]}
+          <Rect
+            key={item.trim_id}
+            x={0}
+            y={yPos}
+            width={80}
+            height={barHeight}
+            fill={isPhysical ? '#795548' : '#9e9e9e'}
+            opacity={0.7}
+            strokeWidth={1 / zoom}
             listening={false}
-            data-trim-id={item.id}
+            data-trim-id={item.trim_id}
           />
         );
       })}

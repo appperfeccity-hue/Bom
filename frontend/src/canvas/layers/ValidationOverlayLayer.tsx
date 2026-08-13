@@ -22,14 +22,14 @@ export function ValidationOverlayLayer({ wallHeight }: ValidationOverlayLayerPro
 
   if (!visible) return null;
 
-  const invalidZones = zones.filter((z) => validationMap.has(z.id));
+  const invalidZones = zones.filter((z) => validationMap.has(z.zone_id));
 
   if (invalidZones.length === 0) return null;
 
   return (
     <Layer>
       {invalidZones.map((zone) => {
-        const validation = validationMap.get(zone.id);
+        const validation = validationMap.get(zone.zone_id);
         if (!validation) return null;
 
         const errorCount = validation.errors.length;
@@ -41,7 +41,7 @@ export function ValidationOverlayLayer({ wallHeight }: ValidationOverlayLayerPro
 
         return (
           <Circle
-            key={`badge-${zone.id}`}
+            key={`badge-${zone.zone_id}`}
             x={badgeX}
             y={badgeY}
             radius={radius}
@@ -51,7 +51,7 @@ export function ValidationOverlayLayer({ wallHeight }: ValidationOverlayLayerPro
         );
       })}
       {invalidZones.map((zone) => {
-        const validation = validationMap.get(zone.id);
+        const validation = validationMap.get(zone.zone_id);
         if (!validation) return null;
 
         const errorCount = validation.errors.length;
@@ -61,7 +61,7 @@ export function ValidationOverlayLayer({ wallHeight }: ValidationOverlayLayerPro
 
         return (
           <Text
-            key={`badge-text-${zone.id}`}
+            key={`badge-text-${zone.zone_id}`}
             x={badgeX - 5 / zoom}
             y={badgeY - 5 / zoom}
             text={String(errorCount)}

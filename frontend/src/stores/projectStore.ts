@@ -9,7 +9,7 @@ import type {
   ProjectSnapshot,
   ProjectMeasurement,
   SkuMaster,
-  WallGeometry,
+  WallGeometryType,
 } from '@/types/database';
 import { fromTable } from '@/lib/supabase';
 import { createDebouncedSave } from '@/lib/autosave';
@@ -27,7 +27,7 @@ export interface ProjectState {
   furniture: TemplateFurniture[];
   trims: TemplateTrim[];
   measurements: ProjectMeasurement | null;
-  wallGeometry: WallGeometry;
+  wallGeometry: WallGeometryType;
   isLoading: boolean;
   error: string | null;
 }
@@ -36,8 +36,8 @@ export interface ProjectActions {
   loadTemplate: (id: string) => Promise<void>;
   loadProject: (id: string) => Promise<void>;
   updateZone: (zone: TemplateZone) => Promise<void>;
-  addZone: (zone: Omit<TemplateZone, 'id' | 'created_at' | 'updated_at'>) => Promise<void>;
-  removeZone: (id: string) => Promise<void>;
+  addZone: (zone: Omit<TemplateZone, 'zone_id' | 'created_at'>) => Promise<void>;
+  removeZone: (zoneId: string) => Promise<void>;
   assignSku: (zoneId: string, skuId: string) => Promise<void>;
   removeSku: (zoneId: string) => Promise<void>;
   updateMeasurements: (measurements: Partial<ProjectMeasurement>) => Promise<void>;
@@ -94,14 +94,13 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
     try {
       const { data: template, error: tErr } = await fromTable('template')
         .select('*')
-        .eq('id', id)
+        .eq('template_id', id)
         .single();
       if (tErr) throw tErr;
 
       const { data: zones, error: zErr } = await fromTable('template_zone')
         .select('*')
-        .eq('template_id', id)
-        .order('z_index');
+        .eq('template_id', id);
       if (zErr) throw zErr;
 
       const { data: lighting, error: lErr } = await fromTable('template_lighting')
@@ -125,7 +124,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
         lighting: (lighting ?? []) as TemplateLighting[],
         furniture: (furniture ?? []) as TemplateFurniture[],
         trims: (trims ?? []) as TemplateTrim[],
-        wallGeometry: (template as Template).wall_geometry,
+        wallGeometry: (template as Template).wall_geometry.type,
         isLoading: false,
       });
     } catch (err) {
@@ -138,7 +137,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
     try {
       const { data: project, error: pErr } = await fromTable('project')
         .select('*')
-        .eq('id', id)
+        .eq('project_id', id)
         .single();
       if (pErr) throw pErr;
 
@@ -151,9 +150,6 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       set({
         currentProject: project as Project,
         measurements: (measurements as ProjectMeasurement) ?? null,
-        wallGeometry: measurements
-          ? (measurements as ProjectMeasurement).wall_geometry
-          : get().wallGeometry,
         isLoading: false,
       });
 
@@ -186,27 +182,25 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
     // Optimistic update
     const prevZones = get().zones;
     set({
-      zones: prevZones.map((z) => (z.id === zone.id ? zone : z)),
+      zones: prevZones.map((z) => (z.zone_id === zone.zone_id ? zone : z)),
     });
 
     // Schedule debounced persistence with save-status transitions.
     // Each zone update is stored by zone ID so concurrent updates within
     // the debounce window are all persisted (not just the last one).
     const saver = getAutosaver((status) => useCanvasStore.getState().setSaveStatus(status));
-    pendingZoneUpdates.set(zone.id, async () => {
+    pendingZoneUpdates.set(zone.zone_id, async () => {
       const { error } = await fromTable('template_zone')
         .update({
           x_mm: zone.x_mm,
           y_mm: zone.y_mm,
           width_mm: zone.width_mm,
           height_mm: zone.height_mm,
-          name: zone.name,
           width_strategy: zone.width_strategy,
           height_strategy: zone.height_strategy,
           position_strategy: zone.position_strategy,
-          z_index: zone.z_index,
         })
-        .eq('id', zone.id);
+        .eq('zone_id', zone.zone_id);
       if (error) {
         // Rollback on failure
         set({ zones: prevZones, error: error.message });
@@ -232,19 +226,19 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
     }
   },
 
-  removeZone: async (id: string) => {
+  removeZone: async (zoneId: string) => {
     // Guard: prevent mutations on a finalized project
     if (get().currentProject?.status === 'FINALIZED') return;
 
     const prevZones = get().zones;
-    set({ zones: prevZones.filter((z) => z.id !== id) });
+    set({ zones: prevZones.filter((z) => z.zone_id !== zoneId) });
 
     try {
-      const { error } = await fromTable('template_zone').delete().eq('id', id);
+      const { error } = await fromTable('template_zone').delete().eq('zone_id', zoneId);
       if (error) throw error;
       // Also remove the SKU mapping
       const newSkuMap = new Map(get().zoneSku);
-      newSkuMap.delete(id);
+      newSkuMap.delete(zoneId);
       set({ zoneSku: newSkuMap });
     } catch (err) {
       set({ zones: prevZones, error: (err as Error).message });
@@ -305,7 +299,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
     try {
       const { error } = await fromTable('project_measurement')
         .update(measurements)
-        .eq('id', updated.id);
+        .eq('project_id', updated.project_id);
       if (error) throw error;
     } catch (err) {
       set({ measurements: prev, error: (err as Error).message });

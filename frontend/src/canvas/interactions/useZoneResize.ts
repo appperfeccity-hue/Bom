@@ -36,7 +36,7 @@ export function useZoneResize(history?: HistoryState) {
     (zone: TemplateZone, handle: ZoneResizeHandle) => {
       if (!canResize) return;
       // In CONSULTANT mode, check if zone is editable via permissions
-      if (mode === CanvasMode.CONSULTANT && !canEditZone(zone.id)) return;
+      if (mode === CanvasMode.CONSULTANT && !canEditZone(zone.zone_id)) return;
       resizeState.current = {
         handle,
         initialBounds: {
@@ -61,13 +61,13 @@ export function useZoneResize(history?: HistoryState) {
         return { x: zone.x_mm, y: zone.y_mm, width: zone.width_mm, height: zone.height_mm };
       }
       // In CONSULTANT mode, check zone-level permission
-      if (mode === CanvasMode.CONSULTANT && !canEditZone(zone.id)) {
+      if (mode === CanvasMode.CONSULTANT && !canEditZone(zone.zone_id)) {
         return { x: zone.x_mm, y: zone.y_mm, width: zone.width_mm, height: zone.height_mm };
       }
 
       const { handle, initialBounds } = resizeState.current;
-      const wallWidth = currentTemplate.base_width_mm;
-      const wallHeight = currentTemplate.base_height_mm;
+      const wallWidth = currentTemplate.wall_geometry.base_width_mm;
+      const wallHeight = currentTemplate.wall_geometry.base_height_mm;
 
       let { x, y, width, height } = initialBounds;
 
@@ -136,11 +136,11 @@ export function useZoneResize(history?: HistoryState) {
     (zone: TemplateZone, finalBounds: { x: number; y: number; width: number; height: number }) => {
       if (!canResize) return;
       // In CONSULTANT mode, check zone-level permission
-      if (mode === CanvasMode.CONSULTANT && !canEditZone(zone.id)) return;
+      if (mode === CanvasMode.CONSULTANT && !canEditZone(zone.zone_id)) return;
 
       // Check for overlap at the final bounds
       const newBox = { x: finalBounds.x, y: finalBounds.y, width: finalBounds.width, height: finalBounds.height };
-      if (hasOverlap(newBox, zones, zone.id)) {
+      if (hasOverlap(newBox, zones, zone.zone_id)) {
         // Revert - do not apply the resize
         resizeState.current = null;
         setResizeHandle(null);

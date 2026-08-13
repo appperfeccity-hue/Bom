@@ -1,0 +1,37 @@
+{
+  "id": "FEAT-001",
+  "type": "fix",
+  "description": "Fix database.ts TypeScript types to match actual DB column names. The Template interface uses 'id' but DB column is 'template_id'. TemplateZone uses 'id' but DB has 'zone_id'. TemplateZoneSku uses 'id' but DB has 'zone_sku_id'. Also fix Template fields: DB has design_family_id, design_subfamily_id, wall_application, priority_zone_id, waste_factor, metadata but frontend has base_width_mm, base_height_mm, version which don't exist in DB. Fix TemplateZone: DB has no 'name', 'z_index', 'updated_at' columns. DB width_strategy values are PROPORTIONAL/FIXED/LOCKED (not FIXED/FILL/PROPORTIONAL). DB height_strategy values are DERIVED_FROM_WALL/FIXED/RESIZABLE. DB position_strategy values are FIXED/FLOATING (not ABSOLUTE/RELATIVE/AUTO). Also fix all stores and components that reference these wrong field names.",
+  "status": "in_progress",
+  "steps": [
+    "1. Update frontend/src/types/database.ts Template interface: rename 'id' to 'template_id', remove base_width_mm/base_height_mm/version, add design_family_id, design_subfamily_id, wall_application, wall_geometry (JSONB - keep as-is since it's already used), adaptation_strategy, priority_zone_id, waste_factor, metadata, status (change to DRAFT/ACTIVE/RETIRED), created_by, created_at, updated_at",
+    "2. Update frontend/src/types/database.ts TemplateZone interface: rename 'id' to 'zone_id', remove 'name'/'z_index'/'updated_at', change ZoneWidthStrategy enum to PROPORTIONAL/FIXED/LOCKED, change ZoneHeightStrategy enum to DERIVED_FROM_WALL/FIXED/RESIZABLE, change ZonePositionStrategy enum to FIXED/FLOATING",
+    "3. Update frontend/src/types/database.ts TemplateZoneSku: rename 'id' to 'zone_sku_id', add 'is_primary' boolean",
+    "4. Update frontend/src/types/database.ts TemplateLighting: rename 'id' to 'lighting_id', update fields to match DB (sku_id, edge_selection, mounting_type, quantity_rule - remove name/type/x_mm/y_mm/width_mm/height_mm/configuration)",
+    "5. Update frontend/src/types/database.ts TemplateFurniture: rename 'id' to 'furniture_id', update fields to match DB (sku_id, position_x_mm, position_y_mm, orientation - remove name/type/width_mm/height_mm/rotation_deg/configuration)",
+    "6. Update frontend/src/types/database.ts TemplateTrim: rename 'id' to 'trim_id', update fields to match DB (sku_id, trim_type, quantity_rule, fixed_quantity - remove name/type/path_mm/configuration)",
+    "7. Update frontend/src/types/database.ts Project: rename 'id' to 'project_id', update fields to match DB schema (customer_reference, site_reference, template_id, snapshot_id, current_configuration_id, current_actual_bom_id, created_by, status with values DRAFT/CONFIGURED/VALIDATED/FINALIZED, finalized_at - remove name/client_name/version)",
+    "8. Update all stores that reference 'id' fields: projectStore.ts (zone.id -> zone.zone_id, template.id -> template.template_id), templateManagementStore.ts (.eq('id', id) -> .eq('template_id', id), template.id -> template.template_id)",
+    "9. Update canvasStore.ts: all references to zone.id -> zone.zone_id in selection logic, clipboard, paste logic",
+    "10. Update canvas interactions: useZoneCreate.ts, useZoneDrag.ts, useZoneResize.ts, useKeyboardShortcuts.ts - zone.id -> zone.zone_id",
+    "11. Update canvas layers: ZonesLayer.tsx, SelectionLayer.tsx - zone.id -> zone.zone_id",
+    "12. Update canvas permissions: usePermissionEnforcement.ts - zone.id references",
+    "13. Update lib/snapshotBuilder.ts - zone.id -> zone.zone_id",
+    "14. Update engines/bomPipeline.ts if it references zone.id (it uses zoneId from snapshot, should be fine)",
+    "15. Update all test files that reference the old field names"
+  ],
+  "acceptance_criteria": [
+    "TypeScript typecheck passes (unset NODE_OPTIONS && cd frontend && npx tsc --noEmit) with no new errors beyond the 2 pre-existing ones",
+    "All existing tests pass (unset NODE_OPTIONS && cd frontend && npx vitest run)",
+    "Template interface uses 'template_id' as primary key",
+    "TemplateZone interface uses 'zone_id' as primary key",
+    "All Supabase queries use correct column names (.eq('template_id', ...) not .eq('id', ...))",
+    "Enum values match DB CHECK constraints"
+  ],
+  "verification": [
+    "unset NODE_OPTIONS && cd frontend && npx tsc --noEmit",
+    "unset NODE_OPTIONS && cd frontend && npx vitest run"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

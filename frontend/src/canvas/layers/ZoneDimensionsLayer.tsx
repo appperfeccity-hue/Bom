@@ -37,7 +37,7 @@ export function ZoneDimensionsLayer({ wallHeight }: ZoneDimensionsLayerProps) {
         const h = zone.height_mm;
 
         return (
-          <React.Fragment key={zone.id}>
+          <React.Fragment key={zone.zone_id}>
             {/* Width dimension line (below the zone) */}
             <Line
               points={[konvaX, konvaY + h + lineOffset, konvaX + w, konvaY + h + lineOffset]}

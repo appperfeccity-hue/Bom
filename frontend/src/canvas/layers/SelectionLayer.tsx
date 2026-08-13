@@ -57,7 +57,7 @@ export function SelectionLayer({ wallHeight }: SelectionLayerProps) {
     return null;
   }
 
-  const selectedZones = zones.filter((z) => selectedZoneIds.includes(z.id));
+  const selectedZones = zones.filter((z) => selectedZoneIds.includes(z.zone_id));
 
   const effectiveHandleSize = isTouchDevice() ? TOUCH_HANDLE_SIZE : HANDLE_SIZE;
   const handleSizeScaled = effectiveHandleSize / zoom;
@@ -112,7 +112,7 @@ export function SelectionLayer({ wallHeight }: SelectionLayerProps) {
         const screenY = wallHeight - zone.y_mm - zone.height_mm;
         return (
           <Rect
-            key={`selection-${zone.id}`}
+            key={`selection-${zone.zone_id}`}
             x={zone.x_mm}
             y={screenY}
             width={zone.width_mm}

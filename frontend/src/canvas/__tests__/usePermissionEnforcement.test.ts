@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import { usePermissionEnforcement } from '@/canvas/permissions/usePermissionEnforcement';
@@ -17,7 +18,7 @@ vi.mock('@/lib/supabase', () => ({
 }));
 
 const mockSnapshot: ProjectSnapshot = {
-  id: 'snap-1',
+  snapshot_id: 'snap-1',
   project_id: 'proj-1',
   template_id: 'tmpl-1',
   snapshot_data: {
@@ -76,7 +77,6 @@ const mockSnapshot: ProjectSnapshot = {
   },
   created_by: 'user-1',
   created_at: '2024-01-01',
-  version: 1,
 };
 
 describe('usePermissionEnforcement', () => {

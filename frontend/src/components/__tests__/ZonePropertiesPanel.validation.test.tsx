@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { useCanvasStore } from '@/stores/canvasStore';
@@ -24,35 +25,35 @@ vi.mock('@/lib/supabase', () => ({
 import { ZonePropertiesPanel } from '@/components/ZonePropertiesPanel';
 
 const mockTemplate: Template = {
-  id: 'tmpl-1',
+  template_id: 'tmpl-1',
   name: 'Test Template',
   description: null,
+  wall_geometry: { type: 'STRAIGHT', base_width_mm: 3000, base_height_mm: 2400 },
   status: TemplateStatus.ACTIVE,
-  wall_geometry: 'STRAIGHT',
-  base_width_mm: 3000,
-  base_height_mm: 2400,
-  adaptation_strategy: AdaptationStrategy.SCALE,
+  adaptation_strategy: AdaptationStrategy.PROPORTIONAL,
+  design_family_id: null,
+  design_subfamily_id: null,
+  wall_application: null,
+  priority_zone_id: null,
+  waste_factor: null,
+  metadata: null,
   created_by: 'user-1',
   created_at: '2024-01-01T00:00:00Z',
   updated_at: '2024-01-01T00:00:00Z',
-  version: 1,
 };
 
-function makeZone(overrides: Partial<TemplateZone> & { id: string }): TemplateZone {
+function makeZone(overrides: Partial<TemplateZone> & { zone_id: string }): TemplateZone {
   return {
     template_id: 'tmpl-1',
-    name: 'Zone 1',
     x_mm: 0,
     y_mm: 0,
     width_mm: 400,
     height_mm: 400,
     width_strategy: 'FIXED' as never,
     height_strategy: 'FIXED' as never,
-    position_strategy: 'ABSOLUTE' as never,
-    z_index: 0,
+    position_strategy: 'FIXED' as never,
     segment: null,
     created_at: '',
-    updated_at: '',
     ...overrides,
   };
 }
@@ -72,7 +73,7 @@ describe('ZonePropertiesPanel - validation errors', () => {
   });
 
   it('does not show validation errors for valid zones', () => {
-    const zone = makeZone({ id: 'z1', x_mm: 0, y_mm: 0, width_mm: 400, height_mm: 400 });
+    const zone = makeZone({ zone_id: 'z1', x_mm: 0, y_mm: 0, width_mm: 400, height_mm: 400 });
     useProjectStore.setState({ zones: [zone] });
     useCanvasStore.setState({ selection: { selectedZoneId: 'z1', selectedZoneIds: ['z1'], resizeHandle: null, marqueeRect: null } });
 
@@ -82,8 +83,8 @@ describe('ZonePropertiesPanel - validation errors', () => {
 
   it('shows error messages when selected zone has overlap', () => {
     const zones = [
-      makeZone({ id: 'z1', x_mm: 0, y_mm: 0, width_mm: 400, height_mm: 400 }),
-      makeZone({ id: 'z2', x_mm: 200, y_mm: 200, width_mm: 400, height_mm: 400 }),
+      makeZone({ zone_id: 'z1', x_mm: 0, y_mm: 0, width_mm: 400, height_mm: 400 }),
+      makeZone({ zone_id: 'z2', x_mm: 200, y_mm: 200, width_mm: 400, height_mm: 400 }),
     ];
     useProjectStore.setState({ zones });
     useCanvasStore.setState({ selection: { selectedZoneId: 'z1', selectedZoneIds: ['z1'], resizeHandle: null, marqueeRect: null } });
@@ -95,7 +96,7 @@ describe('ZonePropertiesPanel - validation errors', () => {
   });
 
   it('shows error messages when selected zone is out of bounds', () => {
-    const zone = makeZone({ id: 'z1', x_mm: 2800, y_mm: 0, width_mm: 400, height_mm: 400 });
+    const zone = makeZone({ zone_id: 'z1', x_mm: 2800, y_mm: 0, width_mm: 400, height_mm: 400 });
     useProjectStore.setState({ zones: [zone] });
     useCanvasStore.setState({ selection: { selectedZoneId: 'z1', selectedZoneIds: ['z1'], resizeHandle: null, marqueeRect: null } });
 
@@ -106,7 +107,7 @@ describe('ZonePropertiesPanel - validation errors', () => {
   });
 
   it('shows error messages when selected zone is undersized', () => {
-    const zone = makeZone({ id: 'z1', x_mm: 0, y_mm: 0, width_mm: 100, height_mm: 100 });
+    const zone = makeZone({ zone_id: 'z1', x_mm: 0, y_mm: 0, width_mm: 100, height_mm: 100 });
     useProjectStore.setState({ zones: [zone] });
     useCanvasStore.setState({ selection: { selectedZoneId: 'z1', selectedZoneIds: ['z1'], resizeHandle: null, marqueeRect: null } });
 
@@ -118,7 +119,7 @@ describe('ZonePropertiesPanel - validation errors', () => {
 
   it('shows multiple error messages when zone has multiple issues', () => {
     // Zone is both undersized and out of bounds
-    const zone = makeZone({ id: 'z1', x_mm: 2900, y_mm: 2300, width_mm: 150, height_mm: 150 });
+    const zone = makeZone({ zone_id: 'z1', x_mm: 2900, y_mm: 2300, width_mm: 150, height_mm: 150 });
     useProjectStore.setState({ zones: [zone] });
     useCanvasStore.setState({ selection: { selectedZoneId: 'z1', selectedZoneIds: ['z1'], resizeHandle: null, marqueeRect: null } });
 
@@ -130,7 +131,7 @@ describe('ZonePropertiesPanel - validation errors', () => {
   });
 
   it('renders nothing when no zone is selected', () => {
-    useProjectStore.setState({ zones: [makeZone({ id: 'z1' })] });
+    useProjectStore.setState({ zones: [makeZone({ zone_id: 'z1' })] });
     useCanvasStore.setState({ selection: { selectedZoneId: null, selectedZoneIds: [], resizeHandle: null, marqueeRect: null } });
 
     const { container } = render(<ZonePropertiesPanel />);

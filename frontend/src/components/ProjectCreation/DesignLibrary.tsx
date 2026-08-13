@@ -63,7 +63,7 @@ export function DesignLibrary() {
     >
       {availableTemplates.map((template) => (
         <TemplateCard
-          key={template.id}
+          key={template.template_id}
           template={template}
           onSelect={selectTemplate}
         />

@@ -56,7 +56,7 @@ export function RetireTemplateDialog() {
           <button
             type="button"
             data-testid="retire-template-confirm-btn"
-            onClick={() => retireTemplate(selectedTemplate.id)}
+            onClick={() => retireTemplate(selectedTemplate.template_id)}
             style={{
               padding: '6px 14px',
               fontSize: '13px',

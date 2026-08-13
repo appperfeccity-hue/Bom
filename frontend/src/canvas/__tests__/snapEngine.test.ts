@@ -10,7 +10,7 @@ import type { TemplateZone } from '@/types/database';
 function makeZone(overrides: Partial<TemplateZone> & { x_mm: number; y_mm: number; width_mm: number; height_mm: number }): TemplateZone {
   const { x_mm, y_mm, width_mm, height_mm, ...rest } = overrides;
   return {
-    id: 'zone-1',
+    zone_id: 'zone-1',
     template_id: 'tpl-1',
     zone_type: 'PRODUCT_DISPLAY',
     min_width_mm: 200,
@@ -19,7 +19,6 @@ function makeZone(overrides: Partial<TemplateZone> & { x_mm: number; y_mm: numbe
     max_height_mm: 2000,
     segment: null,
     created_at: '2024-01-01T00:00:00Z',
-    updated_at: '2024-01-01T00:00:00Z',
     ...rest,
     x_mm,
     y_mm,
@@ -49,8 +48,8 @@ describe('snapEngine', () => {
 
     it('deduplicates overlapping edges from multiple zones', () => {
       const zones = [
-        makeZone({ id: 'z1', x_mm: 0, y_mm: 0, width_mm: 500, height_mm: 400 }),
-        makeZone({ id: 'z2', x_mm: 500, y_mm: 0, width_mm: 500, height_mm: 400 }),
+        makeZone({ zone_id: 'z1', x_mm: 0, y_mm: 0, width_mm: 500, height_mm: 400 }),
+        makeZone({ zone_id: 'z2', x_mm: 500, y_mm: 0, width_mm: 500, height_mm: 400 }),
       ];
       const result = getSnapCandidates(zones, 3000, 2400);
       // x=500 appears from z1.right and z2.left, but should be in list only once
@@ -61,7 +60,7 @@ describe('snapEngine', () => {
 
   describe('findSnapLines', () => {
     it('returns matching snap lines within threshold', () => {
-      const zones = [makeZone({ id: 'z2', x_mm: 500, y_mm: 0, width_mm: 400, height_mm: 300 })];
+      const zones = [makeZone({ zone_id: 'z2', x_mm: 500, y_mm: 0, width_mm: 400, height_mm: 300 })];
       // Moving zone: right edge at 495 (x=95, w=400), within 10mm of z2.left at 500
       const movingBox = { x: 95, y: 0, width: 400, height: 300 };
       const result = findSnapLines(movingBox, zones, 3000, 2400, SNAP_THRESHOLD);
@@ -69,7 +68,7 @@ describe('snapEngine', () => {
     });
 
     it('excludes snap lines beyond threshold', () => {
-      const zones = [makeZone({ id: 'z2', x_mm: 500, y_mm: 0, width_mm: 400, height_mm: 300 })];
+      const zones = [makeZone({ zone_id: 'z2', x_mm: 500, y_mm: 0, width_mm: 400, height_mm: 300 })];
       // Moving zone: right edge at 480 (x=80, w=400), 20mm from z2.left at 500
       const movingBox = { x: 80, y: 0, width: 400, height: 300 };
       const result = findSnapLines(movingBox, zones, 3000, 2400, SNAP_THRESHOLD);

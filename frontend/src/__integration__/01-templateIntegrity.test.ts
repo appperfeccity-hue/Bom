@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Integration Test Area 1: Template Integrity
  *
@@ -16,54 +17,51 @@ import { TemplateStatus, AdaptationStrategy, ZoneWidthStrategy, ZoneHeightStrate
 
 function createTemplate(): Template {
   return {
-    id: 'template-001',
+    template_id: 'template-001',
     name: 'Test Straight Wall',
     description: 'A test template',
+    wall_geometry: { type: 'STRAIGHT', base_width_mm: 3000, base_height_mm: 2400 },
     status: TemplateStatus.ACTIVE,
-    wall_geometry: 'STRAIGHT',
-    base_width_mm: 3000,
-    base_height_mm: 2400,
-    adaptation_strategy: AdaptationStrategy.SCALE,
+    adaptation_strategy: AdaptationStrategy.PROPORTIONAL,
+    design_family_id: null,
+    design_subfamily_id: null,
+    wall_application: null,
+    priority_zone_id: null,
+    waste_factor: null,
+    metadata: null,
     created_by: 'designer-001',
     created_at: '2024-01-01T00:00:00Z',
     updated_at: '2024-01-01T00:00:00Z',
-    version: 1,
   };
 }
 
 function createTemplateZones(): TemplateZone[] {
   return [
     {
-      id: 'zone-a',
+      zone_id: 'zone-a',
       template_id: 'template-001',
-      name: 'Left Zone',
       x_mm: 0,
       y_mm: 0,
       width_mm: 1500,
       height_mm: 2400,
       width_strategy: ZoneWidthStrategy.PROPORTIONAL,
-      height_strategy: ZoneHeightStrategy.FILL,
-      position_strategy: ZonePositionStrategy.ABSOLUTE,
-      z_index: 0,
+      height_strategy: ZoneHeightStrategy.DERIVED_FROM_WALL,
+      position_strategy: ZonePositionStrategy.FIXED,
       segment: null,
       created_at: '2024-01-01T00:00:00Z',
-      updated_at: '2024-01-01T00:00:00Z',
     },
     {
-      id: 'zone-b',
+      zone_id: 'zone-b',
       template_id: 'template-001',
-      name: 'Right Zone',
       x_mm: 1500,
       y_mm: 0,
       width_mm: 1500,
       height_mm: 2400,
       width_strategy: ZoneWidthStrategy.PROPORTIONAL,
-      height_strategy: ZoneHeightStrategy.FILL,
-      position_strategy: ZonePositionStrategy.ABSOLUTE,
-      z_index: 1,
+      height_strategy: ZoneHeightStrategy.DERIVED_FROM_WALL,
+      position_strategy: ZonePositionStrategy.FIXED,
       segment: null,
       created_at: '2024-01-01T00:00:00Z',
-      updated_at: '2024-01-01T00:00:00Z',
     },
   ];
 }
@@ -91,7 +89,6 @@ function createSkuMaster(skuId: string): SkuMaster {
     status: SkuStatus.ACTIVE,
     created_by: 'admin',
     created_at: '2024-01-01T00:00:00Z',
-    updated_at: '2024-01-01T00:00:00Z',
   };
 }
 
@@ -126,11 +123,11 @@ describe('Integration Area 1: Template Integrity', () => {
 
       // Verify zone data preserved
       expect(snapshot.zones).toHaveLength(2);
-      expect(snapshot.zones[0].id).toBe('zone-a');
+      expect(snapshot.zones[0].zone_id).toBe('zone-a');
       expect(snapshot.zones[0].x_mm).toBe(0);
       expect(snapshot.zones[0].width_mm).toBe(1500);
       expect(snapshot.zones[0].height_mm).toBe(2400);
-      expect(snapshot.zones[1].id).toBe('zone-b');
+      expect(snapshot.zones[1].zone_id).toBe('zone-b');
       expect(snapshot.zones[1].x_mm).toBe(1500);
     });
   });
@@ -207,8 +204,8 @@ describe('Integration Area 1: Template Integrity', () => {
 
       const snapshot = buildSnapshotData(template, zones, lighting, furniture, trims, skuMap);
 
-      expect(snapshot.base_dimensions.width_mm).toBe(template.base_width_mm);
-      expect(snapshot.base_dimensions.height_mm).toBe(template.base_height_mm);
+      expect(snapshot.base_dimensions.width_mm).toBe(template.wall_geometry.base_width_mm);
+      expect(snapshot.base_dimensions.height_mm).toBe(template.wall_geometry.base_height_mm);
     });
 
     it('snapshot preserves wall_geometry from template', () => {

@@ -1,0 +1,34 @@
+{
+  "id": "FEAT-003",
+  "type": "feat",
+  "description": "Build the Wall Configuration Store, Consultant Permission model, update BOM pipeline integration, update snapshot builder, and add database migration for new tables (template_wall_configuration, project_wall_configuration, project_obstruction, generated_panel_frame). Wire the wallConfigEngine into the application stores and BOM pipeline.",
+  "status": "pending",
+  "steps": [
+    "1. Create frontend/src/stores/wallConfigStore.ts - Zustand store managing wall configuration state: wall_type, total_width_mm, total_height_mm, rows, columns, panel_gap_mm, fit_algorithm, fit_intensity_percent, mounting_type, obstructions[]. Actions: setWallConfig, addObstruction, removeObstruction, updateObstruction, regenerateFrames (calls wallConfigEngine). Stores the generated panel frames. Undo/redo operates on config changes.",
+    "2. Create consultant permission types in frontend/src/types/database.ts: Add ConsultantWallPermission interface with fields for each wall/spacing parameter (LOCKED|ALLOWED). Add to the existing permission model. Rule 72: Consultant can only change parameters explicitly marked ALLOWED by Designer. Rule 73: Consultant cannot manually edit panel frames.",
+    "3. Update frontend/src/canvas/permissions/usePermissionEnforcement.ts: extend to support the new wall configuration permission model. Add wallConfig parameter checks: isWallParamAllowed(param: string) for CONSULTANT mode. Parameters include wall_width, wall_height, panel_gap, fit_algorithm, fit_intensity, mounting_type, rows, columns.",
+    "4. Update frontend/src/engines/bomPipeline.ts: modify the pipeline to accept panel frames from wallConfigEngine instead of manual zone dimensions. The SnapshotZone type now gets its W and H from generated_panel_frame dimensions. Update runQuantityCalculation to iterate over generated panel frames.",
+    "5. Update frontend/src/lib/snapshotBuilder.ts: extend SnapshotData to include template_wall_configuration, consultant_permissions, project_wall_configuration, site_obstructions, generated_panel_frames sections. Update buildSnapshotData function signature and implementation.",
+    "6. Create migration file migrations/v1.1.5_to_v1.1.6_amendment001.sql with: CREATE TABLE template_wall_configuration (wall_config_id UUID PK, template_id UUID FK refs template, wall_type TEXT CHECK IN ('STRAIGHT','L_CORNER'), total_width_mm INT, total_height_mm INT, rows INT DEFAULT 1, columns INT DEFAULT 1, panel_gap_mm INT DEFAULT 0, fit_algorithm TEXT, fit_intensity_percent INT DEFAULT 0 CHECK BETWEEN 0 AND 100, mounting_type TEXT, created_at TIMESTAMPTZ DEFAULT now(), updated_at TIMESTAMPTZ DEFAULT now()). CREATE TABLE project_wall_configuration (project_wall_config_id UUID PK, project_id UUID FK refs project, wall_config snapshot from template, consultant overrides JSONB). CREATE TABLE project_obstruction (obstruction_id UUID PK, project_id UUID FK, x_mm INT, y_mm INT, width_mm INT, height_mm INT, obstruction_type TEXT CHECK IN ('WINDOW','DOOR','PILLAR','CUSTOM'), label TEXT, created_at TIMESTAMPTZ DEFAULT now()). CREATE TABLE generated_panel_frame (frame_id UUID PK, project_id UUID FK, row_index INT, col_index INT, x_mm INT, y_mm INT, width_mm INT, height_mm INT, segment TEXT, is_edge_panel BOOLEAN, generation_hash TEXT, created_at TIMESTAMPTZ DEFAULT now()). Add RLS policies for all new tables.",
+    "7. Update frontend/src/stores/projectStore.ts: add wallConfig and panelFrames to state. When loading a project, also load its wall configuration and generated frames. The zones array is now populated from generated_panel_frames (each frame becomes a read-only zone for the canvas).",
+    "8. Connect the wallConfigStore to the canvas: when wallConfig changes, call generatePanelFrames and update projectStore.zones with the result. Each PanelFrame maps to a TemplateZone-like object for canvas rendering.",
+    "9. Create frontend/src/engines/__tests__/bomPipelineWallConfig.test.ts: test that BOM pipeline correctly uses panel frame dimensions as W/H inputs. Test that panel_gap_mm is NOT confused with SKU gh_mm/gv_mm.",
+    "10. Create frontend/src/stores/__tests__/wallConfigStore.test.ts: test store state management, test that regenerateFrames produces deterministic output, test undo/redo on config changes."
+  ],
+  "acceptance_criteria": [
+    "wallConfigStore.ts manages wall configuration and regenerates frames on config changes",
+    "Consultant permission model supports LOCKED/ALLOWED per wall/spacing parameter",
+    "BOM pipeline uses generated panel frame dimensions as W and H inputs",
+    "Snapshot builder includes wall configuration, permissions, obstructions, and generated frames",
+    "Migration SQL file creates 4 new tables with correct schema",
+    "projectStore populates zones from generated panel frames",
+    "TypeScript typecheck passes",
+    "All new and existing tests pass"
+  ],
+  "verification": [
+    "unset NODE_OPTIONS && cd frontend && npx tsc --noEmit",
+    "unset NODE_OPTIONS && cd frontend && npx vitest run"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

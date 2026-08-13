@@ -48,8 +48,8 @@ export function TemplateListItem({ template, hasInactiveSkus }: TemplateListItem
           )}
         </div>
         <div style={{ display: 'flex', gap: '12px', fontSize: '12px', color: '#666' }}>
-          <span>{template.wall_geometry}</span>
-          <span>{template.base_width_mm} x {template.base_height_mm} mm</span>
+          <span>{template.wall_geometry.type}</span>
+          <span>{template.wall_geometry.base_width_mm} x {template.wall_geometry.base_height_mm} mm</span>
           <span>Updated: {formattedDate}</span>
         </div>
       </div>
@@ -59,7 +59,7 @@ export function TemplateListItem({ template, hasInactiveSkus }: TemplateListItem
           <>
             <button
               data-testid="template-edit-btn"
-              onClick={() => editTemplate(template.id)}
+              onClick={() => editTemplate(template.template_id)}
               style={{
                 padding: '4px 10px',
                 fontSize: '12px',
@@ -92,7 +92,7 @@ export function TemplateListItem({ template, hasInactiveSkus }: TemplateListItem
           <>
             <button
               data-testid="template-duplicate-btn"
-              onClick={() => duplicateAsNewDraft(template.id)}
+              onClick={() => duplicateAsNewDraft(template.template_id)}
               style={{
                 padding: '4px 10px',
                 fontSize: '12px',
@@ -120,7 +120,7 @@ export function TemplateListItem({ template, hasInactiveSkus }: TemplateListItem
             </button>
             <button
               data-testid="template-view-btn"
-              onClick={() => editTemplate(template.id)}
+              onClick={() => editTemplate(template.template_id)}
               style={{
                 padding: '4px 10px',
                 fontSize: '12px',
@@ -135,11 +135,11 @@ export function TemplateListItem({ template, hasInactiveSkus }: TemplateListItem
           </>
         )}
 
-        {template.status === TemplateStatus.ARCHIVED && (
+        {template.status === TemplateStatus.RETIRED && (
           <>
             <button
               data-testid="template-duplicate-btn"
-              onClick={() => duplicateAsNewDraft(template.id)}
+              onClick={() => duplicateAsNewDraft(template.template_id)}
               style={{
                 padding: '4px 10px',
                 fontSize: '12px',
@@ -153,7 +153,7 @@ export function TemplateListItem({ template, hasInactiveSkus }: TemplateListItem
             </button>
             <button
               data-testid="template-view-btn"
-              onClick={() => editTemplate(template.id)}
+              onClick={() => editTemplate(template.template_id)}
               style={{
                 padding: '4px 10px',
                 fontSize: '12px',

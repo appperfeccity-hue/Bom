@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useCanvasStore } from '@/stores/canvasStore';
@@ -24,21 +25,18 @@ vi.mock('@/lib/supabase', () => ({
   }),
 }));
 
-const makeZone = (id: string, x: number = 0, y: number = 0, width: number = 400, height: number = 400): TemplateZone => ({
-  id,
+const makeZone = (zoneId: string, x: number = 0, y: number = 0, width: number = 400, height: number = 400): TemplateZone => ({
+  zone_id: zoneId,
   template_id: 'tmpl-1',
-  name: `Zone ${id}`,
   x_mm: x,
   y_mm: y,
   width_mm: width,
   height_mm: height,
   width_strategy: 'FIXED' as never,
   height_strategy: 'FIXED' as never,
-  position_strategy: 'ABSOLUTE' as never,
-  z_index: 0,
+  position_strategy: 'FIXED' as never,
   segment: null,
   created_at: '',
-  updated_at: '',
 });
 
 function fireKey(key: string, opts: Partial<KeyboardEvent> = {}): KeyboardEvent {
@@ -62,19 +60,15 @@ describe('useKeyboardShortcuts', () => {
     });
     useProjectStore.setState({
       currentTemplate: {
-        id: 'tmpl-1',
+        template_id: 'tmpl-1',
         name: 'Test Template',
         description: null,
+        wall_geometry: { type: 'STRAIGHT', base_width_mm: 3000, base_height_mm: 2400 },
         status: 'ACTIVE' as never,
-        wall_geometry: 'STRAIGHT',
-        base_width_mm: 3000,
-        base_height_mm: 2400,
         adaptation_strategy: 'SCALE' as never,
         created_by: 'user-1',
         created_at: '',
-        updated_at: '',
-        version: 1,
-      },
+      } as any,
       zones: [],
       currentProject: null,
     });

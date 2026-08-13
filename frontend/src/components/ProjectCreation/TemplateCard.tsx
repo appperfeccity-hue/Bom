@@ -56,10 +56,10 @@ export function TemplateCard({ template, onSelect }: TemplateCardProps) {
             color: '#1565c0',
           }}
         >
-          {template.wall_geometry}
+          {template.wall_geometry.type}
         </span>
         <span style={{ fontSize: '11px', color: '#888' }}>
-          {template.base_width_mm} x {template.base_height_mm} mm
+          {template.wall_geometry.base_width_mm} x {template.wall_geometry.base_height_mm} mm
         </span>
       </div>
 

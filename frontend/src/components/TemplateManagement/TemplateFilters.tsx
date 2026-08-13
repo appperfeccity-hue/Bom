@@ -1,5 +1,5 @@
 import { TemplateStatus } from '@/types/database';
-import type { WallGeometry } from '@/types/database';
+import type { WallGeometryType } from '@/types/database';
 import { useTemplateManagementStore } from '@/stores/templateManagementStore';
 
 export function TemplateFilters() {
@@ -12,10 +12,10 @@ export function TemplateFilters() {
     { label: 'All', value: null },
     { label: 'DRAFT', value: TemplateStatus.DRAFT },
     { label: 'ACTIVE', value: TemplateStatus.ACTIVE },
-    { label: 'ARCHIVED', value: TemplateStatus.ARCHIVED },
+    { label: 'RETIRED', value: TemplateStatus.RETIRED },
   ];
 
-  const geometryOptions: Array<{ label: string; value: WallGeometry | null }> = [
+  const geometryOptions: Array<{ label: string; value: WallGeometryType | null }> = [
     { label: 'All', value: null },
     { label: 'STRAIGHT', value: 'STRAIGHT' },
     { label: 'L_CORNER', value: 'L_CORNER' },
@@ -74,7 +74,7 @@ export function TemplateFilters() {
         value={filters.wallGeometry ?? ''}
         onChange={(e) => {
           const val = e.target.value;
-          setWallGeometryFilter(val ? (val as WallGeometry) : null);
+          setWallGeometryFilter(val ? (val as WallGeometryType) : null);
         }}
         style={{
           padding: '6px 10px',

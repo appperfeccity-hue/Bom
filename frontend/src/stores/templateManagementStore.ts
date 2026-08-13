@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { Template, WallGeometry } from '@/types/database';
+import type { Template, WallGeometryType } from '@/types/database';
 import { TemplateStatus, AdaptationStrategy, CanvasMode } from '@/types/database';
 import { fromTable } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/authStore';
@@ -11,7 +11,7 @@ import { useCanvasStore } from '@/stores/canvasStore';
 export interface TemplateFilters {
   status: TemplateStatus | null;
   search: string;
-  wallGeometry: WallGeometry | null;
+  wallGeometry: WallGeometryType | null;
 }
 
 // --- State / Actions / Store types ---
@@ -33,14 +33,16 @@ export interface TemplateManagementActions {
   applyFilters: () => void;
   setStatusFilter: (status: TemplateStatus | null) => void;
   setSearchFilter: (text: string) => void;
-  setWallGeometryFilter: (geometry: WallGeometry | null) => void;
+  setWallGeometryFilter: (geometry: WallGeometryType | null) => void;
   createTemplate: (data: {
     name: string;
     description?: string;
-    wall_geometry: WallGeometry;
-    base_width_mm: number;
-    base_height_mm: number;
+    wall_geometry: WallGeometryType;
     adaptation_strategy: AdaptationStrategy;
+    design_family_id: string;
+    design_subfamily_id?: string;
+    wall_application: string;
+    waste_factor: number;
   }) => Promise<void>;
   retireTemplate: (id: string) => Promise<void>;
   duplicateAsNewDraft: (id: string) => Promise<void>;
@@ -89,7 +91,7 @@ function filterTemplates(templates: Template[], filters: TemplateFilters): Templ
   }
 
   if (filters.wallGeometry) {
-    result = result.filter((t) => t.wall_geometry === filters.wallGeometry);
+    result = result.filter((t) => t.wall_geometry.type === filters.wallGeometry);
   }
 
   return result;
@@ -141,7 +143,7 @@ export const useTemplateManagementStore = create<TemplateManagementStore>((set, 
     });
   },
 
-  setWallGeometryFilter: (geometry: WallGeometry | null) => {
+  setWallGeometryFilter: (geometry: WallGeometryType | null) => {
     set((state) => {
       const filters = { ...state.filters, wallGeometry: geometry };
       return { filters, filteredTemplates: filterTemplates(state.templates, filters) };
@@ -160,9 +162,11 @@ export const useTemplateManagementStore = create<TemplateManagementStore>((set, 
           description: data.description ?? null,
           status: TemplateStatus.DRAFT,
           wall_geometry: data.wall_geometry,
-          base_width_mm: data.base_width_mm,
-          base_height_mm: data.base_height_mm,
           adaptation_strategy: data.adaptation_strategy,
+          design_family_id: data.design_family_id,
+          design_subfamily_id: data.design_subfamily_id ?? null,
+          wall_application: data.wall_application,
+          waste_factor: data.waste_factor,
           created_by: userId,
         });
       if (error) throw error;
@@ -178,8 +182,8 @@ export const useTemplateManagementStore = create<TemplateManagementStore>((set, 
     set({ isLoading: true, error: null });
     try {
       const { error } = await fromTable('template')
-        .update({ status: TemplateStatus.ARCHIVED })
-        .eq('id', id);
+        .update({ status: TemplateStatus.RETIRED })
+        .eq('template_id', id);
       if (error) throw error;
 
       set({ showRetireDialog: false, selectedTemplateForAction: null, isLoading: false });
@@ -196,7 +200,7 @@ export const useTemplateManagementStore = create<TemplateManagementStore>((set, 
       if (!userId) throw new Error('User not authenticated');
 
       // Find the template to duplicate
-      const template = get().templates.find((t) => t.id === id);
+      const template = get().templates.find((t) => t.template_id === id);
       if (!template) throw new Error('Template not found');
 
       // Strip trailing " (Copy)" to avoid compounding (e.g. "Name (Copy) (Copy)")
@@ -208,9 +212,11 @@ export const useTemplateManagementStore = create<TemplateManagementStore>((set, 
           description: template.description,
           status: TemplateStatus.DRAFT,
           wall_geometry: template.wall_geometry,
-          base_width_mm: template.base_width_mm,
-          base_height_mm: template.base_height_mm,
           adaptation_strategy: template.adaptation_strategy,
+          design_family_id: template.design_family_id,
+          design_subfamily_id: template.design_subfamily_id,
+          wall_application: template.wall_application,
+          waste_factor: template.waste_factor,
           created_by: userId,
         });
       if (error) throw error;

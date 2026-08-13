@@ -11,68 +11,76 @@ export enum CanvasMode {
 }
 
 export enum ZoneWidthStrategy {
-  FIXED = 'FIXED',
-  FILL = 'FILL',
   PROPORTIONAL = 'PROPORTIONAL',
+  FIXED = 'FIXED',
+  LOCKED = 'LOCKED',
 }
 
 export enum ZoneHeightStrategy {
+  DERIVED_FROM_WALL = 'DERIVED_FROM_WALL',
   FIXED = 'FIXED',
-  FILL = 'FILL',
-  PROPORTIONAL = 'PROPORTIONAL',
+  RESIZABLE = 'RESIZABLE',
 }
 
 export enum ZonePositionStrategy {
-  ABSOLUTE = 'ABSOLUTE',
-  RELATIVE = 'RELATIVE',
-  AUTO = 'AUTO',
+  FIXED = 'FIXED',
+  FLOATING = 'FLOATING',
 }
 
 export enum TemplateStatus {
   DRAFT = 'DRAFT',
   ACTIVE = 'ACTIVE',
-  ARCHIVED = 'ARCHIVED',
+  RETIRED = 'RETIRED',
 }
 
 export enum ProjectStatus {
   DRAFT = 'DRAFT',
-  IN_PROGRESS = 'IN_PROGRESS',
-  REVIEW = 'REVIEW',
-  APPROVED = 'APPROVED',
+  CONFIGURED = 'CONFIGURED',
   VALIDATED = 'VALIDATED',
   FINALIZED = 'FINALIZED',
-  ARCHIVED = 'ARCHIVED',
 }
 
 export enum AdaptationStrategy {
-  SCALE = 'SCALE',
-  REFLOW = 'REFLOW',
-  CLIP = 'CLIP',
+  PROPORTIONAL = 'PROPORTIONAL',
+  PRIORITY_ZONE = 'PRIORITY_ZONE',
+  EQUAL_DISTRIBUTION = 'EQUAL_DISTRIBUTION',
+  FIXED = 'FIXED',
 }
 
-export type WallGeometry = 'STRAIGHT' | 'L_CORNER';
+export type WallGeometryType = 'STRAIGHT' | 'L_CORNER';
+
+export interface WallGeometry {
+  type: WallGeometryType;
+  base_width_mm: number;
+  base_height_mm: number;
+  segment_a_width_mm?: number;
+  segment_b_width_mm?: number;
+}
 
 // --- Database Row Interfaces ---
 
 export interface Template {
-  id: string;
+  template_id: string;
   name: string;
   description: string | null;
-  status: TemplateStatus;
+  design_family_id: string | null;
+  design_subfamily_id: string | null;
+  wall_application: string | null;
   wall_geometry: WallGeometry;
-  base_width_mm: number;
-  base_height_mm: number;
   adaptation_strategy: AdaptationStrategy;
+  priority_zone_id: string | null;
+  waste_factor: number | null;
+  metadata: Record<string, unknown> | null;
+  status: TemplateStatus;
   created_by: string;
   created_at: string;
   updated_at: string;
-  version: number;
 }
 
 export interface TemplateZone {
-  id: string;
+  zone_id: string;
   template_id: string;
-  name: string;
+  segment: 'SEGMENT_A' | 'SEGMENT_B' | null;
   x_mm: number;
   y_mm: number;
   width_mm: number;
@@ -80,101 +88,93 @@ export interface TemplateZone {
   width_strategy: ZoneWidthStrategy;
   height_strategy: ZoneHeightStrategy;
   position_strategy: ZonePositionStrategy;
-  z_index: number;
-  segment: 'SEGMENT_A' | 'SEGMENT_B' | null;
   created_at: string;
-  updated_at: string;
 }
 
 export interface TemplateZoneSku {
-  id: string;
+  zone_sku_id: string;
   zone_id: string;
   sku_id: string;
-  created_at: string;
+  is_primary: boolean;
 }
 
 export interface TemplateLighting {
-  id: string;
+  lighting_id: string;
   template_id: string;
-  name: string;
-  type: string;
-  x_mm: number;
-  y_mm: number;
-  width_mm: number;
-  height_mm: number;
-  configuration: Record<string, unknown>;
+  sku_id: string;
+  edge_selection: string | null;
+  mounting_type: 'DIRECT' | 'PROFILE' | 'COVE';
+  quantity_rule: string | null;
   created_at: string;
-  updated_at: string;
 }
 
 export interface TemplateFurniture {
-  id: string;
+  furniture_id: string;
   template_id: string;
-  name: string;
-  type: string;
-  x_mm: number;
-  y_mm: number;
-  width_mm: number;
-  height_mm: number;
-  rotation_deg: number;
-  configuration: Record<string, unknown>;
+  sku_id: string;
+  position_x_mm: number;
+  position_y_mm: number;
+  orientation: 'HORIZONTAL' | 'VERTICAL';
   created_at: string;
-  updated_at: string;
 }
 
 export interface TemplateTrim {
-  id: string;
+  trim_id: string;
   template_id: string;
-  name: string;
-  type: string;
-  path_mm: Array<{ x: number; y: number }>;
-  configuration: Record<string, unknown>;
+  sku_id: string;
+  trim_type: 'GEOMETRY' | 'PHYSICAL';
+  quantity_rule: 'TRIM_BY_ZONE_PERIMETER' | 'TRIM_BY_PANEL_EDGE' | 'TRIM_BY_LENGTH' | 'TRIM_FIXED';
+  fixed_quantity: number | null;
   created_at: string;
-  updated_at: string;
 }
 
 export interface Project {
-  id: string;
-  name: string;
+  project_id: string;
+  customer_reference: string | null;
+  site_reference: string | null;
   template_id: string;
-  status: ProjectStatus;
-  client_name: string | null;
+  snapshot_id: string | null;
+  current_configuration_id: string | null;
+  current_actual_bom_id: string | null;
   created_by: string;
+  status: ProjectStatus;
   created_at: string;
   updated_at: string;
-  version: number;
+  finalized_at: string | null;
 }
 
 export interface ProjectSnapshot {
-  id: string;
+  snapshot_id: string;
   project_id: string;
   template_id: string;
   snapshot_data: Record<string, unknown>;
-  created_by: string;
+  snapshot_hash: string;
+  rule_set_id: string;
   created_at: string;
-  version: number;
 }
 
 export interface ProjectMeasurement {
-  id: string;
+  measurement_id: string;
   project_id: string;
   wall_width_mm: number;
   wall_height_mm: number;
-  wall_geometry: WallGeometry;
   segment_a_width_mm: number | null;
   segment_b_width_mm: number | null;
-  created_at: string;
-  updated_at: string;
+  measured_by: string;
+  measured_at: string;
+  measurement_source: 'MANUAL' | 'LASER' | 'TAPE';
+  measurement_status: 'DRAFT' | 'CONFIRMED';
+  notes: string | null;
 }
 
 export interface ProjectConfiguration {
-  id: string;
+  configuration_id: string;
   project_id: string;
-  snapshot_id: string;
-  zone_configurations: Record<string, unknown>;
-  created_at: string;
+  configuration_version: number;
+  configuration_hash: string;
   updated_at: string;
-  version: number;
+  updated_by: string;
+  configuration_data: Record<string, unknown>;
 }
 
 // --- SKU & Catalogue Enums ---

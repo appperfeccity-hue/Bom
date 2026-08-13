@@ -18,9 +18,9 @@ export function FinalizationConfirmDialog() {
   }
 
   const handleConfirm = () => {
-    if (!currentProject?.id) return;
+    if (!currentProject?.project_id) return;
     const finalizationKey = crypto.randomUUID();
-    void confirmFinalization(currentProject.id, finalizationKey);
+    void confirmFinalization(currentProject.project_id, finalizationKey);
   };
 
   return (

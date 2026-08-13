@@ -14,13 +14,13 @@ export function PublishConfirmation() {
 
   const handlePublish = () => {
     if (currentTemplate) {
-      void publishTemplate(currentTemplate.id);
+      void publishTemplate(currentTemplate.template_id);
     }
   };
 
   const handleRetry = () => {
     if (currentTemplate) {
-      void publishTemplate(currentTemplate.id);
+      void publishTemplate(currentTemplate.template_id);
     }
   };
 

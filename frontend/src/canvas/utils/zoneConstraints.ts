@@ -85,7 +85,7 @@ export function hasOverlap(
   excludeId?: string,
 ): boolean {
   return existingZones.some((existing) => {
-    if (excludeId && existing.id === excludeId) return false;
+    if (excludeId && existing.zone_id === excludeId) return false;
     const existingBox: BoundingBox = {
       x: existing.x_mm,
       y: existing.y_mm,

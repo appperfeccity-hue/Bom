@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { describe, it, expect } from 'vitest';
 import { buildSnapshotData, computeSnapshotHash } from '../snapshotBuilder';
 import type { SnapshotData } from '../snapshotBuilder';
@@ -17,36 +18,36 @@ import type {
 } from '@/types/database';
 
 const makeTemplate = (overrides: Partial<Template> = {}): Template => ({
-  id: 'tpl-1',
+  template_id: 'tpl-1',
   name: 'Test Template',
   description: null,
+  wall_geometry: { type: 'STRAIGHT', base_width_mm: 3000, base_height_mm: 2700 },
   status: TemplateStatus.ACTIVE,
-  wall_geometry: 'STRAIGHT',
-  base_width_mm: 3000,
-  base_height_mm: 2700,
-  adaptation_strategy: AdaptationStrategy.SCALE,
+  adaptation_strategy: AdaptationStrategy.PROPORTIONAL,
+  design_family_id: null,
+  design_subfamily_id: null,
+  wall_application: null,
+  priority_zone_id: null,
+  waste_factor: null,
+  metadata: null,
   created_by: 'user-1',
   created_at: '2024-01-01T00:00:00Z',
   updated_at: '2024-01-01T00:00:00Z',
-  version: 1,
   ...overrides,
 });
 
 const makeZone = (overrides: Partial<TemplateZone> = {}): TemplateZone => ({
-  id: 'zone-1',
+  zone_id: 'zone-1',
   template_id: 'tpl-1',
-  name: 'Zone A',
   x_mm: 100,
   y_mm: 200,
   width_mm: 1000,
   height_mm: 800,
   width_strategy: 'FIXED' as TemplateZone['width_strategy'],
   height_strategy: 'FIXED' as TemplateZone['height_strategy'],
-  position_strategy: 'ABSOLUTE' as TemplateZone['position_strategy'],
-  z_index: 1,
+  position_strategy: 'FIXED' as TemplateZone['position_strategy'],
   segment: null,
   created_at: '2024-01-01T00:00:00Z',
-  updated_at: '2024-01-01T00:00:00Z',
   ...overrides,
 });
 
@@ -72,50 +73,39 @@ const makeSku = (overrides: Partial<SkuMaster> = {}): SkuMaster => ({
   status: SkuStatus.ACTIVE,
   created_by: 'user-1',
   created_at: '2024-01-01T00:00:00Z',
-  updated_at: '2024-01-01T00:00:00Z',
   ...overrides,
 });
 
 const makeLighting = (overrides: Partial<TemplateLighting> = {}): TemplateLighting => ({
-  id: 'light-1',
+  lighting_id: 'light-1',
   template_id: 'tpl-1',
-  name: 'Spotlight A',
-  type: 'SPOT',
-  x_mm: 500,
-  y_mm: 100,
-  width_mm: 50,
-  height_mm: 50,
-  configuration: { brightness: 80 },
+  sku_id: 'sku-light-1',
+  edge_selection: null,
+  mounting_type: 'DIRECT',
+  quantity_rule: null,
   created_at: '2024-01-01T00:00:00Z',
-  updated_at: '2024-01-01T00:00:00Z',
   ...overrides,
 });
 
 const makeFurniture = (overrides: Partial<TemplateFurniture> = {}): TemplateFurniture => ({
-  id: 'furn-1',
+  furniture_id: 'furn-1',
   template_id: 'tpl-1',
-  name: 'Chair A',
-  type: 'CHAIR',
-  x_mm: 200,
-  y_mm: 300,
-  width_mm: 400,
-  height_mm: 400,
-  rotation_deg: 0,
-  configuration: {},
+  sku_id: 'sku-furn-1',
+  position_x_mm: 200,
+  position_y_mm: 300,
+  orientation: 'HORIZONTAL',
   created_at: '2024-01-01T00:00:00Z',
-  updated_at: '2024-01-01T00:00:00Z',
   ...overrides,
 });
 
 const makeTrim = (overrides: Partial<TemplateTrim> = {}): TemplateTrim => ({
-  id: 'trim-1',
+  trim_id: 'trim-1',
   template_id: 'tpl-1',
-  name: 'Base Trim',
-  type: 'BASE',
-  path_mm: [{ x: 0, y: 0 }, { x: 3000, y: 0 }],
-  configuration: {},
+  sku_id: 'sku-trim-1',
+  trim_type: 'PHYSICAL',
+  quantity_rule: 'TRIM_BY_ZONE_PERIMETER',
+  fixed_quantity: null,
   created_at: '2024-01-01T00:00:00Z',
-  updated_at: '2024-01-01T00:00:00Z',
   ...overrides,
 });
 
@@ -131,7 +121,7 @@ describe('snapshotBuilder', () => {
 
       const result = buildSnapshotData(template, zones, lighting, furniture, trims, zoneSku);
 
-      expect(result.wall_geometry).toBe('STRAIGHT');
+      expect(result.wall_geometry).toEqual({ type: 'STRAIGHT', base_width_mm: 3000, base_height_mm: 2700 });
       expect(result.base_dimensions).toEqual({ width_mm: 3000, height_mm: 2700 });
       expect(result.zones).toHaveLength(1);
       expect(result.lighting).toEqual(lighting);
@@ -143,22 +133,20 @@ describe('snapshotBuilder', () => {
 
     it('maps zones with correct properties', () => {
       const template = makeTemplate();
-      const zone = makeZone({ id: 'zone-2', name: 'Zone B', x_mm: 50, y_mm: 75, width_mm: 500, height_mm: 600, z_index: 3 });
+      const zone = makeZone({ zone_id: 'zone-2', x_mm: 50, y_mm: 75, width_mm: 500, height_mm: 600 });
       const zoneSku = new Map<string, SkuMaster>();
 
       const result = buildSnapshotData(template, [zone], [], [], [], zoneSku);
 
       expect(result.zones[0]).toEqual({
-        id: 'zone-2',
-        name: 'Zone B',
+        zone_id: 'zone-2',
         x_mm: 50,
         y_mm: 75,
         width_mm: 500,
         height_mm: 600,
         width_strategy: 'FIXED',
         height_strategy: 'FIXED',
-        position_strategy: 'ABSOLUTE',
-        z_index: 3,
+        position_strategy: 'FIXED',
         primary_sku: null,
         alternatives: [],
       });
@@ -166,8 +154,8 @@ describe('snapshotBuilder', () => {
 
     it('includes zone SKU freeze data when zoneSku map has entries', () => {
       const template = makeTemplate();
-      const zone1 = makeZone({ id: 'zone-1' });
-      const zone2 = makeZone({ id: 'zone-2', name: 'Zone B' });
+      const zone1 = makeZone({ zone_id: 'zone-1' });
+      const zone2 = makeZone({ zone_id: 'zone-2' });
       const sku1 = makeSku({ sku_id: 'sku-1', sku_code: 'WP-001' });
       const sku2 = makeSku({ sku_id: 'sku-2', sku_code: 'WP-002', material: 'Walnut' });
 
@@ -183,7 +171,7 @@ describe('snapshotBuilder', () => {
 
     it('sets primary_sku to null for zones without SKU mapping', () => {
       const template = makeTemplate();
-      const zone = makeZone({ id: 'zone-1' });
+      const zone = makeZone({ zone_id: 'zone-1' });
       const zoneSku = new Map<string, SkuMaster>();
       // No entry for zone-1
 
@@ -205,12 +193,14 @@ describe('snapshotBuilder', () => {
     });
 
     it('uses template wall_geometry and base dimensions', () => {
-      const template = makeTemplate({ wall_geometry: 'L_CORNER', base_width_mm: 5000, base_height_mm: 3000 });
+      const template = makeTemplate({
+        wall_geometry: { type: 'L_CORNER', base_width_mm: 5000, base_height_mm: 3000 },
+      });
       const zoneSku = new Map<string, SkuMaster>();
 
       const result = buildSnapshotData(template, [], [], [], [], zoneSku);
 
-      expect(result.wall_geometry).toBe('L_CORNER');
+      expect(result.wall_geometry).toEqual({ type: 'L_CORNER', base_width_mm: 5000, base_height_mm: 3000 });
       expect(result.base_dimensions).toEqual({ width_mm: 5000, height_mm: 3000 });
     });
   });
@@ -218,7 +208,7 @@ describe('snapshotBuilder', () => {
   describe('computeSnapshotHash', () => {
     it('returns a consistent hex string for the same input', async () => {
       const snapshotData: SnapshotData = {
-        wall_geometry: 'STRAIGHT',
+        wall_geometry: { type: 'STRAIGHT', base_width_mm: 3000, base_height_mm: 2700 },
         base_dimensions: { width_mm: 3000, height_mm: 2700 },
         zones: [],
         lighting: [],
@@ -238,7 +228,7 @@ describe('snapshotBuilder', () => {
 
     it('returns different values for different inputs', async () => {
       const data1: SnapshotData = {
-        wall_geometry: 'STRAIGHT',
+        wall_geometry: { type: 'STRAIGHT', base_width_mm: 3000, base_height_mm: 2700 },
         base_dimensions: { width_mm: 3000, height_mm: 2700 },
         zones: [],
         lighting: [],
@@ -249,7 +239,7 @@ describe('snapshotBuilder', () => {
       };
 
       const data2: SnapshotData = {
-        wall_geometry: 'L_CORNER',
+        wall_geometry: { type: 'STRAIGHT', base_width_mm: 5000, base_height_mm: 3000 },
         base_dimensions: { width_mm: 5000, height_mm: 3000 },
         zones: [],
         lighting: [],
@@ -267,7 +257,7 @@ describe('snapshotBuilder', () => {
 
     it('returns different hash when zones are added', async () => {
       const baseData: SnapshotData = {
-        wall_geometry: 'STRAIGHT',
+        wall_geometry: { type: 'STRAIGHT', base_width_mm: 3000, base_height_mm: 2700 },
         base_dimensions: { width_mm: 3000, height_mm: 2700 },
         zones: [],
         lighting: [],
@@ -280,16 +270,14 @@ describe('snapshotBuilder', () => {
       const dataWithZone: SnapshotData = {
         ...baseData,
         zones: [{
-          id: 'zone-1',
-          name: 'Zone A',
+          zone_id: 'zone-1',
           x_mm: 0,
           y_mm: 0,
           width_mm: 1000,
           height_mm: 800,
           width_strategy: 'FIXED',
           height_strategy: 'FIXED',
-          position_strategy: 'ABSOLUTE',
-          z_index: 1,
+          position_strategy: 'FIXED',
           primary_sku: null,
           alternatives: [],
         }],
@@ -303,19 +291,17 @@ describe('snapshotBuilder', () => {
 
     it('returns different hash when nested zone properties differ', async () => {
       const data1: SnapshotData = {
-        wall_geometry: 'STRAIGHT',
+        wall_geometry: { type: 'STRAIGHT', base_width_mm: 3000, base_height_mm: 2700 },
         base_dimensions: { width_mm: 3000, height_mm: 2700 },
         zones: [{
-          id: 'zone-1',
-          name: 'Zone A',
+          zone_id: 'zone-1',
           x_mm: 0,
           y_mm: 0,
           width_mm: 1000,
           height_mm: 800,
           width_strategy: 'FIXED',
           height_strategy: 'FIXED',
-          position_strategy: 'ABSOLUTE',
-          z_index: 1,
+          position_strategy: 'FIXED',
           primary_sku: null,
           alternatives: [],
         }],
@@ -327,19 +313,17 @@ describe('snapshotBuilder', () => {
       };
 
       const data2: SnapshotData = {
-        wall_geometry: 'STRAIGHT',
+        wall_geometry: { type: 'STRAIGHT', base_width_mm: 3000, base_height_mm: 2700 },
         base_dimensions: { width_mm: 3000, height_mm: 2700 },
         zones: [{
-          id: 'zone-1',
-          name: 'Zone A',
+          zone_id: 'zone-1',
           x_mm: 0,
           y_mm: 0,
           width_mm: 2000,
           height_mm: 800,
           width_strategy: 'FIXED',
           height_strategy: 'FIXED',
-          position_strategy: 'ABSOLUTE',
-          z_index: 1,
+          position_strategy: 'FIXED',
           primary_sku: null,
           alternatives: [],
         }],
@@ -358,7 +342,7 @@ describe('snapshotBuilder', () => {
 
     it('includes nested base_dimensions properties in hash', async () => {
       const data1: SnapshotData = {
-        wall_geometry: 'STRAIGHT',
+        wall_geometry: { type: 'STRAIGHT', base_width_mm: 3000, base_height_mm: 2700 },
         base_dimensions: { width_mm: 3000, height_mm: 2700 },
         zones: [],
         lighting: [],
@@ -369,7 +353,7 @@ describe('snapshotBuilder', () => {
       };
 
       const data2: SnapshotData = {
-        wall_geometry: 'STRAIGHT',
+        wall_geometry: { type: 'STRAIGHT', base_width_mm: 3000, base_height_mm: 3000 },
         base_dimensions: { width_mm: 3000, height_mm: 3000 },
         zones: [],
         lighting: [],

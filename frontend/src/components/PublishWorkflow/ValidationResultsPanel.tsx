@@ -12,13 +12,13 @@ export function ValidationResultsPanel() {
 
   const handleGenerateBom = () => {
     if (currentTemplate) {
-      void generateMasterBom(currentTemplate.id);
+      void generateMasterBom(currentTemplate.template_id);
     }
   };
 
   const handleRerunValidation = () => {
     if (currentTemplate) {
-      void rerunValidation(currentTemplate.id);
+      void rerunValidation(currentTemplate.template_id);
     }
   };
 

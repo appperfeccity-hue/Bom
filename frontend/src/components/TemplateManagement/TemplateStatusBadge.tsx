@@ -7,7 +7,7 @@ interface TemplateStatusBadgeProps {
 const statusStyles: Record<TemplateStatus, { backgroundColor: string; color: string }> = {
   [TemplateStatus.DRAFT]: { backgroundColor: '#9e9e9e', color: '#ffffff' },
   [TemplateStatus.ACTIVE]: { backgroundColor: '#e8f5e9', color: '#2e7d32' },
-  [TemplateStatus.ARCHIVED]: { backgroundColor: '#fff3e0', color: '#e65100' },
+  [TemplateStatus.RETIRED]: { backgroundColor: '#fff3e0', color: '#e65100' },
 };
 
 export function TemplateStatusBadge({ status }: TemplateStatusBadgeProps) {

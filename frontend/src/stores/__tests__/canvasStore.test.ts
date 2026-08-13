@@ -26,7 +26,6 @@ describe('canvasStore', () => {
       },
       selection: { selectedZoneId: null, selectedZoneIds: [], resizeHandle: null, marqueeRect: null },
       saveStatus: 'saved',
-      version: 1,
     });
   });
 

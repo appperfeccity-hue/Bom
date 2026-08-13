@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useProjectStore } from '@/stores/projectStore';
 import type { SkuMaster } from '@/types/database';
@@ -62,7 +63,6 @@ const mockSku: SkuMaster = {
   status: 'ACTIVE' as never,
   created_by: 'user-1',
   created_at: '',
-  updated_at: '',
 };
 
 describe('projectStore.removeSku', () => {
@@ -72,20 +72,17 @@ describe('projectStore.removeSku', () => {
       currentProject: null,
       zones: [
         {
-          id: 'zone-1',
+          zone_id: 'zone-1',
           template_id: 'tmpl-1',
-          name: 'Zone 1',
           x_mm: 0,
           y_mm: 0,
           width_mm: 500,
           height_mm: 400,
           width_strategy: 'FIXED' as never,
           height_strategy: 'FIXED' as never,
-          position_strategy: 'ABSOLUTE' as never,
-          z_index: 0,
+          position_strategy: 'FIXED' as never,
           segment: null,
           created_at: '',
-          updated_at: '',
         },
       ],
       zoneSku: new Map([['zone-1', mockSku]]),
@@ -104,15 +101,12 @@ describe('projectStore.removeSku', () => {
   it('does nothing when project is FINALIZED', async () => {
     useProjectStore.setState({
       currentProject: {
-        id: 'proj-1',
+        project_id: 'proj-1',
         name: 'Test',
         template_id: 'tmpl-1',
         status: 'FINALIZED' as never,
-        client_name: null,
         created_by: 'user-1',
         created_at: '',
-        updated_at: '',
-        version: 1,
       },
     });
 

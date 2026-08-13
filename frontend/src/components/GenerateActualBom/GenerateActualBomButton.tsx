@@ -24,7 +24,7 @@ export function GenerateActualBomButton() {
 
   const handleClick = () => {
     if (currentProject && currentSnapshot) {
-      void runPipeline(currentProject.id, currentSnapshot.id);
+      void runPipeline(currentProject.project_id, currentSnapshot.snapshot_id);
     }
   };
 

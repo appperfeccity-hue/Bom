@@ -117,7 +117,7 @@ export function AddAlternativeDialog({
           >
             <option value="">Select a zone...</option>
             {zones.map((z) => (
-              <option key={z.id} value={z.id}>{z.name}</option>
+              <option key={z.zone_id} value={z.zone_id}>{`Zone ${z.zone_id.slice(0, 8)}`}</option>
             ))}
           </select>
         </div>

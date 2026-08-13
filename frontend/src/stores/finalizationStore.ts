@@ -100,7 +100,7 @@ export const useFinalizationStore = create<FinalizationStore>((set, get) => ({
 
       // Update the project status in projectStore to FINALIZED
       const projectState = useProjectStore.getState();
-      if (projectState.currentProject?.id === projectId) {
+      if (projectState.currentProject?.project_id === projectId) {
         useProjectStore.setState({
           currentProject: {
             ...projectState.currentProject,

@@ -3,7 +3,7 @@
  * based on their position relative to the corner boundary in L_CORNER templates.
  */
 
-import type { WallGeometry } from '@/types/database';
+import type { WallGeometryType } from '@/types/database';
 
 export interface ZoneBounds {
   x_mm: number;
@@ -29,7 +29,7 @@ export interface CornerPosition {
 export function assignSegment(
   zone: ZoneBounds,
   cornerAt: CornerPosition,
-  wallGeometry: WallGeometry,
+  wallGeometry: WallGeometryType,
 ): 'SEGMENT_A' | 'SEGMENT_B' | null {
   if (wallGeometry !== 'L_CORNER') return null;
 

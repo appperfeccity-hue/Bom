@@ -32,10 +32,10 @@ export function BomPanel() {
     if (!isBomPanelOpen) return;
 
     if (isDesigner && currentTemplate) {
-      fetchMasterBom(currentTemplate.id);
+      fetchMasterBom(currentTemplate.template_id);
     } else if (!isDesigner && currentProject) {
-      fetchActualBom(currentProject.id);
-      fetchFinalBom(currentProject.id);
+      fetchActualBom(currentProject.project_id);
+      fetchFinalBom(currentProject.project_id);
     }
   }, [isBomPanelOpen, isDesigner, currentTemplate, currentProject, fetchMasterBom, fetchActualBom, fetchFinalBom]);
 

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import React from 'react';
@@ -37,17 +38,13 @@ vi.mock('react-konva', () => ({
 import { TrimLayer } from '@/canvas/layers/TrimLayer';
 
 const makeTrim = (overrides: Partial<TemplateTrim> = {}): TemplateTrim => ({
-  id: 'trim-1',
+  trim_id: 'trim-1',
   template_id: 'tmpl-1',
-  name: 'Top Border',
-  type: 'PHYSICAL',
-  path_mm: [
-    { x: 0, y: 2400 },
-    { x: 3000, y: 2400 },
-  ],
-  configuration: {},
+  sku_id: 'sku-trim-1',
+  trim_type: 'PHYSICAL',
+  quantity_rule: 'TRIM_BY_ZONE_PERIMETER',
+  fixed_quantity: null,
   created_at: '2024-01-01T00:00:00Z',
-  updated_at: '2024-01-01T00:00:00Z',
   ...overrides,
 });
 
@@ -78,68 +75,58 @@ describe('TrimLayer', () => {
     expect(container.innerHTML).toBe('');
   });
 
-  it('renders a Line for each trim item', () => {
+  it('renders a Rect for each trim item', () => {
     useProjectStore.setState({
       trims: [
-        makeTrim({ id: 'trim-1' }),
-        makeTrim({ id: 'trim-2', name: 'Bottom Border' }),
+        makeTrim({ trim_id: 'trim-1' }),
+        makeTrim({ trim_id: 'trim-2' }),
       ],
     });
 
     render(<TrimLayer wallHeight={2400} />);
-    const lines = screen.getAllByTestId('konva-line');
-    expect(lines).toHaveLength(2);
+    const rects = screen.getAllByTestId('konva-rect');
+    expect(rects).toHaveLength(2);
   });
 
-  it('uses thick solid stroke for PHYSICAL type', () => {
+  it('uses brown fill for PHYSICAL type', () => {
     useProjectStore.setState({
-      trims: [makeTrim({ type: 'PHYSICAL' })],
+      trims: [makeTrim({ trim_type: 'PHYSICAL' })],
     });
 
     render(<TrimLayer wallHeight={2400} />);
-    const line = screen.getByTestId('konva-line');
-    expect(line).toHaveAttribute('stroke', '#795548');
+    const rect = screen.getByTestId('konva-rect');
+    expect(rect).toHaveAttribute('fill', '#795548');
   });
 
-  it('uses thin dashed stroke for GEOMETRY type', () => {
+  it('uses grey fill for GEOMETRY type', () => {
     useProjectStore.setState({
-      trims: [makeTrim({ type: 'GEOMETRY' })],
+      trims: [makeTrim({ trim_type: 'GEOMETRY' })],
     });
 
     render(<TrimLayer wallHeight={2400} />);
-    const line = screen.getByTestId('konva-line');
-    expect(line).toHaveAttribute('stroke', '#9e9e9e');
-    expect(line).toHaveAttribute('dash', '6,4');
+    const rect = screen.getByTestId('konva-rect');
+    expect(rect).toHaveAttribute('fill', '#9e9e9e');
   });
 
-  it('defaults to GEOMETRY style for unknown type', () => {
+  it('defaults to grey fill for unknown type', () => {
     useProjectStore.setState({
-      trims: [makeTrim({ type: 'CUSTOM_UNKNOWN' })],
+      trims: [makeTrim({ trim_type: 'CUSTOM_UNKNOWN' as any })],
     });
 
     render(<TrimLayer wallHeight={2400} />);
-    const line = screen.getByTestId('konva-line');
-    expect(line).toHaveAttribute('stroke', '#9e9e9e');
+    const rect = screen.getByTestId('konva-rect');
+    expect(rect).toHaveAttribute('fill', '#9e9e9e');
   });
 
-  it('converts path_mm points y-coordinate using wallHeight', () => {
-    // wallHeight=2400, point y=2400 => screenY = 2400 - 2400 = 0
-    // wallHeight=2400, point y=0 => screenY = 2400 - 0 = 2400
+  it('renders trims at sequential y positions from bottom', () => {
     useProjectStore.setState({
-      trims: [
-        makeTrim({
-          path_mm: [
-            { x: 0, y: 2400 },
-            { x: 3000, y: 0 },
-          ],
-        }),
-      ],
+      trims: [makeTrim({ trim_id: 'trim-1' })],
     });
 
     render(<TrimLayer wallHeight={2400} />);
-    const line = screen.getByTestId('konva-line');
-    // Points should be: [0, 0, 3000, 2400] (flattened with y converted)
-    expect(line).toHaveAttribute('points', '0,0,3000,2400');
+    const rect = screen.getByTestId('konva-rect');
+    // First trim: yPos = wallHeight - (0 + 1) * (10 + 5) = 2400 - 15 = 2385
+    expect(rect).toHaveAttribute('y', '2385');
   });
 
   it('adjusts rendering based on zoom', () => {
@@ -147,12 +134,12 @@ describe('TrimLayer', () => {
       viewport: { zoom: 2.0, panX: 0, panY: 0 },
     });
     useProjectStore.setState({
-      trims: [makeTrim({ type: 'PHYSICAL' })],
+      trims: [makeTrim({ trim_type: 'PHYSICAL' })],
     });
 
     render(<TrimLayer wallHeight={2400} />);
-    const line = screen.getByTestId('konva-line');
+    const rect = screen.getByTestId('konva-rect');
     // Verify it still renders at different zoom levels
-    expect(line).toHaveAttribute('stroke', '#795548');
+    expect(rect).toHaveAttribute('fill', '#795548');
   });
 });

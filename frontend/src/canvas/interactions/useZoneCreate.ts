@@ -51,8 +51,8 @@ export function useZoneCreate(history?: HistoryState) {
     (canvasX: number, canvasY: number) => {
       if (!isCreating || !startPos.current || !currentTemplate) return;
 
-      const wallWidth = currentTemplate.base_width_mm;
-      const wallHeight = currentTemplate.base_height_mm;
+      const wallWidth = currentTemplate.wall_geometry.base_width_mm;
+      const wallHeight = currentTemplate.wall_geometry.base_height_mm;
 
       let endX = gridConfig.snapEnabled ? snapToGrid(canvasX, gridConfig.size) : Math.round(canvasX);
       let endY = gridConfig.snapEnabled ? snapToGrid(canvasY, gridConfig.size) : Math.round(canvasY);
@@ -79,8 +79,8 @@ export function useZoneCreate(history?: HistoryState) {
       return;
     }
 
-    const wallWidth = currentTemplate.base_width_mm;
-    const wallHeight = currentTemplate.base_height_mm;
+    const wallWidth = currentTemplate.wall_geometry.base_width_mm;
+    const wallHeight = currentTemplate.wall_geometry.base_height_mm;
 
     // Enforce minimum size
     if (createPreview.width < MIN_ZONE_WIDTH || createPreview.height < MIN_ZONE_HEIGHT) {
@@ -141,16 +141,14 @@ export function useZoneCreate(history?: HistoryState) {
         history.pushState(zones);
       }
       return addZone({
-        template_id: currentTemplate.id,
-        name: `Zone ${zones.length + 1}`,
+        template_id: currentTemplate.template_id,
         x_mm: constrained.x,
         y_mm: constrained.y,
         width_mm: createPreview.width,
         height_mm: createPreview.height,
         width_strategy: ZoneWidthStrategy.FIXED,
         height_strategy: ZoneHeightStrategy.FIXED,
-        position_strategy: ZonePositionStrategy.ABSOLUTE,
-        z_index: zones.length,
+        position_strategy: ZonePositionStrategy.FIXED,
         segment,
       });
     })();

@@ -224,7 +224,7 @@ export function Toolbar() {
           </button>
           {currentTemplate?.status === TemplateStatus.DRAFT && (
             <button
-              onClick={() => void runValidation(currentTemplate.id)}
+              onClick={() => void runValidation(currentTemplate.template_id)}
               title="Publish Template"
               data-testid="publish-template-btn"
               style={{

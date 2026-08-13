@@ -22,7 +22,7 @@ export function ZonePropertiesPanel() {
   const { removeSku } = useSkuRemove();
   const validationMap = useZoneValidation();
 
-  const selectedZone = zones.find((z) => z.id === selection.selectedZoneId);
+  const selectedZone = zones.find((z) => z.zone_id === selection.selectedZoneId);
   const wallGeometry = useProjectStore((s) => s.wallGeometry);
 
   // Multi-selection info
@@ -72,8 +72,8 @@ export function ZonePropertiesPanel() {
 
       // Apply wall boundary constraint for position/size fields
       if (field === 'x_mm' || field === 'y_mm' || field === 'width_mm' || field === 'height_mm') {
-        const wallWidth = currentTemplate.base_width_mm;
-        const wallHeight = currentTemplate.base_height_mm;
+        const wallWidth = currentTemplate.wall_geometry.base_width_mm;
+        const wallHeight = currentTemplate.wall_geometry.base_height_mm;
         const constrained = constrainToWall(
           updated.x_mm,
           updated.y_mm,
@@ -87,7 +87,7 @@ export function ZonePropertiesPanel() {
 
         // Check for overlap with other zones
         const box = { x: updated.x_mm, y: updated.y_mm, width: updated.width_mm, height: updated.height_mm };
-        if (hasOverlap(box, zones, selectedZone.id)) {
+        if (hasOverlap(box, zones, selectedZone.zone_id)) {
           return; // Reject the change if it causes overlap
         }
       }
@@ -99,8 +99,8 @@ export function ZonePropertiesPanel() {
 
   if (!selectedZone) return null;
 
-  const sku = zoneSku.get(selectedZone.id);
-  const zoneValidation = validationMap.get(selectedZone.id);
+  const sku = zoneSku.get(selectedZone.zone_id);
+  const zoneValidation = validationMap.get(selectedZone.zone_id);
 
   return (
     <div
@@ -143,13 +143,13 @@ export function ZonePropertiesPanel() {
       )}
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        {/* Zone name */}
+        {/* Zone ID */}
         <label style={{ fontSize: '13px' }}>
-          Name
+          Zone ID
           <input
             type="text"
-            value={selectedZone.name}
-            onChange={(e) => handleFieldChange('name', e.target.value)}
+            value={selectedZone.zone_id}
+            readOnly
             style={{ display: 'block', width: '100%', marginTop: '4px', padding: '6px' }}
             data-testid="input-zone-name"
           />
@@ -291,7 +291,7 @@ export function ZonePropertiesPanel() {
           </button>
           {sku && (
             <button
-              onClick={() => removeSku(selectedZone.id)}
+              onClick={() => removeSku(selectedZone.zone_id)}
               style={{ marginTop: '4px', marginLeft: '8px', fontSize: '12px', padding: '4px 8px', color: '#d32f2f' }}
               data-testid="remove-sku-btn"
             >

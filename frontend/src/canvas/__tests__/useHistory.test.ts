@@ -3,21 +3,18 @@ import { renderHook, act } from '@testing-library/react';
 import { useHistory, resetHistory } from '@/canvas/history/useHistory';
 import type { TemplateZone } from '@/types/database';
 
-const makeZone = (id: string, x: number = 0, y: number = 0): TemplateZone => ({
-  id,
+const makeZone = (zoneId: string, x: number = 0, y: number = 0): TemplateZone => ({
+  zone_id: zoneId,
   template_id: 'tmpl-1',
-  name: `Zone ${id}`,
   x_mm: x,
   y_mm: y,
   width_mm: 400,
   height_mm: 400,
   width_strategy: 'FIXED' as never,
   height_strategy: 'FIXED' as never,
-  position_strategy: 'ABSOLUTE' as never,
-  z_index: 0,
+  position_strategy: 'FIXED' as never,
   segment: null,
   created_at: '',
-  updated_at: '',
 });
 
 describe('useHistory', () => {

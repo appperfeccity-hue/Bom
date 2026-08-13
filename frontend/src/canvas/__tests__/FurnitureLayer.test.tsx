@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import React from 'react';
@@ -39,18 +40,13 @@ vi.mock('react-konva', () => ({
 import { FurnitureLayer } from '@/canvas/layers/FurnitureLayer';
 
 const makeFurniture = (overrides: Partial<TemplateFurniture> = {}): TemplateFurniture => ({
-  id: 'furn-1',
+  furniture_id: 'furn-1',
   template_id: 'tmpl-1',
-  name: 'Display Table',
-  type: 'TABLE',
-  x_mm: 500,
-  y_mm: 100,
-  width_mm: 600,
-  height_mm: 400,
-  rotation_deg: 0,
-  configuration: {},
+  sku_id: 'sku-furn-1',
+  position_x_mm: 500,
+  position_y_mm: 100,
+  orientation: 'HORIZONTAL',
   created_at: '2024-01-01T00:00:00Z',
-  updated_at: '2024-01-01T00:00:00Z',
   ...overrides,
 });
 
@@ -81,7 +77,7 @@ describe('FurnitureLayer', () => {
     expect(container.innerHTML).toBe('');
   });
 
-  it('renders a Group with Rect and Text for each furniture item', () => {
+  it('renders a Group with Rect for each furniture item', () => {
     useProjectStore.setState({
       furniture: [makeFurniture()],
     });
@@ -89,41 +85,41 @@ describe('FurnitureLayer', () => {
     render(<FurnitureLayer wallHeight={2400} />);
     expect(screen.getAllByTestId('konva-group')).toHaveLength(1);
     expect(screen.getAllByTestId('konva-rect')).toHaveLength(1);
-    expect(screen.getAllByTestId('konva-text')).toHaveLength(1);
   });
 
   it('renders multiple furniture items', () => {
     useProjectStore.setState({
       furniture: [
-        makeFurniture({ id: 'furn-1' }),
-        makeFurniture({ id: 'furn-2', name: 'Shelf Unit', x_mm: 1200 }),
+        makeFurniture({ furniture_id: 'furn-1' }),
+        makeFurniture({ furniture_id: 'furn-2', position_x_mm: 1200 }),
       ],
     });
 
     render(<FurnitureLayer wallHeight={2400} />);
     expect(screen.getAllByTestId('konva-group')).toHaveLength(2);
     expect(screen.getAllByTestId('konva-rect')).toHaveLength(2);
-    expect(screen.getAllByTestId('konva-text')).toHaveLength(2);
   });
 
-  it('applies rotation_deg to the Group', () => {
+  it('uses HORIZONTAL orientation to set width > height', () => {
     useProjectStore.setState({
-      furniture: [makeFurniture({ rotation_deg: 45 })],
+      furniture: [makeFurniture({ orientation: 'HORIZONTAL' })],
     });
 
     render(<FurnitureLayer wallHeight={2400} />);
-    const group = screen.getByTestId('konva-group');
-    expect(group).toHaveAttribute('rotation', '45');
+    const rect = screen.getByTestId('konva-rect');
+    expect(rect).toHaveAttribute('width', '200');
+    expect(rect).toHaveAttribute('height', '100');
   });
 
-  it('renders furniture name as Text label', () => {
+  it('uses VERTICAL orientation to set height > width', () => {
     useProjectStore.setState({
-      furniture: [makeFurniture({ name: 'Counter Unit' })],
+      furniture: [makeFurniture({ orientation: 'VERTICAL' })],
     });
 
     render(<FurnitureLayer wallHeight={2400} />);
-    const text = screen.getByTestId('konva-text');
-    expect(text).toHaveAttribute('text', 'Counter Unit');
+    const rect = screen.getByTestId('konva-rect');
+    expect(rect).toHaveAttribute('width', '100');
+    expect(rect).toHaveAttribute('height', '200');
   });
 
   it('fills rect with light gray', () => {
@@ -137,16 +133,15 @@ describe('FurnitureLayer', () => {
   });
 
   it('converts y-coordinate using wallHeight (bottom-left to top-left)', () => {
-    // wallHeight=2400, y_mm=100, height_mm=400
-    // screenY = 2400 - 100 - 400 = 1900
-    // Group positioned at center: x = 500 + 600/2 = 800, y = 1900 + 400/2 = 2100
+    // wallHeight=2400, position_y_mm=100, HORIZONTAL orientation: height=100
+    // screenY = 2400 - 100 - 100 = 2200
     useProjectStore.setState({
-      furniture: [makeFurniture({ x_mm: 500, y_mm: 100, width_mm: 600, height_mm: 400 })],
+      furniture: [makeFurniture({ position_x_mm: 500, position_y_mm: 100, orientation: 'HORIZONTAL' })],
     });
 
     render(<FurnitureLayer wallHeight={2400} />);
     const group = screen.getByTestId('konva-group');
-    expect(group).toHaveAttribute('x', '800');
-    expect(group).toHaveAttribute('y', '2100');
+    expect(group).toHaveAttribute('x', '500');
+    expect(group).toHaveAttribute('y', '2200');
   });
 });

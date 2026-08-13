@@ -113,17 +113,17 @@ export function CanvasContainer({ mode }: CanvasContainerProps) {
 
   useEffect(() => {
     if (currentTemplate && stageSize.width > 0) {
-      const templateChanged = lastTemplateId.current !== currentTemplate.id;
+      const templateChanged = lastTemplateId.current !== currentTemplate.template_id;
       if (!hasInitialized.current || templateChanged) {
         hasInitialized.current = true;
-        lastTemplateId.current = currentTemplate.id;
+        lastTemplateId.current = currentTemplate.template_id;
         // Clear history when switching templates/projects
         if (templateChanged) {
           resetHistory();
         }
         fitToViewport(
-          currentTemplate.base_width_mm,
-          currentTemplate.base_height_mm,
+          currentTemplate.wall_geometry.base_width_mm,
+          currentTemplate.wall_geometry.base_height_mm,
           stageSize.width,
           stageSize.height,
         );
@@ -131,8 +131,8 @@ export function CanvasContainer({ mode }: CanvasContainerProps) {
     }
   }, [currentTemplate, stageSize, fitToViewport]);
 
-  const wallWidth = currentTemplate?.base_width_mm ?? 3000;
-  const wallHeight = currentTemplate?.base_height_mm ?? 2400;
+  const wallWidth = currentTemplate?.wall_geometry.base_width_mm ?? 3000;
+  const wallHeight = currentTemplate?.wall_geometry.base_height_mm ?? 2400;
 
   // Handle click on empty canvas area for zone creation or marquee selection
   const handleStageMouseDown = (e: { evt: MouseEvent; target: { getStage: () => unknown } }) => {

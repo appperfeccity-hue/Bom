@@ -24,8 +24,8 @@ export function useZoneValidation(): Map<string, ZoneValidationState> {
   const zones = useProjectStore((s) => s.zones);
   const currentTemplate = useProjectStore((s) => s.currentTemplate);
 
-  const wallWidth = currentTemplate?.base_width_mm ?? 0;
-  const wallHeight = currentTemplate?.base_height_mm ?? 0;
+  const wallWidth = currentTemplate?.wall_geometry.base_width_mm ?? 0;
+  const wallHeight = currentTemplate?.wall_geometry.base_height_mm ?? 0;
 
   return useMemo(() => {
     const validationMap = new Map<string, ZoneValidationState>();
@@ -41,7 +41,7 @@ export function useZoneValidation(): Map<string, ZoneValidationState> {
       };
 
       // Check overlap with other zones
-      if (hasOverlap(box, zones, zone.id)) {
+      if (hasOverlap(box, zones, zone.zone_id)) {
         errors.push('Zone overlaps with another zone');
       }
 
@@ -56,7 +56,7 @@ export function useZoneValidation(): Map<string, ZoneValidationState> {
       }
 
       if (errors.length > 0) {
-        validationMap.set(zone.id, { errors });
+        validationMap.set(zone.zone_id, { errors });
       }
     }
 

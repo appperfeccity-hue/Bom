@@ -113,7 +113,7 @@ export function TemplateManagementPanel() {
           {!isLoading && !error && filteredTemplates.length > 0 && (
             <div>
               {filteredTemplates.map((template) => (
-                <TemplateListItem key={template.id} template={template} />
+                <TemplateListItem key={template.template_id} template={template} />
               ))}
             </div>
           )}

@@ -17,7 +17,7 @@ export function ApprovalStep() {
 
   const handleRerunValidation = () => {
     if (currentTemplate) {
-      void rerunValidation(currentTemplate.id);
+      void rerunValidation(currentTemplate.template_id);
     }
   };
 

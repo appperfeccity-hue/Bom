@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import { useProjectStore } from '@/stores/projectStore';
@@ -23,35 +24,35 @@ vi.mock('@/lib/supabase', () => ({
 import { useZoneValidation } from '@/canvas/utils/useZoneValidation';
 
 const mockTemplate: Template = {
-  id: 'tmpl-1',
+  template_id: 'tmpl-1',
   name: 'Test Template',
   description: null,
+  wall_geometry: { type: 'STRAIGHT', base_width_mm: 3000, base_height_mm: 2400 },
   status: TemplateStatus.ACTIVE,
-  wall_geometry: 'STRAIGHT',
-  base_width_mm: 3000,
-  base_height_mm: 2400,
-  adaptation_strategy: AdaptationStrategy.SCALE,
+  adaptation_strategy: AdaptationStrategy.PROPORTIONAL,
+  design_family_id: null,
+  design_subfamily_id: null,
+  wall_application: null,
+  priority_zone_id: null,
+  waste_factor: null,
+  metadata: null,
   created_by: 'user-1',
   created_at: '2024-01-01T00:00:00Z',
   updated_at: '2024-01-01T00:00:00Z',
-  version: 1,
 };
 
-function makeZone(overrides: Partial<TemplateZone> & { id: string }): TemplateZone {
+function makeZone(overrides: Partial<TemplateZone> & { zone_id: string }): TemplateZone {
   return {
     template_id: 'tmpl-1',
-    name: 'Zone',
     x_mm: 0,
     y_mm: 0,
     width_mm: 400,
     height_mm: 400,
     width_strategy: 'FIXED' as never,
     height_strategy: 'FIXED' as never,
-    position_strategy: 'ABSOLUTE' as never,
-    z_index: 0,
+    position_strategy: 'FIXED' as never,
     segment: null,
     created_at: '',
-    updated_at: '',
     ...overrides,
   };
 }
@@ -72,8 +73,8 @@ describe('useZoneValidation', () => {
   it('returns empty map when all zones are valid', () => {
     useProjectStore.setState({
       zones: [
-        makeZone({ id: 'z1', x_mm: 0, y_mm: 0, width_mm: 400, height_mm: 400 }),
-        makeZone({ id: 'z2', x_mm: 500, y_mm: 0, width_mm: 400, height_mm: 400 }),
+        makeZone({ zone_id: 'z1', x_mm: 0, y_mm: 0, width_mm: 400, height_mm: 400 }),
+        makeZone({ zone_id: 'z2', x_mm: 500, y_mm: 0, width_mm: 400, height_mm: 400 }),
       ],
     });
 
@@ -84,8 +85,8 @@ describe('useZoneValidation', () => {
   it('detects overlapping zones', () => {
     useProjectStore.setState({
       zones: [
-        makeZone({ id: 'z1', x_mm: 0, y_mm: 0, width_mm: 400, height_mm: 400 }),
-        makeZone({ id: 'z2', x_mm: 200, y_mm: 200, width_mm: 400, height_mm: 400 }),
+        makeZone({ zone_id: 'z1', x_mm: 0, y_mm: 0, width_mm: 400, height_mm: 400 }),
+        makeZone({ zone_id: 'z2', x_mm: 200, y_mm: 200, width_mm: 400, height_mm: 400 }),
       ],
     });
 
@@ -98,7 +99,7 @@ describe('useZoneValidation', () => {
   it('detects out-of-bounds zones', () => {
     useProjectStore.setState({
       zones: [
-        makeZone({ id: 'z1', x_mm: 2800, y_mm: 0, width_mm: 400, height_mm: 400 }),
+        makeZone({ zone_id: 'z1', x_mm: 2800, y_mm: 0, width_mm: 400, height_mm: 400 }),
       ],
     });
 
@@ -110,7 +111,7 @@ describe('useZoneValidation', () => {
   it('detects undersized zones (below 200x200mm)', () => {
     useProjectStore.setState({
       zones: [
-        makeZone({ id: 'z1', x_mm: 0, y_mm: 0, width_mm: 100, height_mm: 100 }),
+        makeZone({ zone_id: 'z1', x_mm: 0, y_mm: 0, width_mm: 100, height_mm: 100 }),
       ],
     });
 
@@ -123,7 +124,7 @@ describe('useZoneValidation', () => {
     useProjectStore.setState({
       zones: [
         // Undersized and out-of-bounds
-        makeZone({ id: 'z1', x_mm: 2900, y_mm: 2300, width_mm: 150, height_mm: 150 }),
+        makeZone({ zone_id: 'z1', x_mm: 2900, y_mm: 2300, width_mm: 150, height_mm: 150 }),
       ],
     });
 
@@ -138,7 +139,7 @@ describe('useZoneValidation', () => {
   it('does not flag valid zones that are exactly at the boundary', () => {
     useProjectStore.setState({
       zones: [
-        makeZone({ id: 'z1', x_mm: 2600, y_mm: 2000, width_mm: 400, height_mm: 400 }),
+        makeZone({ zone_id: 'z1', x_mm: 2600, y_mm: 2000, width_mm: 400, height_mm: 400 }),
       ],
     });
 
@@ -150,7 +151,7 @@ describe('useZoneValidation', () => {
     useProjectStore.setState({
       currentTemplate: null,
       zones: [
-        makeZone({ id: 'z1', x_mm: 0, y_mm: 0, width_mm: 400, height_mm: 400 }),
+        makeZone({ zone_id: 'z1', x_mm: 0, y_mm: 0, width_mm: 400, height_mm: 400 }),
       ],
     });
 

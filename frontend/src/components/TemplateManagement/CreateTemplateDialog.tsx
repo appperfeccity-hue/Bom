@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { WallGeometry } from '@/types/database';
+import type { WallGeometryType } from '@/types/database';
 import { AdaptationStrategy } from '@/types/database';
 import { useTemplateManagementStore } from '@/stores/templateManagementStore';
 
@@ -9,12 +9,15 @@ export function CreateTemplateDialog() {
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [wallGeometry, setWallGeometry] = useState<WallGeometry>('STRAIGHT');
+  const [wallGeometry, setWallGeometry] = useState<WallGeometryType>('STRAIGHT');
   const [baseWidthMm, setBaseWidthMm] = useState<number | ''>('');
   const [baseHeightMm, setBaseHeightMm] = useState<number | ''>('');
   const [adaptationStrategy, setAdaptationStrategy] = useState<AdaptationStrategy>(
-    AdaptationStrategy.SCALE,
+    AdaptationStrategy.PROPORTIONAL,
   );
+  const [designFamilyId] = useState('default-family');
+  const [wallApplication] = useState('WALL_PANEL');
+  const [wasteFactor] = useState(0.05);
 
   const isValid = name.trim() !== '' && baseWidthMm !== '' && baseHeightMm !== '' &&
     baseWidthMm > 0 && baseHeightMm > 0 && baseWidthMm <= 50000 && baseHeightMm <= 50000;
@@ -26,9 +29,10 @@ export function CreateTemplateDialog() {
       name: name.trim(),
       description: description.trim() || undefined,
       wall_geometry: wallGeometry,
-      base_width_mm: baseWidthMm as number,
-      base_height_mm: baseHeightMm as number,
       adaptation_strategy: adaptationStrategy,
+      design_family_id: designFamilyId,
+      wall_application: wallApplication,
+      waste_factor: wasteFactor,
     });
   };
 
@@ -85,7 +89,7 @@ export function CreateTemplateDialog() {
           <select
             data-testid="create-template-geometry"
             value={wallGeometry}
-            onChange={(e) => setWallGeometry(e.target.value as WallGeometry)}
+            onChange={(e) => setWallGeometry(e.target.value as WallGeometryType)}
             style={{ padding: '6px 10px', border: '1px solid #ccc', borderRadius: '4px' }}
           >
             <option value="STRAIGHT">STRAIGHT</option>
@@ -134,9 +138,10 @@ export function CreateTemplateDialog() {
             onChange={(e) => setAdaptationStrategy(e.target.value as AdaptationStrategy)}
             style={{ padding: '6px 10px', border: '1px solid #ccc', borderRadius: '4px' }}
           >
-            <option value={AdaptationStrategy.SCALE}>SCALE</option>
-            <option value={AdaptationStrategy.REFLOW}>REFLOW</option>
-            <option value={AdaptationStrategy.CLIP}>CLIP</option>
+            <option value={AdaptationStrategy.PROPORTIONAL}>PROPORTIONAL</option>
+            <option value={AdaptationStrategy.PRIORITY_ZONE}>PRIORITY_ZONE</option>
+            <option value={AdaptationStrategy.EQUAL_DISTRIBUTION}>EQUAL_DISTRIBUTION</option>
+            <option value={AdaptationStrategy.FIXED}>FIXED</option>
           </select>
         </label>
 

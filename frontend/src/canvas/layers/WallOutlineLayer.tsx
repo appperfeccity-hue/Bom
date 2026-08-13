@@ -1,12 +1,12 @@
 import { Layer, Line } from 'react-konva';
 import { useCanvasStore } from '@/stores/canvasStore';
 import { CanvasLayer } from '@/types/canvas';
-import type { WallGeometry } from '@/types/database';
+import type { WallGeometryType } from '@/types/database';
 
 interface WallOutlineLayerProps {
   wallWidth: number;
   wallHeight: number;
-  wallGeometry: WallGeometry;
+  wallGeometry: WallGeometryType;
   /** For L_CORNER: width of segment A (horizontal) */
   segmentAWidth?: number;
   /** For L_CORNER: width of segment B (vertical) */

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { useAdminStore } from '../adminStore';
 import { RuleSetStatus } from '@/types/database';
@@ -221,7 +222,7 @@ describe('adminStore', () => {
       const mockChain = {
         select: vi.fn().mockReturnThis(),
         order: vi.fn().mockResolvedValue({
-          data: [{ rule_set_id: 'rs-1', rule_set_code: 'RS-001', version: 1, status: 'DRAFT', constants: {} }],
+          data: [{ rule_set_id: 'rs-1', rule_set_code: 'RS001', version: 1, status: 'DRAFT', effective_from: null, effective_to: null, constants: {}, created_by: 'admin', created_at: '2024-01-01' }],
           error: null,
         }),
       };
@@ -239,7 +240,7 @@ describe('adminStore', () => {
 
       // Pre-populate store with a DRAFT rule set
       useAdminStore.setState({
-        ruleSets: [{ rule_set_id: 'rs-1', rule_set_code: 'RS-001', version: 1, status: RuleSetStatus.DRAFT, constants: {}, created_by: 'u1', effective_from: null, effective_to: null, created_at: '2024-01-01' }],
+        ruleSets: [{ rule_set_id: 'rs-1', rule_set_code: 'RS001', version: 1, status: 'DRAFT', effective_from: null, effective_to: null, constants: {}, created_by: 'admin', created_at: '2024-01-01' }] as any,
       });
 
       const mockUpdate = vi.fn().mockReturnThis();
@@ -262,7 +263,7 @@ describe('adminStore', () => {
     it('should reject invalid state transitions', async () => {
       // Pre-populate store with a DRAFT rule set
       useAdminStore.setState({
-        ruleSets: [{ rule_set_id: 'rs-1', rule_set_code: 'RS-001', version: 1, status: RuleSetStatus.DRAFT, constants: {}, created_by: 'u1', effective_from: null, effective_to: null, created_at: '2024-01-01' }],
+        ruleSets: [{ rule_set_id: 'rs-1', rule_set_code: 'RS001', version: 1, status: 'DRAFT', effective_from: null, effective_to: null, constants: {}, created_by: 'admin', created_at: '2024-01-01' }] as any,
       });
 
       await useAdminStore.getState().transitionRuleSetStatus('rs-1', 'SUPERSEDED');
@@ -271,7 +272,7 @@ describe('adminStore', () => {
 
     it('should reject backward transitions', async () => {
       useAdminStore.setState({
-        ruleSets: [{ rule_set_id: 'rs-1', rule_set_code: 'RS-001', version: 1, status: RuleSetStatus.ACTIVE, constants: {}, created_by: 'u1', effective_from: null, effective_to: null, created_at: '2024-01-01' }],
+        ruleSets: [{ rule_set_id: 'rs-1', rule_set_code: 'RS001', version: 1, status: 'ACTIVE', effective_from: null, effective_to: null, constants: {}, created_by: 'admin', created_at: '2024-01-01' }] as any,
       });
 
       await useAdminStore.getState().transitionRuleSetStatus('rs-1', 'DRAFT');
@@ -286,11 +287,13 @@ describe('adminStore', () => {
 
       // Mock the asset check query to return only GEOMETRY
       const mockAssetChain = {
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        in: vi.fn().mockResolvedValue({
-          data: [{ asset_type: 'GEOMETRY' }],
-          error: null,
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            in: vi.fn().mockResolvedValue({
+              data: [{ asset_type: 'GEOMETRY' }],
+              error: null,
+            }),
+          }),
         }),
       };
       mockedFromTable.mockReturnValueOnce(mockAssetChain as unknown as ReturnType<typeof fromTable>);

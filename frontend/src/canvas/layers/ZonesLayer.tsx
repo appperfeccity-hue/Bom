@@ -51,15 +51,15 @@ export function ZonesLayer({ wallHeight }: ZonesLayerProps) {
       const nativeEvt = e.evt as MouseEvent | TouchEvent;
       const shiftHeld = 'shiftKey' in nativeEvt && (nativeEvt as MouseEvent).shiftKey;
       if (shiftHeld) {
-        toggleZoneSelection(zone.id);
+        toggleZoneSelection(zone.zone_id);
       } else {
-        selectZone(zone.id);
+        selectZone(zone.zone_id);
       }
 
       // Highlight corresponding BOM lines for the clicked zone
       const bomLines = useBomStore.getState().masterBomLines;
       const matchingLineIds = bomLines
-        .filter((line) => line.source_zone_id === zone.id)
+        .filter((line) => line.source_zone_id === zone.zone_id)
         .map((line) => line.master_bom_line_id);
       setHighlightedBomLineIds(matchingLineIds);
     }
@@ -68,9 +68,9 @@ export function ZonesLayer({ wallHeight }: ZonesLayerProps) {
   return (
     <Layer>
       {zones.map((zone) => {
-        const isSelected = selection.selectedZoneIds.includes(zone.id);
-        const isHighlighted = highlightedZoneIds.includes(zone.id);
-        const hasErrors = validationMap.has(zone.id);
+        const isSelected = selection.selectedZoneIds.includes(zone.zone_id);
+        const isHighlighted = highlightedZoneIds.includes(zone.zone_id);
+        const hasErrors = validationMap.has(zone.zone_id);
 
         // Convert from bottom-left origin to top-left (Konva)
         const screenY = wallHeight - zone.y_mm - zone.height_mm;
@@ -86,7 +86,7 @@ export function ZonesLayer({ wallHeight }: ZonesLayerProps) {
 
         return (
           <Rect
-            key={zone.id}
+            key={zone.zone_id}
             x={zone.x_mm}
             y={screenY}
             width={zone.width_mm}
@@ -98,19 +98,19 @@ export function ZonesLayer({ wallHeight }: ZonesLayerProps) {
             onClick={(e) => handleZoneClick(zone, e)}
             onTap={(e) => handleZoneClick(zone, e)}
             listening={isDesigner}
-            data-zone-id={zone.id}
+            data-zone-id={zone.zone_id}
           />
         );
       })}
       {/* Zone labels */}
       {zones.map((zone, index) => {
-        const sku = zoneSku.get(zone.id);
+        const sku = zoneSku.get(zone.zone_id);
         const label = sku ? sku.sku_code : `Zone ${index + 1}`;
         const screenY = wallHeight - zone.y_mm - zone.height_mm;
 
         return (
           <Text
-            key={`label-${zone.id}`}
+            key={`label-${zone.zone_id}`}
             x={zone.x_mm + 10}
             y={screenY + 10}
             text={label}
