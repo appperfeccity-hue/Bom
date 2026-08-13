@@ -1,0 +1,28 @@
+{
+  "project_type": "React 18 SPA with Vite, TypeScript strict mode, Zustand state, Supabase backend",
+  "language": "TypeScript (strict)",
+  "build_system": "Vite + npm, top-level Makefile delegates to frontend/",
+  "test_framework": "vitest with @testing-library/react, jsdom environment, setupFiles: ./src/test-setup.ts",
+  "build_command": "cd frontend && unset NODE_OPTIONS && npx tsc --noEmit",
+  "test_command": "cd frontend && unset NODE_OPTIONS && npx vitest --run",
+  "verification_instructions": "1. Run typecheck: cd frontend && unset NODE_OPTIONS && npx tsc --noEmit. 2. Run tests: cd frontend && unset NODE_OPTIONS && npx vitest --run. All 673+ tests must pass.",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "cd frontend && npm ci (already done, node_modules exists). NOTE: Must use 'unset NODE_OPTIONS' before running node commands due to sandbox preload issue.",
+  "environment_constraints": "COMMON_DEPENDENCIES network. Must unset NODE_OPTIONS before running vitest/tsc due to proxy-bootstrap.js preload issue in sandbox. No Docker daemon needed.",
+  "contribution_requirements": "Follow existing panel pattern: {FeatureName}Panel.tsx + Add{Item}Dialog.tsx + index.ts + __tests__/ directory. DESIGNER-mode-only visibility check. Use fromTable() from @/lib/supabase for DB queries. Use data-testid attributes for all interactive elements.",
+  "key_patterns": "1. Panel components: standalone, receive templateId prop, check CanvasMode.DESIGNER, use fromTable() for CRUD. 2. Dialog components: fixed overlay, form fields, confirm/cancel buttons, error display. 3. Tests: vi.mock @/lib/supabase and @/stores/authStore, import component after mocks, use waitFor for async data. 4. Types: MountingType already in engines/types.ts as 'DIRECT'|'PROFILE'|'COVE'. SkuCompatibility interface in types/database.ts. 5. Index files: re-export Panel + Dialog.",
+  "relevant_files": [
+    "frontend/src/components/HiddenComponents/HiddenComponentsPanel.tsx",
+    "frontend/src/components/HiddenComponents/AddHiddenComponentDialog.tsx",
+    "frontend/src/components/HiddenComponents/__tests__/HiddenComponentsPanel.test.tsx",
+    "frontend/src/components/PromotedAlternatives/PromotedAlternativesPanel.tsx",
+    "frontend/src/components/PromotedAlternatives/AddAlternativeDialog.tsx",
+    "frontend/src/components/ConsultantPermissions/ConsultantPermissionsPanel.tsx",
+    "frontend/src/lib/supabase.ts",
+    "frontend/src/engines/types.ts",
+    "frontend/src/types/database.ts",
+    "frontend/src/stores/authStore.ts",
+    "baseline/v1.1.5_baseline.sql"
+  ],
+  "directory_structure": "frontend/src/components/{FeatureName}/ - each feature has Panel.tsx, Dialog.tsx, index.ts, __tests__/. frontend/src/engines/ - calculation engines. frontend/src/types/ - database.ts, canvas.ts. frontend/src/stores/ - Zustand stores. frontend/src/lib/ - supabase.ts helper."
+}

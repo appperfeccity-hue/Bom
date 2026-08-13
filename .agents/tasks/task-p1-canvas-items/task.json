@@ -1,0 +1,14 @@
+{
+  "task_id": "task-p1-canvas-items",
+  "task_description": "Build P1 Canvas items (SKU rendering/removal, validation UX, lighting/furniture/trim layers) and fix 5 follow-ups from P0 (history clear, nudge batching, subscriber cleanup, permission key validation, permission range priority)",
+  "status": "completed",
+  "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003", "FEAT-004"],
+  "blocked_reason": null,
+  "verification": {
+    "build": "pass",
+    "tests": "pass",
+    "test_quality": "pass",
+    "docker_build": "skipped",
+    "summary": "814 tests passing (up from 755 baseline), vite build succeeds. Semantic review APPROVED with 4 non-blocking observations about URL cache TTL, sequential URL generation, dead variable, and unbounded image cache."
+  }
+}

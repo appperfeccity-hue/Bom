@@ -1,0 +1,23 @@
+{
+  "project_type": "React 18 + TypeScript + Vite frontend with pure calculation engines",
+  "language": "TypeScript",
+  "build_system": "npm + Vite, orchestrated via top-level Makefile",
+  "test_framework": "vitest with describe/it/expect pattern, tests in __tests__/ directory",
+  "build_command": "cd frontend && npm run build",
+  "test_command": "cd frontend && npx vitest --run",
+  "verification_instructions": "1. Run `make typecheck` to confirm no TS errors. 2. Run `make test` to confirm all tests pass. 3. Run `make build` to confirm production build succeeds.",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "cd frontend && npm ci",
+  "environment_constraints": "COMMON_DEPENDENCIES network mode - npm packages can be installed from public registries.",
+  "contribution_requirements": "Engines are pure TypeScript modules with no side effects, no DB calls, no external dependencies. Each engine exports from index.ts. Tests use vitest with golden test fixtures pattern.",
+  "key_patterns": "1. Engine files export a single main function. 2. Input/output types defined in types.ts. 3. EngineError class for validation errors. 4. Tests use describe blocks with golden test fixtures naming convention. 5. Index.ts re-exports all engine functions and types.",
+  "relevant_files": [
+    "frontend/src/engines/types.ts",
+    "frontend/src/engines/index.ts",
+    "frontend/src/engines/wallPanelEngine.ts",
+    "frontend/src/engines/__tests__/wallPanelEngine.test.ts",
+    "frontend/src/engines/siteAdaptationEngine.ts",
+    "frontend/src/engines/__tests__/siteAdaptationEngine.test.ts"
+  ],
+  "directory_structure": "frontend/src/engines/ - pure calculation engines. frontend/src/engines/__tests__/ - vitest test files. Each engine has a corresponding test file."
+}

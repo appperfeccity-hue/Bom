@@ -1,7 +1,14 @@
 {
   "task_id": "task-amendment-001-wall-config",
   "task_description": "Implement PERFECCITY MVP Amendment 001: Wall Configuration & Spacing, Site Instantiation, and Consultant Permissions. Option A: Replace manual zone creation entirely with configuration-driven panel frame generation. Fix critical DB type mismatches first, then build wallConfigEngine with 8 fit algorithms, remove manual zone interactions, add consultant permission model, update BOM pipeline and snapshot builder.",
-  "status": "in_progress",
+  "status": "completed",
   "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003"],
-  "blocked_reason": null
+  "blocked_reason": null,
+  "verification": {
+    "build": "pass",
+    "tests": "pass",
+    "test_quality": "pass",
+    "docker_build": "skipped",
+    "summary": "TypeScript typecheck passes (1 pre-existing error only). All 1094 tests pass across 77 test files. New tests in wallConfigEngine.test.ts (56 tests) and wallConfigStore.test.ts (28 tests) and bomPipelineWallConfig.test.ts (7 tests) exercise actual engine logic and would fail if code were reverted. Docker build skipped (not needed for verification)."
+  }
 }

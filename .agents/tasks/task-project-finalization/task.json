@@ -1,7 +1,7 @@
 {
   "task_id": "task-project-finalization",
   "task_description": "Implement Project Finalisation Flow (Spec sections 96-97, 99, 73): Consultant confirms finalization, creating an immutable Final BOM. Includes finalizationStore (Zustand), FinalizeButton, FinalizationConfirmDialog, FinalizationSuccessPanel, lock controls when FINALIZED, and tests.",
-  "status": "in_progress",
+  "status": "completed",
   "feature_order": ["FEAT-001"],
   "blocked_reason": null,
   "verification": {
@@ -9,6 +9,6 @@
     "tests": "pass",
     "test_quality": "pass",
     "docker_build": "skipped",
-    "summary": "All 517 tests pass (473 existing + 35 original + 9 new review-fix tests). TypeScript compiles without errors. Review issues addressed: double-submit guard, RPC response validation, store-level mutation guards, timestamp documentation."
+    "summary": "All 517 tests pass (473 existing + 44 new). TypeScript compiles without errors. Vite build succeeds. v2 semantic review APPROVED."
   }
 }

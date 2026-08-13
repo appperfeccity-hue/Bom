@@ -1,0 +1,33 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "Update bomStore to use full pipeline, add GenerateActualBom button/panel components, and add SKU deactivation warning badge to template list",
+  "status": "completed",
+  "steps": [
+    "Update src/stores/bomStore.ts: Replace the existing synchronous generateActualBom method with a new async runPipeline method that calls runBomPipeline from src/engines/bomPipeline.ts. Add new state fields: pipelineStatus ('idle'|'running'|'success'|'blocked'), pipelineErrors (PipelineError[]), pipelineWarnings (PipelineError[]), pipelineProgress (current step name). The new runPipeline action accepts { projectId, snapshotId } and fetches needed data (snapshot, measurements, configuration, permissions, compatibility rules) from Supabase, then calls runBomPipeline. On success, persist actual_bom and actual_bom_line rows to Supabase. Keep the existing generateActualBom for backward compatibility but mark as deprecated. Add resetPipeline action to clear pipeline state.",
+    "Create src/components/GenerateActualBom/GenerateActualBomButton.tsx - A button component visible only in CONSULTANT mode (following the FinalizeButton pattern from src/components/Finalization/FinalizeButton.tsx). When clicked, calls bomStore.runPipeline(). Shows spinner/disabled state while pipeline runs. Uses data-testid='generate-actual-bom-btn'.",
+    "Create src/components/GenerateActualBom/ValidationResultsPanel.tsx - Displays pipeline results: a list of blocking errors (red, with error code and message) and warnings (yellow). Shows pipeline status badge (SUCCESS/BLOCKED). Each error shows its code and human-readable message from errorCatalogue. Uses data-testid='validation-results-panel'.",
+    "Create src/components/GenerateActualBom/index.ts - barrel export for GenerateActualBomButton and ValidationResultsPanel.",
+    "Update src/components/Toolbar.tsx - Add GenerateActualBomButton to the consultant section of the toolbar, similar to how FinalizeButton is included.",
+    "Update src/components/TemplateManagement/TemplateListItem.tsx - Add a BLOCKED warning badge (orange/red, data-testid='sku-inactive-badge') that appears when template has any assigned SKU with status INACTIVE. This requires checking sku status - add a prop 'hasInactiveSkus?: boolean' to the component and display badge conditionally.",
+    "Create src/components/GenerateActualBom/__tests__/GenerateActualBomButton.test.tsx - Test that button renders only in CONSULTANT mode, triggers runPipeline on click, shows disabled state while running.",
+    "Create src/components/GenerateActualBom/__tests__/ValidationResultsPanel.test.tsx - Test that blocking errors render with correct error codes, warnings render separately, SUCCESS/BLOCKED status displays correctly.",
+    "Create src/components/TemplateManagement/__tests__/TemplateListItemInactiveSku.test.tsx - Test that BLOCKED badge appears when hasInactiveSkus=true, is absent when false.",
+    "Update src/stores/__tests__/bomStore.test.ts - Add test cases for the new runPipeline method (mock the pipeline and supabase calls) and resetPipeline action."
+  ],
+  "acceptance_criteria": [
+    "bomStore has runPipeline async action that calls runBomPipeline and stores results in pipelineStatus/pipelineErrors/pipelineWarnings",
+    "GenerateActualBomButton renders only for CONSULTANT mode and triggers pipeline",
+    "ValidationResultsPanel displays errors and warnings from pipeline output",
+    "TemplateListItem shows BLOCKED badge when hasInactiveSkus is true",
+    "All new component and store tests pass",
+    "TypeScript strict mode passes",
+    "All existing 517+ tests still pass"
+  ],
+  "verification": [
+    "cd frontend && unset NODE_OPTIONS && npx tsc --noEmit",
+    "cd frontend && unset NODE_OPTIONS && npx vitest --run"
+  ],
+  "blocked_reason": null,
+  "findings": "All 615 tests pass (517 original + 72 from FEAT-001 + 26 new). TypeScript strict mode passes. Template type requires description, adaptation_strategy, version fields. Project requires version: number (not optional). WallGeometry is a type alias 'STRAIGHT' | 'L_CORNER' (not 'FLAT'). The bomPipeline module must be mocked in store tests via vi.mock. The fromTable mock pattern with chained methods (.select.eq.neq.single) is consistent across all test files."
+}

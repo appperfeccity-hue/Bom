@@ -1,0 +1,14 @@
+{
+  "task_id": "task-site-adaptation-engine",
+  "task_description": "Implement the Site Adaptation Engine (section 77) that transforms template zone geometry to match actual site dimensions using 4 strategies: PROPORTIONAL, PRIORITY_ZONE, EQUAL_DISTRIBUTION, and FIXED. Includes height adaptation and constraint enforcement.",
+  "status": "completed",
+  "feature_order": ["FEAT-001"],
+  "blocked_reason": null,
+  "verification": {
+    "build": "pass",
+    "tests": "pass",
+    "test_quality": "pass",
+    "docker_build": "skipped",
+    "summary": "All 473 tests pass (41 site adaptation engine tests), TypeScript typecheck clean, no regressions. Review v2 APPROVED."
+  }
+}

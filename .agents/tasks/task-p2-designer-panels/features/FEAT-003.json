@@ -1,0 +1,32 @@
+{
+  "id": "FEAT-003",
+  "type": "feat",
+  "description": "Product Relationships UI - Designer can define how products relate to each other within a template, with SKU compatibility validation. Uses the sku_compatibility table (source_sku_id, target_sku_id, relationship_type, directionality, is_mandatory, status), per spec section 53.",
+  "status": "completed",
+  "steps": [
+    "Create directory frontend/src/components/ProductRelationships/ with files: ProductRelationshipsPanel.tsx, AddRelationshipDialog.tsx, index.ts, and __tests__/ directory.",
+    "In ProductRelationshipsPanel.tsx: Follow PromotedAlternativesPanel.tsx pattern (it also does SKU lookups). Accept templateId prop. Check CanvasMode.DESIGNER. Fetch relationships from 'sku_compatibility' by first getting all sku_ids used in this template (from template_lighting, template_trim, template_zone_sku tables) then fetching sku_compatibility rows where source_sku_id or target_sku_id is in that set. Display each relationship showing: source SKU -> target SKU, relationship_type badge (REQUIRES in red, COMPATIBLE_WITH in green, ALTERNATIVE_TO in blue), directionality indicator (arrow for UNIDIRECTIONAL, double-arrow for BIDIRECTIONAL), is_mandatory flag. Include 'Add Relationship' button and 'Remove' button per item. Use data-testid='product-relationships-panel', data-testid='add-relationship-btn', data-testid='no-relationships-msg', data-testid='relationship-item-{id}', data-testid='relationship-type-{id}'.",
+    "In AddRelationshipDialog.tsx: Follow AddAlternativeDialog.tsx pattern (uses SKU search). Fields: Source SKU (text search with dropdown, using fromTable('sku_master').select('*').ilike('sku_code', '%query%').eq('status', 'ACTIVE').range(0, 19)), Target SKU (same search pattern), Relationship Type (select: REQUIRES, COMPATIBLE_WITH, ALTERNATIVE_TO), Directionality (select: UNIDIRECTIONAL, BIDIRECTIONAL), Is Mandatory (checkbox). Validation: source and target must be different SKUs (source_sku_id <> target_sku_id per DB constraint). Insert into 'sku_compatibility' table. Use data-testid='add-relationship-dialog', data-testid='source-sku-search', data-testid='target-sku-search', data-testid='relationship-type-select', data-testid='directionality-select', data-testid='mandatory-checkbox', data-testid='confirm-btn', data-testid='cancel-btn', data-testid='write-error', data-testid='validation-error'.",
+    "In index.ts: Export ProductRelationshipsPanel and AddRelationshipDialog.",
+    "Create __tests__/ProductRelationshipsPanel.test.tsx following PromotedAlternativesPanel test pattern. Mock fromTable for sku_compatibility, template_lighting, template_zone_sku tables. Test: renders in DESIGNER mode, hidden in CONSULTANT mode, displays relationships after fetch, shows correct relationship type badges, shows directionality indicators, shows mandatory flag, shows empty state, opens dialog on button click, remove button works. Minimum 9 test cases."
+  ],
+  "acceptance_criteria": [
+    "ProductRelationshipsPanel renders in DESIGNER mode and is hidden in CONSULTANT mode",
+    "Panel fetches SKU compatibility relationships relevant to the template's SKUs",
+    "Each relationship shows source/target SKUs, type badge, directionality, and mandatory flag",
+    "Relationship type badges are color-coded: REQUIRES(red), COMPATIBLE_WITH(green), ALTERNATIVE_TO(blue)",
+    "Add button opens dialog with SKU search for both source and target",
+    "Dialog validates source != target before allowing submission",
+    "Dialog inserts into sku_compatibility table with all required fields",
+    "Remove button deletes the relationship",
+    "All new tests pass along with existing tests",
+    "TypeScript strict mode passes with no errors"
+  ],
+  "verification": [
+    "cd frontend && unset NODE_OPTIONS && npx vitest --run src/components/ProductRelationships/__tests__/",
+    "cd frontend && unset NODE_OPTIONS && npx tsc --noEmit",
+    "cd frontend && unset NODE_OPTIONS && npx vitest --run"
+  ],
+  "blocked_reason": null,
+  "findings": "All 14 new tests pass. Full suite: 714 tests pass. TypeScript strict mode clean. Panel fetches SKU IDs from template_lighting, template_trim, and template_zone_sku, then queries sku_compatibility with .or() filter. AddRelationshipDialog validates source != target before insert."
+}

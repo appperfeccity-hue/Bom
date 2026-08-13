@@ -9,6 +9,6 @@
     "tests": "pass",
     "test_quality": "pass",
     "docker_build": "skipped",
-    "summary": "TypeScript strict compilation passes cleanly. All 411 tests pass (349 existing + 62 new). All 13 golden fixtures verified. Tests exercise real calculation logic with concrete numeric assertions."
+    "summary": "TypeScript strict compilation passes cleanly. All 432 tests pass (349 existing + 83 new). All 13 golden fixtures verified. Engines validated with input guards, type coercion fixes, and partial-result handling. Semantic review v2 APPROVED."
   }
 }
