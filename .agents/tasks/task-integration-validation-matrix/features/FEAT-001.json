@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "feat",
   "description": "Create the comprehensive integration test suite in frontend/src/__integration__/ covering all 10 areas of the MVP Integration Validation Matrix. Tests exercise the full production chain: Template -> Canvas Snapshot -> Wall/Zone Validation -> Construction + Mounting Rules -> SKU Assignment/Compatibility -> Lighting/Trim/Furniture -> BOM Calculation -> BOM<->Canvas Consistency -> Finalisation. Tests use realistic mock data and directly call the pure engine functions and test store states.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "Create directory frontend/src/__integration__/ for the integration test files.",
     "Create frontend/src/__integration__/helpers/fixtures.ts with shared realistic mock data factories: createStraightWallSnapshot (3000x2400 wall, 2 zones, panels 600x1200, gaps 3mm, waste 5%), createLCornerSnapshot (L-corner wall with segment_a 2000mm and segment_b 1500mm, 3 zones with correct segment assignments), createMultiZoneMultiSkuSnapshot (4 zones, different SKUs, various panel sizes), createConsultantModeInput (permissions with LOCKED/RESTRICTED/FREE fields and consultant actions), createFinalisationInput (full pipeline input that passes all validation).",
@@ -34,5 +34,5 @@
     "Run 'unset NODE_OPTIONS && cd /projects/sandbox/Bom/frontend && npx vitest --run' and confirm all tests pass (901 existing + new integration tests)"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All 121 integration tests pass alongside 901 existing tests (1022 total). One test required adjustment: a 30mm zone width triggers GEO_ZONE_MIN_DIMENSION before reaching the panel engine's 50mm retained check. Fixed by using a zone configuration (110mm wide, 100mm panels, 12mm gap) that passes geometry validation but correctly triggers the retained width failure in the panel engine."
 }
