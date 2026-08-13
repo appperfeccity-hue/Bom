@@ -77,7 +77,7 @@ export const useFinalizationStore = create<FinalizationStore>((set, get) => ({
       const timestamp = new Date().toISOString();
       const computedHash = await computeSha256(projectId + finalizationKey + timestamp);
 
-      const { data, error } = await supabase.schema('perfecity').rpc('finalize_project', {
+      const { data, error } = await supabase.rpc('finalize_project', {
         p_project_id: projectId,
         p_user_id: userId,
         p_finalization_key: finalizationKey,

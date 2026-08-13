@@ -21,6 +21,9 @@ export const supabase = createClient(
   supabaseUrl ?? 'http://localhost:54321',
   supabaseAnonKey ?? 'placeholder-key',
   {
+    db: {
+      schema: 'perfecity',
+    },
     auth: {
       autoRefreshToken: true,
       persistSession: true,
@@ -35,9 +38,10 @@ export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
 
 /**
  * Helper to query a table in the perfecity schema.
- * Uses the schema option on the query builder to target perfecity.
+ * The global client is already configured with db.schema = 'perfecity',
+ * so this is a convenience wrapper.
  * Returns the query builder. Callers should handle errors from results.
  */
 export function fromTable(table: string) {
-  return supabase.schema('perfecity').from(table);
+  return supabase.from(table);
 }
