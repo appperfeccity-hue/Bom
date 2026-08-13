@@ -2,7 +2,7 @@
   "id": "FEAT-003",
   "type": "feat",
   "description": "Build the Wall Configuration Store, Consultant Permission model, update BOM pipeline integration, update snapshot builder, and add database migration for new tables (template_wall_configuration, project_wall_configuration, project_obstruction, generated_panel_frame). Wire the wallConfigEngine into the application stores and BOM pipeline.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "1. Create frontend/src/stores/wallConfigStore.ts - Zustand store managing wall configuration state: wall_type, total_width_mm, total_height_mm, rows, columns, panel_gap_mm, fit_algorithm, fit_intensity_percent, mounting_type, obstructions[]. Actions: setWallConfig, addObstruction, removeObstruction, updateObstruction, regenerateFrames (calls wallConfigEngine). Stores the generated panel frames. Undo/redo operates on config changes.",
     "2. Create consultant permission types in frontend/src/types/database.ts: Add ConsultantWallPermission interface with fields for each wall/spacing parameter (LOCKED|ALLOWED). Add to the existing permission model. Rule 72: Consultant can only change parameters explicitly marked ALLOWED by Designer. Rule 73: Consultant cannot manually edit panel frames.",
@@ -30,5 +30,5 @@
     "unset NODE_OPTIONS && cd frontend && npx vitest run"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All 1094 tests pass (35 new tests added: 28 wallConfigStore + 7 bomPipelineWallConfig). TypeScript typecheck clean except pre-existing ValidationOverlayLayer.tsx unused var. Wall panel engine uses 'smallest N covering' algorithm (not floor division), so panel counts are ceiling-style. The snapshotBuilder signature was extended with optional 7th parameter (WallConfigSnapshotInput) so all existing callers continue to work without changes. The SnapshotData type now includes 5 new fields with sensible defaults (null/empty array) when wallConfigInput is not provided."
 }
