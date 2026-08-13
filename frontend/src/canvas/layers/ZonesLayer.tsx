@@ -2,7 +2,6 @@ import { Layer, Rect, Text } from 'react-konva';
 import { useCanvasStore } from '@/stores/canvasStore';
 import { useProjectStore } from '@/stores/projectStore';
 import { useBomStore } from '@/stores/bomStore';
-import { CanvasMode } from '@/types/database';
 import { CanvasLayer } from '@/types/canvas';
 import { useZoneValidation } from '@/canvas/utils/useZoneValidation';
 import type { TemplateZone } from '@/types/database';
@@ -26,12 +25,13 @@ function isTouchDevice(): boolean {
 
 /**
  * Renders all zones from projectStore as Konva Rects.
- * In DESIGNER mode: zones are interactive (clicks select, drag to move).
- * In CONSULTANT mode: read-only.
+ * Zones are now system-generated (from wallConfigEngine) and read-only
+ * in both DESIGNER and CONSULTANT modes (Rule 65).
+ * Selection is allowed for SKU assignment viewing.
+ * A visual indicator (dashed stroke pattern) shows zones are system-generated.
  */
 export function ZonesLayer({ wallHeight }: ZonesLayerProps) {
   const visible = useCanvasStore((s) => s.layerVisibility[CanvasLayer.ZONES]);
-  const mode = useCanvasStore((s) => s.mode);
   const selection = useCanvasStore((s) => s.selection);
   const selectZone = useCanvasStore((s) => s.selectZone);
   const toggleZoneSelection = useCanvasStore((s) => s.toggleZoneSelection);
@@ -44,25 +44,22 @@ export function ZonesLayer({ wallHeight }: ZonesLayerProps) {
 
   if (!visible) return null;
 
-  const isDesigner = mode === CanvasMode.DESIGNER;
-
   const handleZoneClick = (zone: TemplateZone, e: { evt: Event }) => {
-    if (isDesigner) {
-      const nativeEvt = e.evt as MouseEvent | TouchEvent;
-      const shiftHeld = 'shiftKey' in nativeEvt && (nativeEvt as MouseEvent).shiftKey;
-      if (shiftHeld) {
-        toggleZoneSelection(zone.zone_id);
-      } else {
-        selectZone(zone.zone_id);
-      }
-
-      // Highlight corresponding BOM lines for the clicked zone
-      const bomLines = useBomStore.getState().masterBomLines;
-      const matchingLineIds = bomLines
-        .filter((line) => line.source_zone_id === zone.zone_id)
-        .map((line) => line.master_bom_line_id);
-      setHighlightedBomLineIds(matchingLineIds);
+    // Allow selection for SKU viewing (read-only - no editing)
+    const nativeEvt = e.evt as MouseEvent | TouchEvent;
+    const shiftHeld = 'shiftKey' in nativeEvt && (nativeEvt as MouseEvent).shiftKey;
+    if (shiftHeld) {
+      toggleZoneSelection(zone.zone_id);
+    } else {
+      selectZone(zone.zone_id);
     }
+
+    // Highlight corresponding BOM lines for the clicked zone
+    const bomLines = useBomStore.getState().masterBomLines;
+    const matchingLineIds = bomLines
+      .filter((line) => line.source_zone_id === zone.zone_id)
+      .map((line) => line.master_bom_line_id);
+    setHighlightedBomLineIds(matchingLineIds);
   };
 
   return (
@@ -75,14 +72,14 @@ export function ZonesLayer({ wallHeight }: ZonesLayerProps) {
         // Convert from bottom-left origin to top-left (Konva)
         const screenY = wallHeight - zone.y_mm - zone.height_mm;
 
-        // Determine stroke color: red for invalid, gold for highlighted, blue for selected
+        // Determine stroke color: red for invalid, gold for highlighted, blue for selected, teal for system-generated
         const strokeColor = hasErrors
           ? '#f44336'
           : isHighlighted
             ? '#ffc107'
             : isSelected
               ? '#1976d2'
-              : '#90caf9';
+              : '#4db6ac'; // Teal color indicates system-generated zones
 
         return (
           <Rect
@@ -91,13 +88,13 @@ export function ZonesLayer({ wallHeight }: ZonesLayerProps) {
             y={screenY}
             width={zone.width_mm}
             height={zone.height_mm}
-            fill={isHighlighted ? '#fff8e1' : isSelected ? '#bbdefb' : '#e3f2fd'}
+            fill={isHighlighted ? '#fff8e1' : isSelected ? '#bbdefb' : '#e0f2f1'}
             stroke={strokeColor}
             strokeWidth={(isHighlighted ? 3 : isSelected || hasErrors ? 2 : 1) / zoom}
             hitStrokeWidth={isTouchDevice() ? TOUCH_HIT_PADDING / zoom : 0}
             onClick={(e) => handleZoneClick(zone, e)}
             onTap={(e) => handleZoneClick(zone, e)}
-            listening={isDesigner}
+            listening={true}
             data-zone-id={zone.zone_id}
           />
         );

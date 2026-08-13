@@ -9,9 +9,9 @@ import {
 
 describe('errorCatalogue', () => {
   describe('ErrorCode enum', () => {
-    it('should have 28 error codes', () => {
+    it('should have 33 error codes', () => {
       const codes = Object.values(ErrorCode);
-      expect(codes).toHaveLength(28);
+      expect(codes).toHaveLength(33);
     });
 
     it('should have all unique error codes', () => {

@@ -4,7 +4,7 @@ import { useCanvasStore } from '@/stores/canvasStore';
 import { useProjectStore } from '@/stores/projectStore';
 import { CanvasMode } from '@/types/database';
 import type { TemplateZone } from '@/types/database';
-import { useKeyboardShortcuts, resetNudgeTimer } from '@/canvas/interactions/useKeyboardShortcuts';
+import { useKeyboardShortcuts } from '@/canvas/interactions/useKeyboardShortcuts';
 import { resetHistory, useHistory } from '@/canvas/history/useHistory';
 import { renderHook, act } from '@testing-library/react';
 function makeZone(overrides: Partial<TemplateZone> & { zone_id: string }): TemplateZone {
@@ -27,7 +27,6 @@ const WALL_HEIGHT = 2400;
 describe('Multi-select interactions', () => {
   beforeEach(() => {
     resetHistory();
-    resetNudgeTimer();
     useCanvasStore.setState({
       mode: CanvasMode.DESIGNER,
       viewport: { zoom: 1.0, panX: 0, panY: 0 },
@@ -46,8 +45,8 @@ describe('Multi-select interactions', () => {
       zones: [],
     });
   });
-  describe('Batch delete via keyboard', () => {
-    it('deletes all selected zones with single history push', () => {
+  describe('Rule 65: Zone deletion removed (zones are system-generated)', () => {
+    it('Delete key does not remove zones in Designer mode', () => {
       const zones = [
         makeZone({ zone_id: 'z1', x_mm: 0, y_mm: 0 }),
         makeZone({ zone_id: 'z2', x_mm: 500, y_mm: 0 }),
@@ -61,116 +60,13 @@ describe('Multi-select interactions', () => {
       const { result: shortcuts } = renderHook(() =>
         useKeyboardShortcuts({ history: result.current }),
       );
-      // Push initial state to enable undo
-      act(() => {
-        result.current.pushState(zones);
-      });
       const event = new KeyboardEvent('keydown', { key: 'Delete' });
       act(() => {
         shortcuts.current.handleKeyDown(event);
       });
+      // All zones should remain - deletion is no longer supported
       const remainingZones = useProjectStore.getState().zones;
-      expect(remainingZones).toHaveLength(1);
-      expect(remainingZones[0].zone_id).toBe('z3');
-      // Selection should be cleared
-      expect(useCanvasStore.getState().selection.selectedZoneIds).toEqual([]);
-    });
-    it('does not delete in CONSULTANT mode', () => {
-      const zones = [makeZone({ zone_id: 'z1', x_mm: 0, y_mm: 0 })];
-      useProjectStore.setState({ zones });
-      useCanvasStore.setState({
-        mode: CanvasMode.CONSULTANT,
-        selection: { selectedZoneId: 'z1', selectedZoneIds: ['z1'], resizeHandle: null, marqueeRect: null },
-      });
-      const { result } = renderHook(() => useHistory());
-      const { result: shortcuts } = renderHook(() =>
-        useKeyboardShortcuts({ history: result.current }),
-      );
-      const event = new KeyboardEvent('keydown', { key: 'Delete' });
-      act(() => {
-        shortcuts.current.handleKeyDown(event);
-      });
-      expect(useProjectStore.getState().zones).toHaveLength(1);
-    });
-  });
-  describe('Batch nudge via arrow keys', () => {
-    it('nudges all selected zones by the same offset', () => {
-      const zones = [
-        makeZone({ zone_id: 'z1', x_mm: 200, y_mm: 200 }),
-        makeZone({ zone_id: 'z2', x_mm: 700, y_mm: 200 }),
-      ];
-      useProjectStore.setState({ zones });
-      useCanvasStore.setState({
-        selection: { selectedZoneId: 'z1', selectedZoneIds: ['z1', 'z2'], resizeHandle: null, marqueeRect: null },
-      });
-      const { result } = renderHook(() => useHistory());
-      const { result: shortcuts } = renderHook(() =>
-        useKeyboardShortcuts({ history: result.current }),
-      );
-      const event = new KeyboardEvent('keydown', { key: 'ArrowRight' });
-      act(() => {
-        shortcuts.current.handleKeyDown(event);
-      });
-      const updatedZones = useProjectStore.getState().zones;
-      const z1 = updatedZones.find((z) => z.zone_id === 'z1')!;
-      const z2 = updatedZones.find((z) => z.zone_id === 'z2')!;
-      expect(z1.x_mm).toBe(300);
-      expect(z2.x_mm).toBe(800);
-      // Y unchanged
-      expect(z1.y_mm).toBe(200);
-      expect(z2.y_mm).toBe(200);
-    });
-    it('does not nudge if group would exceed wall boundary', () => {
-      // z2 is at the right edge
-      const zones = [
-        makeZone({ zone_id: 'z1', x_mm: 200, y_mm: 200 }),
-        makeZone({ zone_id: 'z2', x_mm: 2600, y_mm: 200 }),
-      ];
-      useProjectStore.setState({ zones });
-      useCanvasStore.setState({
-        selection: { selectedZoneId: 'z1', selectedZoneIds: ['z1', 'z2'], resizeHandle: null, marqueeRect: null },
-      });
-      const { result } = renderHook(() => useHistory());
-      const { result: shortcuts } = renderHook(() =>
-        useKeyboardShortcuts({ history: result.current }),
-      );
-      const event = new KeyboardEvent('keydown', { key: 'ArrowRight' });
-      act(() => {
-        shortcuts.current.handleKeyDown(event);
-      });
-      // Already at wall boundary for the group
-      const updatedZones = useProjectStore.getState().zones;
-      const z1 = updatedZones.find((z) => z.zone_id === 'z1')!;
-      const z2 = updatedZones.find((z) => z.zone_id === 'z2')!;
-      // The group can still move right because z2 at 2600 + 400 = 3000, which is at the boundary
-      // but the nudge amount is 100 (grid size), so 2600+100+400 = 3100 > 3000
-      // constrainToWall should clamp: group goes from x=200 to x=3000, width=2800
-      // constrained: max x = 3000 - 2800 = 200, so dx = 0
-      expect(z1.x_mm).toBe(200);
-      expect(z2.x_mm).toBe(2600);
-    });
-    it('does not nudge if it would cause overlap with non-selected zone', () => {
-      const zones = [
-        makeZone({ zone_id: 'z1', x_mm: 0, y_mm: 0 }),
-        makeZone({ zone_id: 'z2', x_mm: 500, y_mm: 0 }), // not selected, blocks z1 from moving right
-      ];
-      useProjectStore.setState({ zones });
-      useCanvasStore.setState({
-        selection: { selectedZoneId: 'z1', selectedZoneIds: ['z1'], resizeHandle: null, marqueeRect: null },
-      });
-      const { result } = renderHook(() => useHistory());
-      const { result: shortcuts } = renderHook(() =>
-        useKeyboardShortcuts({ history: result.current }),
-      );
-      const event = new KeyboardEvent('keydown', { key: 'ArrowRight' });
-      act(() => {
-        shortcuts.current.handleKeyDown(event);
-      });
-      const updatedZones = useProjectStore.getState().zones;
-      const z1 = updatedZones.find((z) => z.zone_id === 'z1')!;
-      // z1 nudges right by 100: from 0 to 100, width 400, so occupies 100-500
-      // z2 occupies 500-900 - no overlap (edge touching is not overlap)
-      expect(z1.x_mm).toBe(100);
+      expect(remainingZones).toHaveLength(3);
     });
   });
   describe('Shift+Click toggle selection', () => {
@@ -187,6 +83,31 @@ describe('Multi-select interactions', () => {
       useCanvasStore.getState().toggleZoneSelection('z2');
       const { selection } = useCanvasStore.getState();
       expect(selection.selectedZoneIds).toEqual(['z1']);
+    });
+  });
+  describe('Undo/Redo still works for wall configuration changes', () => {
+    it('Ctrl+Z undoes wall configuration changes', () => {
+      const zonesV1 = [makeZone({ zone_id: 'z1', x_mm: 0, y_mm: 0, width_mm: 500 })];
+      const zonesV2 = [makeZone({ zone_id: 'z1', x_mm: 0, y_mm: 0, width_mm: 800 })];
+      useProjectStore.setState({ zones: zonesV2 });
+
+      const { result } = renderHook(() => useHistory());
+      const { result: shortcuts } = renderHook(() =>
+        useKeyboardShortcuts({ history: result.current }),
+      );
+
+      act(() => {
+        result.current.pushState(zonesV1);
+        result.current.pushState(zonesV2);
+      });
+
+      const event = new KeyboardEvent('keydown', { key: 'z', ctrlKey: true });
+      act(() => {
+        shortcuts.current.handleKeyDown(event);
+      });
+
+      const currentZones = useProjectStore.getState().zones;
+      expect(currentZones[0].width_mm).toBe(500);
     });
   });
 });

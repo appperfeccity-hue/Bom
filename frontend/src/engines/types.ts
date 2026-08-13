@@ -146,6 +146,95 @@ export interface HiddenComponentOutput {
   included: boolean;
 }
 
+// --- Wall Configuration Engine ---
+
+/** Wall type (straight or L-shaped corner). */
+export type WallType = 'STRAIGHT' | 'L_CORNER';
+
+/** Panel fit algorithm for distributing panel widths across columns. */
+export type FitAlgorithm =
+  | 'EQUAL'
+  | 'ADJUST_END_PANELS'
+  | 'SPREAD_LEFT'
+  | 'SPREAD_RIGHT'
+  | 'SPREAD_BOTH_ENDS'
+  | 'CENTRE_FOCUS'
+  | 'OUTER_FOCUS'
+  | 'ALTERNATING';
+
+/** Mounting type for the wall configuration. */
+export type WallMountingType = 'DIRECT' | 'PROFILE' | 'RAIL';
+
+/** Type of obstruction on the wall. */
+export type ObstructionType = 'WINDOW' | 'DOOR' | 'PILLAR' | 'CUSTOM';
+
+/** Wall segment identifier for L_CORNER walls. */
+export type WallSegment = 'SEGMENT_A' | 'SEGMENT_B';
+
+/** An obstruction (protected area) that panels cannot overlap. */
+export interface Obstruction {
+  /** Horizontal position in mm from wall left edge */
+  x_mm: number;
+  /** Vertical position in mm from wall bottom edge */
+  y_mm: number;
+  /** Width of obstruction in mm */
+  width_mm: number;
+  /** Height of obstruction in mm */
+  height_mm: number;
+  /** Type of obstruction */
+  type: ObstructionType;
+}
+
+/** Input configuration for the wall configuration engine. */
+export interface WallConfigInput {
+  /** Wall type (STRAIGHT or L_CORNER) */
+  wall_type: WallType;
+  /** Total wall width in mm */
+  total_width_mm: number;
+  /** Total wall height in mm */
+  total_height_mm: number;
+  /** Number of panel rows */
+  rows: number;
+  /** Number of panel columns */
+  columns: number;
+  /** Structural gap between panel frames in mm (Rule 63: independent from SKU gh_mm/gv_mm) */
+  panel_gap_mm: number;
+  /** Panel fit algorithm */
+  fit_algorithm: FitAlgorithm;
+  /** Fit intensity from 0 to 100 (0 = equal distribution, 100 = maximum algorithm effect) */
+  fit_intensity_percent: number;
+  /** Mounting type */
+  mounting_type: WallMountingType;
+  /** Array of obstructions (protected areas) */
+  obstructions: Obstruction[];
+  /** Segment A width for L_CORNER walls (optional) */
+  segment_a_width_mm?: number;
+  /** Segment B width for L_CORNER walls (optional) */
+  segment_b_width_mm?: number;
+}
+
+/** A generated panel frame. */
+export interface PanelFrame {
+  /** Deterministic ID based on row/col/config hash */
+  frame_id: string;
+  /** Row index (0-based) */
+  row_index: number;
+  /** Column index (0-based) */
+  col_index: number;
+  /** Horizontal position in mm from wall left edge */
+  x_mm: number;
+  /** Vertical position in mm from wall bottom edge */
+  y_mm: number;
+  /** Panel frame width in mm */
+  width_mm: number;
+  /** Panel frame height in mm */
+  height_mm: number;
+  /** Wall segment (for L_CORNER walls) or null */
+  segment: WallSegment | null;
+  /** Whether this panel is at an edge of the wall */
+  is_edge_panel: boolean;
+}
+
 // --- Site Adaptation Engine ---
 
 export type SiteAdaptationStrategy =

@@ -41,6 +41,13 @@ export enum ErrorCode {
   PERM_INVALID_SKU_SELECTION = 'PERM_INVALID_SKU_SELECTION',
   // Quantity errors (1)
   QTY_PANEL_NO_VALID_ARRANGEMENT = 'QTY_PANEL_NO_VALID_ARRANGEMENT',
+  // Wall Configuration errors (3)
+  E_WALL_NO_DIMENSIONS = 'E-WALL-001',
+  E_WALL_INVALID_GEOMETRY = 'E-WALL-002',
+  E_WALL_GAP_EXCEEDS_SPACE = 'E-WALL-003',
+  // Fit errors (2)
+  E_FIT_PANEL_BELOW_MIN = 'E-FIT-001',
+  E_FIT_INTENSITY_INVALID = 'E-FIT-002',
 }
 
 export enum ErrorSeverity {
@@ -219,6 +226,33 @@ export const ERROR_DEFINITIONS: Record<ErrorCode, ErrorDefinition> = {
     severity: ErrorSeverity.BLOCKING,
     category: ErrorCategory.QUANTITY,
     messageTemplate: 'No valid panel arrangement found for the given dimensions',
+  },
+  // Wall Configuration
+  [ErrorCode.E_WALL_NO_DIMENSIONS]: {
+    severity: ErrorSeverity.BLOCKING,
+    category: ErrorCategory.GEOMETRY,
+    messageTemplate: 'Wall dimensions are missing or zero',
+  },
+  [ErrorCode.E_WALL_INVALID_GEOMETRY]: {
+    severity: ErrorSeverity.BLOCKING,
+    category: ErrorCategory.GEOMETRY,
+    messageTemplate: 'Wall geometry is invalid (negative dimensions or invalid L_CORNER segments)',
+  },
+  [ErrorCode.E_WALL_GAP_EXCEEDS_SPACE]: {
+    severity: ErrorSeverity.BLOCKING,
+    category: ErrorCategory.GEOMETRY,
+    messageTemplate: 'Panel gaps exceed available wall space',
+  },
+  // Fit
+  [ErrorCode.E_FIT_PANEL_BELOW_MIN]: {
+    severity: ErrorSeverity.BLOCKING,
+    category: ErrorCategory.GEOMETRY,
+    messageTemplate: 'Generated panel frame dimension is below minimum 50mm (Rule 69)',
+  },
+  [ErrorCode.E_FIT_INTENSITY_INVALID]: {
+    severity: ErrorSeverity.BLOCKING,
+    category: ErrorCategory.GEOMETRY,
+    messageTemplate: 'Fit intensity must be between 0 and 100',
   },
 };
 

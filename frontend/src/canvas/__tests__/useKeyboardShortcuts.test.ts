@@ -7,7 +7,6 @@ import { useKeyboardShortcuts } from '@/canvas/interactions/useKeyboardShortcuts
 import { useHistory, resetHistory } from '@/canvas/history/useHistory';
 import { CanvasMode } from '@/types/database';
 import type { TemplateZone } from '@/types/database';
-import { resetNudgeTimer } from '@/canvas/interactions/useKeyboardShortcuts';
 
 // Mock Supabase client
 vi.mock('@/lib/supabase', () => ({
@@ -51,7 +50,6 @@ function fireKey(key: string, opts: Partial<KeyboardEvent> = {}): KeyboardEvent 
 describe('useKeyboardShortcuts', () => {
   beforeEach(() => {
     resetHistory();
-    resetNudgeTimer();
     useCanvasStore.setState({
       mode: CanvasMode.DESIGNER,
       viewport: { zoom: 1.0, panX: 0, panY: 0 },
@@ -74,50 +72,6 @@ describe('useKeyboardShortcuts', () => {
     });
   });
 
-  it('Delete key removes selected zone in Designer mode', () => {
-    const zone = makeZone('z1', 100, 100);
-    useProjectStore.setState({ zones: [zone] });
-    useCanvasStore.setState({
-      mode: CanvasMode.DESIGNER,
-      selection: { selectedZoneId: 'z1', selectedZoneIds: ['z1'], resizeHandle: null, marqueeRect: null },
-    });
-
-    const { result } = renderHook(() => {
-      const history = useHistory();
-      return useKeyboardShortcuts({ history });
-    });
-
-    act(() => {
-      result.current.handleKeyDown(fireKey('Delete'));
-    });
-
-    // Zone should be removed from store
-    expect(useProjectStore.getState().zones).toHaveLength(0);
-    // Selection should be cleared
-    expect(useCanvasStore.getState().selection.selectedZoneId).toBeNull();
-  });
-
-  it('Delete key does nothing in Consultant mode', () => {
-    const zone = makeZone('z1', 100, 100);
-    useProjectStore.setState({ zones: [zone] });
-    useCanvasStore.setState({
-      mode: CanvasMode.CONSULTANT,
-      selection: { selectedZoneId: 'z1', selectedZoneIds: ['z1'], resizeHandle: null, marqueeRect: null },
-    });
-
-    const { result } = renderHook(() => {
-      const history = useHistory();
-      return useKeyboardShortcuts({ history });
-    });
-
-    act(() => {
-      result.current.handleKeyDown(fireKey('Delete'));
-    });
-
-    // Zone should still exist
-    expect(useProjectStore.getState().zones).toHaveLength(1);
-  });
-
   it('Escape clears selection', () => {
     useCanvasStore.setState({
       selection: { selectedZoneId: 'z1', selectedZoneIds: ['z1'], resizeHandle: null, marqueeRect: null },
@@ -133,100 +87,6 @@ describe('useKeyboardShortcuts', () => {
     });
 
     expect(useCanvasStore.getState().selection.selectedZoneId).toBeNull();
-  });
-
-  it('Arrow keys nudge zone by grid size when snap enabled', () => {
-    const zone = makeZone('z1', 500, 500);
-    useProjectStore.setState({ zones: [zone] });
-    useCanvasStore.setState({
-      mode: CanvasMode.DESIGNER,
-      selection: { selectedZoneId: 'z1', selectedZoneIds: ['z1'], resizeHandle: null, marqueeRect: null },
-      gridConfig: { size: 100, snapEnabled: true },
-    });
-
-    const { result } = renderHook(() => {
-      const history = useHistory();
-      return useKeyboardShortcuts({ history });
-    });
-
-    act(() => {
-      result.current.handleKeyDown(fireKey('ArrowRight'));
-    });
-
-    const updatedZones = useProjectStore.getState().zones;
-    expect(updatedZones[0].x_mm).toBe(600); // 500 + 100 (grid size)
-    expect(updatedZones[0].y_mm).toBe(500); // unchanged
-  });
-
-  it('Arrow keys nudge by 1mm when snap disabled', () => {
-    const zone = makeZone('z1', 500, 500);
-    useProjectStore.setState({ zones: [zone] });
-    useCanvasStore.setState({
-      mode: CanvasMode.DESIGNER,
-      selection: { selectedZoneId: 'z1', selectedZoneIds: ['z1'], resizeHandle: null, marqueeRect: null },
-      gridConfig: { size: 100, snapEnabled: false },
-    });
-
-    const { result } = renderHook(() => {
-      const history = useHistory();
-      return useKeyboardShortcuts({ history });
-    });
-
-    act(() => {
-      result.current.handleKeyDown(fireKey('ArrowLeft'));
-    });
-
-    const updatedZones = useProjectStore.getState().zones;
-    expect(updatedZones[0].x_mm).toBe(499); // 500 - 1
-  });
-
-  it('Nudge is constrained to wall boundary', () => {
-    // Place zone at x=0, nudge left should keep it at 0
-    const zone = makeZone('z1', 0, 500);
-    useProjectStore.setState({ zones: [zone] });
-    useCanvasStore.setState({
-      mode: CanvasMode.DESIGNER,
-      selection: { selectedZoneId: 'z1', selectedZoneIds: ['z1'], resizeHandle: null, marqueeRect: null },
-      gridConfig: { size: 100, snapEnabled: true },
-    });
-
-    const { result } = renderHook(() => {
-      const history = useHistory();
-      return useKeyboardShortcuts({ history });
-    });
-
-    act(() => {
-      result.current.handleKeyDown(fireKey('ArrowLeft'));
-    });
-
-    // Zone should stay at 0 since constrainToWall clamps it
-    const updatedZones = useProjectStore.getState().zones;
-    expect(updatedZones[0].x_mm).toBe(0);
-  });
-
-  it('Nudge is blocked when it would cause overlap', () => {
-    // Two zones side by side
-    const zone1 = makeZone('z1', 0, 0);
-    const zone2 = makeZone('z2', 400, 0);
-    useProjectStore.setState({ zones: [zone1, zone2] });
-    useCanvasStore.setState({
-      mode: CanvasMode.DESIGNER,
-      selection: { selectedZoneId: 'z1', selectedZoneIds: ['z1'], resizeHandle: null, marqueeRect: null },
-      gridConfig: { size: 100, snapEnabled: true },
-    });
-
-    const { result } = renderHook(() => {
-      const history = useHistory();
-      return useKeyboardShortcuts({ history });
-    });
-
-    act(() => {
-      result.current.handleKeyDown(fireKey('ArrowRight'));
-    });
-
-    // Zone1 should not move because it would overlap with zone2
-    const updatedZones = useProjectStore.getState().zones;
-    expect(updatedZones[0].x_mm).toBe(0);
   });
 
   it('Ctrl+Z triggers undo', () => {
@@ -282,7 +142,28 @@ describe('useKeyboardShortcuts', () => {
     expect(currentZones[0].x_mm).toBe(100); // Back to zones2
   });
 
-  it('ArrowUp increases y (bottom-left origin)', () => {
+  it('Delete key does nothing (zones are read-only per Rule 65)', () => {
+    const zone = makeZone('z1', 100, 100);
+    useProjectStore.setState({ zones: [zone] });
+    useCanvasStore.setState({
+      mode: CanvasMode.DESIGNER,
+      selection: { selectedZoneId: 'z1', selectedZoneIds: ['z1'], resizeHandle: null, marqueeRect: null },
+    });
+
+    const { result } = renderHook(() => {
+      const history = useHistory();
+      return useKeyboardShortcuts({ history });
+    });
+
+    act(() => {
+      result.current.handleKeyDown(fireKey('Delete'));
+    });
+
+    // Zone should still exist - deletion is no longer supported
+    expect(useProjectStore.getState().zones).toHaveLength(1);
+  });
+
+  it('Arrow keys do nothing (zone nudge removed per Rule 65)', () => {
     const zone = makeZone('z1', 500, 500);
     useProjectStore.setState({ zones: [zone] });
     useCanvasStore.setState({
@@ -297,20 +178,19 @@ describe('useKeyboardShortcuts', () => {
     });
 
     act(() => {
-      result.current.handleKeyDown(fireKey('ArrowUp'));
+      result.current.handleKeyDown(fireKey('ArrowRight'));
     });
 
     const updatedZones = useProjectStore.getState().zones;
-    expect(updatedZones[0].y_mm).toBe(600); // 500 + 100
+    expect(updatedZones[0].x_mm).toBe(500); // Unchanged
+    expect(updatedZones[0].y_mm).toBe(500); // Unchanged
   });
 
-  it('ArrowDown decreases y (bottom-left origin)', () => {
-    const zone = makeZone('z1', 500, 500);
-    useProjectStore.setState({ zones: [zone] });
+  it('Ctrl+C does nothing (zone copy removed per Rule 65)', () => {
+    const zones = [makeZone('z1', 200, 200)];
+    useProjectStore.setState({ zones });
     useCanvasStore.setState({
-      mode: CanvasMode.DESIGNER,
       selection: { selectedZoneId: 'z1', selectedZoneIds: ['z1'], resizeHandle: null, marqueeRect: null },
-      gridConfig: { size: 100, snapEnabled: true },
     });
 
     const { result } = renderHook(() => {
@@ -319,59 +199,29 @@ describe('useKeyboardShortcuts', () => {
     });
 
     act(() => {
-      result.current.handleKeyDown(fireKey('ArrowDown'));
+      result.current.handleKeyDown(fireKey('c', { ctrlKey: true }));
     });
 
-    const updatedZones = useProjectStore.getState().zones;
-    expect(updatedZones[0].y_mm).toBe(400); // 500 - 100
+    expect(useCanvasStore.getState().clipboard).toBeNull();
   });
 
-  it('rapid arrow nudges within 300ms create only one history entry', () => {
-    const zone = makeZone('z1', 500, 500);
-    useProjectStore.setState({ zones: [zone] });
+  it('Ctrl+V does nothing (zone paste removed per Rule 65)', () => {
+    const zones = [makeZone('z1', 200, 200)];
+    useProjectStore.setState({ zones });
     useCanvasStore.setState({
-      mode: CanvasMode.DESIGNER,
-      selection: { selectedZoneId: 'z1', selectedZoneIds: ['z1'], resizeHandle: null, marqueeRect: null },
-      gridConfig: { size: 100, snapEnabled: true },
+      clipboard: [makeZone('z1', 200, 200)],
     });
 
     const { result } = renderHook(() => {
       const history = useHistory();
-      return { shortcuts: useKeyboardShortcuts({ history }), history };
+      return useKeyboardShortcuts({ history });
     });
 
-    // Push an initial baseline state so we have a known undo target
     act(() => {
-      result.current.history.pushState([makeZone('z1', 500, 500)]);
+      result.current.handleKeyDown(fireKey('v', { ctrlKey: true }));
     });
 
-    // First arrow press - should push state to history (debounce timer expired since lastNudgeTime=0)
-    act(() => {
-      result.current.shortcuts.handleKeyDown(fireKey('ArrowRight'));
-    });
-
-    // Second arrow press immediately after - within 300ms, should NOT push state
-    act(() => {
-      result.current.shortcuts.handleKeyDown(fireKey('ArrowRight'));
-    });
-
-    // The zone should have moved twice (500 -> 600 -> 700)
-    const updatedZones = useProjectStore.getState().zones;
-    expect(updatedZones[0].x_mm).toBe(700);
-
-    // Count undo steps available - should be exactly 1 (we can undo from the nudge push back to baseline)
-    // If the second nudge had also pushed, we'd have 2 undo steps
-    let undoCount = 0;
-    act(() => {
-      let state = result.current.history.undo();
-      while (state !== null) {
-        undoCount++;
-        state = result.current.history.undo();
-      }
-    });
-
-    // Only 1 undo step: from nudge push back to baseline.
-    // The second rapid nudge did NOT create an additional history entry.
-    expect(undoCount).toBe(1);
+    // No new zones pasted
+    expect(useProjectStore.getState().zones).toHaveLength(1);
   });
 });

@@ -117,8 +117,8 @@ describe('ZonesLayer - validation styling', () => {
 
     render(<ZonesLayer wallHeight={2400} />);
     const rects = screen.getAllByTestId('konva-rect');
-    // The zone rect should have normal blue stroke
-    expect(rects[0]).toHaveAttribute('stroke', '#90caf9');
+    // The zone rect should have teal stroke (system-generated zones)
+    expect(rects[0]).toHaveAttribute('stroke', '#4db6ac');
   });
 
   it('renders zones with red stroke when they have overlap errors', () => {

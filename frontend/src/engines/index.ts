@@ -10,6 +10,7 @@ export { calculateLights } from './lightEngine';
 export { calculateFurniture } from './furnitureEngine';
 export { calculateHiddenComponent } from './hiddenComponentEngine';
 export { adaptZonesToSite } from './siteAdaptationEngine';
+export { generatePanelFrames } from './wallConfigEngine';
 export { EngineError } from './types';
 export type {
   WallPanelInput,
@@ -33,6 +34,14 @@ export type {
   SiteAdaptationInput,
   SiteAdaptationZoneOutput,
   SiteAdaptationOutput,
+  WallConfigInput,
+  PanelFrame,
+  WallType,
+  FitAlgorithm,
+  WallMountingType,
+  ObstructionType,
+  Obstruction,
+  WallSegment,
 } from './types';
 
 // --- Error Catalogue ---
