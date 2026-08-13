@@ -2,7 +2,7 @@
   "id": "FEAT-002",
   "type": "feat",
   "description": "Build the Wall Configuration Engine (wallConfigEngine.ts) with 8 Panel Fit algorithms, obstruction handling, and deterministic panel frame generation. Remove manual zone creation/drag/resize interactions. Update CanvasContainer and SelectionLayer to remove zone manipulation. Add new error codes E-WALL-001 through E-FIT-002 to error catalogue.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "1. Create frontend/src/engines/wallConfigEngine.ts with: WallConfigInput type (wall_type: STRAIGHT|L_CORNER, total_width_mm, total_height_mm, rows, columns, panel_gap_mm, fit_algorithm: EQUAL|ADJUST_END_PANELS|SPREAD_LEFT|SPREAD_RIGHT|SPREAD_BOTH_ENDS|CENTRE_FOCUS|OUTER_FOCUS|ALTERNATING, fit_intensity_percent: 0-100, mounting_type, obstructions array, segment_a_width_mm optional, segment_b_width_mm optional)",
     "2. Implement generatePanelFrames(config: WallConfigInput): PanelFrame[] - deterministic pure function that computes panel frame positions and dimensions from wall config parameters. Each PanelFrame has: frame_id (deterministic UUID based on row/col/config hash), row_index, col_index, x_mm, y_mm, width_mm, height_mm, segment (SEGMENT_A|SEGMENT_B|null), is_edge_panel boolean",
@@ -48,5 +48,5 @@
     "unset NODE_OPTIONS && cd frontend && npx vitest run"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All 1059 tests pass (56 new wallConfigEngine tests + updated existing tests). TypeScript typecheck clean except pre-existing ValidationOverlayLayer.tsx unused var. ZonesLayer default stroke color changed from #90caf9 to #4db6ac (teal) to visually indicate system-generated zones - updated the ZonesLayer.validation.test accordingly. The errorCatalogue count test updated from 28 to 33 error codes. The store-level copySelection/pasteClipboard/duplicateSelection APIs in canvasStore still exist for programmatic use but keyboard shortcuts no longer invoke them for zone manipulation."
 }
