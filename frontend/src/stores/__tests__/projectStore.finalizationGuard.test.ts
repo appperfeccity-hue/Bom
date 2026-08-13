@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { useProjectStore } from '../projectStore';
 import { ProjectStatus, ZoneWidthStrategy, ZoneHeightStrategy, ZonePositionStrategy } from '@/types/database';
@@ -36,15 +35,21 @@ vi.mock('@/stores/canvasStore', () => ({
 const makeProject = (overrides: Partial<Project> = {}): Project => ({
   project_id: 'proj-1',
   customer_reference: 'Test Project',
+  site_reference: null,
   template_id: 'tpl-1',
+  snapshot_id: null,
+  current_configuration_id: null,
+  current_actual_bom_id: null,
   status: ProjectStatus.VALIDATED,
   created_by: 'user-1',
   created_at: '2024-01-01T00:00:00Z',
+  updated_at: '2024-01-01T00:00:00Z',
+  finalized_at: null,
   ...overrides,
 });
 
-const makeZone = (id: string): TemplateZone => ({
-  id,
+const makeZone = (zoneId: string): TemplateZone => ({
+  zone_id: zoneId,
   template_id: 'tpl-1',
   x_mm: 0,
   y_mm: 0,
@@ -72,7 +77,7 @@ describe('projectStore - finalization guards', () => {
   describe('updateZone guard', () => {
     it('does not update zone when project is FINALIZED', async () => {
       const originalZones = useProjectStore.getState().zones;
-      const updatedZone = { ...makeZone('zone-1'), name: 'Modified Zone' };
+      const updatedZone = { ...makeZone('zone-1'), width_mm: 200 };
 
       await useProjectStore.getState().updateZone(updatedZone);
 
@@ -84,13 +89,13 @@ describe('projectStore - finalization guards', () => {
       useProjectStore.setState({
         currentProject: makeProject({ status: ProjectStatus.VALIDATED }),
       });
-      const updatedZone = { ...makeZone('zone-1'), name: 'Modified Zone' };
+      const updatedZone = { ...makeZone('zone-1'), width_mm: 200 };
 
       await useProjectStore.getState().updateZone(updatedZone);
 
       // Zone should be updated (optimistic update)
-      const zone = useProjectStore.getState().zones.find((z) => z.id === 'zone-1');
-      expect(zone?.name).toBe('Modified Zone');
+      const zone = useProjectStore.getState().zones.find((z) => z.zone_id === 'zone-1');
+      expect(zone?.width_mm).toBe(200);
     });
   });
 
@@ -100,7 +105,6 @@ describe('projectStore - finalization guards', () => {
 
       await useProjectStore.getState().addZone({
         template_id: 'tpl-1',
-        name: 'New Zone',
         x_mm: 0,
         y_mm: 0,
         width_mm: 50,

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import React from 'react';
@@ -101,6 +100,7 @@ const mockSku: SkuMaster = {
   status: 'ACTIVE' as never,
   created_by: 'user-1',
   created_at: '',
+  updated_at: '',
 };
 
 describe('SkuPlacementLayer', () => {

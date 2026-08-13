@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { useTemplateManagementStore } from '../templateManagementStore';
 import { useAuthStore } from '../authStore';
@@ -340,6 +339,7 @@ describe('templateManagementStore', () => {
         name: 'New Template',
         description: 'A new one',
         design_family_id: 'fam-1',
+        wall_geometry: 'STRAIGHT',
         wall_application: 'WALL_PANEL', waste_factor: 0.05,
         adaptation_strategy: AdaptationStrategy.PROPORTIONAL,
       });
@@ -369,6 +369,7 @@ describe('templateManagementStore', () => {
       await useTemplateManagementStore.getState().createTemplate({
         name: 'Fail',
         design_family_id: 'fam-1',
+        wall_geometry: 'STRAIGHT',
         wall_application: 'WALL_PANEL', waste_factor: 0.05,
         adaptation_strategy: AdaptationStrategy.PROPORTIONAL,
       });

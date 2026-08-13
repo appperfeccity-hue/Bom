@@ -1,7 +1,15 @@
-// @ts-nocheck
 import { describe, it, expect } from 'vitest';
 import { buildSnapshotData, computeSnapshotHash } from '../snapshotBuilder';
 import type { SnapshotData } from '../snapshotBuilder';
+
+/** Amendment 001 fields with defaults for test SnapshotData literals */
+const AMENDMENT_DEFAULTS = {
+  template_wall_configuration: null,
+  consultant_permissions: null,
+  project_wall_configuration: null,
+  site_obstructions: [] as never[],
+  generated_panel_frames: [] as never[],
+} as const;
 import {
   TemplateStatus,
   AdaptationStrategy,
@@ -73,6 +81,7 @@ const makeSku = (overrides: Partial<SkuMaster> = {}): SkuMaster => ({
   status: SkuStatus.ACTIVE,
   created_by: 'user-1',
   created_at: '2024-01-01T00:00:00Z',
+  updated_at: '2024-01-01T00:00:00Z',
   ...overrides,
 });
 
@@ -216,6 +225,8 @@ describe('snapshotBuilder', () => {
         trims: [],
         hidden_components: [],
         calculation_parameters: {},
+        ...AMENDMENT_DEFAULTS,
+        ...AMENDMENT_DEFAULTS,
       };
 
       const hash1 = await computeSnapshotHash(snapshotData);
@@ -236,6 +247,7 @@ describe('snapshotBuilder', () => {
         trims: [],
         hidden_components: [],
         calculation_parameters: {},
+        ...AMENDMENT_DEFAULTS,
       };
 
       const data2: SnapshotData = {
@@ -247,6 +259,8 @@ describe('snapshotBuilder', () => {
         trims: [],
         hidden_components: [],
         calculation_parameters: {},
+        ...AMENDMENT_DEFAULTS,
+        ...AMENDMENT_DEFAULTS,
       };
 
       const hash1 = await computeSnapshotHash(data1);
@@ -265,6 +279,7 @@ describe('snapshotBuilder', () => {
         trims: [],
         hidden_components: [],
         calculation_parameters: {},
+        ...AMENDMENT_DEFAULTS,
       };
 
       const dataWithZone: SnapshotData = {
@@ -310,6 +325,7 @@ describe('snapshotBuilder', () => {
         trims: [],
         hidden_components: [],
         calculation_parameters: {},
+        ...AMENDMENT_DEFAULTS,
       };
 
       const data2: SnapshotData = {
@@ -332,6 +348,7 @@ describe('snapshotBuilder', () => {
         trims: [],
         hidden_components: [],
         calculation_parameters: {},
+        ...AMENDMENT_DEFAULTS,
       };
 
       const hash1 = await computeSnapshotHash(data1);
@@ -350,6 +367,7 @@ describe('snapshotBuilder', () => {
         trims: [],
         hidden_components: [],
         calculation_parameters: {},
+        ...AMENDMENT_DEFAULTS,
       };
 
       const data2: SnapshotData = {
@@ -361,6 +379,7 @@ describe('snapshotBuilder', () => {
         trims: [],
         hidden_components: [],
         calculation_parameters: {},
+        ...AMENDMENT_DEFAULTS,
       };
 
       const hash1 = await computeSnapshotHash(data1);

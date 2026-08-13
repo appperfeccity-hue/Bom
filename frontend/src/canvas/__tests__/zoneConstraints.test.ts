@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { describe, it, expect } from 'vitest';
 import {
   clampDimensions,
@@ -21,7 +20,6 @@ function makeZone(overrides: Partial<TemplateZone> = {}): TemplateZone {
   return {
     zone_id: 'zone-1',
     template_id: 'tmpl-1',
-    name: 'Test Zone',
     x_mm: 0,
     y_mm: 0,
     width_mm: 400,

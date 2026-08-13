@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { useBomStore } from '@/stores/bomStore';
@@ -92,7 +91,7 @@ const mockMasterBomLines: MasterBomLine[] = [
 const mockActualBom: ActualBom = {
   actual_bom_id: 'abom-1',
   project_id: 'proj-1',
-  snapshot_snapshot_id: 'snap-1',
+  snapshot_id: 'snap-1',
   configuration_id: 'cfg-1',
   status: ActualBomStatus.VALIDATED,
   engine_version: '1.0',

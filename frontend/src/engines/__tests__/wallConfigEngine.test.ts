@@ -59,14 +59,22 @@ describe('wallConfigEngine', () => {
     });
 
     it('accounts for gaps between panels', () => {
-      // Panel width = (3000 - 2*10) / 3 = 2980 / 3 = 993.33...
+      // Available width = 3000 - 2*10 = 2980; per column = 2980/3 = 993.33...
+      // After rounding with sum-correction: widths should sum to 2980
+      // Math.round(993.33) = 993 for each, sum = 2979, +1 correction on widest -> [994, 993, 993]
       const config = makeConfig({ total_width_mm: 3000, columns: 3, panel_gap_mm: 10 });
       const frames = generatePanelFrames(config);
       expect(frames).toHaveLength(3);
-      const expectedWidth = (3000 - 2 * 10) / 3;
-      expect(frames[0].width_mm).toBeCloseTo(expectedWidth, 5);
-      expect(frames[1].width_mm).toBeCloseTo(expectedWidth, 5);
-      expect(frames[2].width_mm).toBeCloseTo(expectedWidth, 5);
+      // All widths should be integers
+      frames.forEach((f) => expect(Number.isInteger(f.width_mm)).toBe(true));
+      // Sum of widths should equal available width (2980)
+      const totalWidth = frames.reduce((sum, f) => sum + f.width_mm, 0);
+      expect(totalWidth).toBe(2980);
+      // Each panel should be close to 993-994
+      frames.forEach((f) => {
+        expect(f.width_mm).toBeGreaterThanOrEqual(993);
+        expect(f.width_mm).toBeLessThanOrEqual(994);
+      });
     });
 
     it('single column gets full available width', () => {

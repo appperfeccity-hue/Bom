@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { usePublishStore, PublishStep, canPublish } from '../publishStore';
 import { useProjectStore } from '../projectStore';
@@ -79,6 +78,7 @@ const makeSku = (overrides: Partial<SkuMaster> = {}): SkuMaster => ({
   status: SkuStatus.ACTIVE,
   created_by: 'user-1',
   created_at: '2024-01-01T00:00:00Z',
+  updated_at: '2024-01-01T00:00:00Z',
   ...overrides,
 });
 

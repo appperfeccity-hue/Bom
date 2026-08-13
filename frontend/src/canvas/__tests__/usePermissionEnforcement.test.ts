@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import { usePermissionEnforcement } from '@/canvas/permissions/usePermissionEnforcement';
@@ -75,7 +74,8 @@ const mockSnapshot: ProjectSnapshot = {
       },
     ],
   },
-  created_by: 'user-1',
+  snapshot_hash: 'hash-1',
+  rule_set_id: 'ruleset-1',
   created_at: '2024-01-01',
 };
 
@@ -235,7 +235,7 @@ describe('usePermissionEnforcement', () => {
       ...mockSnapshot,
       snapshot_data: {
         permissions: [
-          ...mockSnapshot.snapshot_data.permissions,
+          ...(mockSnapshot.snapshot_data.permissions as Array<Record<string, unknown>>),
           {
             permission_id: 'perm-uuid',
             template_id: 'tmpl-1',

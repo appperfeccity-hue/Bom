@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import React from 'react';
@@ -41,7 +40,6 @@ import { ZoneDimensionsLayer } from '@/canvas/layers/ZoneDimensionsLayer';
 const makeZone = (overrides: Partial<TemplateZone> = {}): TemplateZone => ({
   zone_id: 'zone-1',
   template_id: 'tmpl-1',
-  name: 'Test Zone',
   x_mm: 100,
   y_mm: 200,
   width_mm: 800,

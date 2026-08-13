@@ -62,16 +62,36 @@ export function usePermissionEnforcement(): PermissionEnforcement {
   /**
    * Wall configuration permissions from the snapshot.
    * Rule 72: Consultant can only change parameters explicitly marked ALLOWED.
+   *
+   * The snapshotBuilder writes consultant_permissions as a ConsultantWallPermissions
+   * object (keyed by parameter name, values are 'LOCKED'|'ALLOWED'), so we normalize
+   * it into an array of {parameter_key, permission_mode} for uniform lookup.
    */
   const wallConfigPermissions: WallConfigPermission[] = useMemo(() => {
     if (mode !== CanvasMode.CONSULTANT || !currentSnapshot) {
       return [];
     }
     const snapshotData = currentSnapshot.snapshot_data;
-    if (!snapshotData || !Array.isArray(snapshotData.consultant_permissions)) {
+    if (!snapshotData || !snapshotData.consultant_permissions) {
       return [];
     }
-    return snapshotData.consultant_permissions as WallConfigPermission[];
+
+    const raw = snapshotData.consultant_permissions;
+
+    // Handle array format (already normalized)
+    if (Array.isArray(raw)) {
+      return raw as WallConfigPermission[];
+    }
+
+    // Handle object format (ConsultantWallPermissions keyed by parameter name)
+    if (typeof raw === 'object') {
+      return Object.entries(raw).map(([key, value]) => ({
+        parameter_key: key,
+        permission_mode: value as WallParamPermissionMode,
+      }));
+    }
+
+    return [];
   }, [mode, currentSnapshot]);
 
   const getFieldPermission = useCallback(

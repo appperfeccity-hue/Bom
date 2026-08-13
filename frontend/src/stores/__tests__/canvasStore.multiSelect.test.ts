@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { describe, it, expect, beforeEach } from 'vitest';
 import { useCanvasStore } from '../canvasStore';
 import { CanvasMode } from '@/types/database';
@@ -18,7 +17,6 @@ function makeZone(overrides: Partial<TemplateZone> & { zone_id: string }): Templ
     position_strategy: 'FIXED' as any,
     
     created_at: '2024-01-01',
-    segment: null,
     segment: null,
   };
 }

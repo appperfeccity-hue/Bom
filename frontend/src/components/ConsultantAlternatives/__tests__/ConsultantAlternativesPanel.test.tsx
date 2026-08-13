@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { ConsultantAlternativesPanel } from '../ConsultantAlternativesPanel';
@@ -58,7 +57,8 @@ const mockSnapshotWithAlternatives: ProjectSnapshot = {
       },
     ],
   },
-  created_by: 'user-1',
+  snapshot_hash: 'hash-1',
+  rule_set_id: 'ruleset-1',
   created_at: '2024-01-01',
 };
 
@@ -199,6 +199,7 @@ describe('ConsultantAlternativesPanel', () => {
       status: 'ACTIVE' as never,
       created_by: 'user-1',
       created_at: '2024-01-01',
+      updated_at: '2024-01-01',
     };
 
     const skuMap = new Map();

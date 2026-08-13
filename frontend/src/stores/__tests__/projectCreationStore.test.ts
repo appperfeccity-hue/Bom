@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { useProjectCreationStore, CreationStep } from '../projectCreationStore';
 import { useAuthStore } from '../authStore';
@@ -40,10 +39,18 @@ const makeTemplate = (overrides: Partial<Template> = {}): Template => ({
   template_id: 'tpl-1',
   name: 'Test Template',
   description: 'A template for testing',
-  status: TemplateStatus.ACTIVE,
+  design_family_id: null,
+  design_subfamily_id: null,
+  wall_application: null,
+  wall_geometry: { type: 'STRAIGHT', base_width_mm: 3000, base_height_mm: 2400 },
   adaptation_strategy: AdaptationStrategy.PROPORTIONAL,
+  priority_zone_id: null,
+  waste_factor: null,
+  metadata: null,
+  status: TemplateStatus.ACTIVE,
   created_by: 'user-1',
   created_at: '2024-01-01T00:00:00Z',
+  updated_at: '2024-01-01T00:00:00Z',
   ...overrides,
 });
 

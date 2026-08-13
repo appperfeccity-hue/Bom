@@ -299,3 +299,30 @@ export const useWallConfigStore = create<WallConfigStore>((set, get) => ({
     });
   },
 }));
+
+/**
+ * Subscription that syncs wallConfigStore.panelFrames to projectStore.
+ *
+ * When wallConfigStore panel frames change, the subscription automatically
+ * calls projectStore.setWallConfigAndFrames to keep both stores in sync.
+ * This prevents the dual-store divergence issue where wallConfigStore.panelFrames
+ * and projectStore.panelFrames/zones could hold different data.
+ *
+ * Call this function once (e.g., at app initialization) to activate the sync.
+ * Returns an unsubscribe function for cleanup.
+ */
+export function initWallConfigStoreSync(
+  projectStoreRef: {
+    getState: () => { setWallConfigAndFrames: (config: WallConfigInput, frames: PanelFrame[]) => void };
+  },
+): () => void {
+  let previousFrames = useWallConfigStore.getState().panelFrames;
+
+  return useWallConfigStore.subscribe((state) => {
+    // Only sync if panel frames reference changed
+    if (state.panelFrames !== previousFrames) {
+      previousFrames = state.panelFrames;
+      projectStoreRef.getState().setWallConfigAndFrames(state.config, state.panelFrames);
+    }
+  });
+}

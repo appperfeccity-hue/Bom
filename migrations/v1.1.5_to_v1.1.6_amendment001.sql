@@ -230,7 +230,11 @@ CREATE POLICY "project_obstruction_delete"
     )
   );
 
--- generated_panel_frame: read-only for all authenticated; insert/delete by project owner
+-- generated_panel_frame: read-only for all authenticated; insert by project owner.
+-- No UPDATE or DELETE policies per Rule 64 (immutable once generated).
+-- Regeneration is handled by the application layer which deletes ALL frames for a
+-- project via CASCADE on project deletion or via a dedicated RPC that performs
+-- a transactional delete-then-reinsert when wall config changes.
 CREATE POLICY "generated_panel_frame_select"
   ON perfecity.generated_panel_frame FOR SELECT
   TO authenticated
@@ -240,17 +244,6 @@ CREATE POLICY "generated_panel_frame_insert"
   ON perfecity.generated_panel_frame FOR INSERT
   TO authenticated
   WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM perfecity.project p
-      WHERE p.project_id = generated_panel_frame.project_id
-        AND p.created_by = auth.uid()::text
-    )
-  );
-
-CREATE POLICY "generated_panel_frame_delete"
-  ON perfecity.generated_panel_frame FOR DELETE
-  TO authenticated
-  USING (
     EXISTS (
       SELECT 1 FROM perfecity.project p
       WHERE p.project_id = generated_panel_frame.project_id

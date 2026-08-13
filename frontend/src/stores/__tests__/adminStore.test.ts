@@ -1,7 +1,5 @@
-// @ts-nocheck
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { useAdminStore } from '../adminStore';
-import { RuleSetStatus } from '@/types/database';
 
 // Mock the supabase module
 vi.mock('@/lib/supabase', () => {

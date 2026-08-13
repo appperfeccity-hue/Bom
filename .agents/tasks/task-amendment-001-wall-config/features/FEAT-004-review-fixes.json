@@ -1,0 +1,32 @@
+{
+  "id": "FEAT-004-review-fixes",
+  "type": "fix",
+  "description": "Address 7 issues found during semantic code review (2026-08-13-071700-review.md). Fix consultant_permissions snapshot shape mismatch, remove @ts-nocheck from test files, add rounding strategy to wallConfigEngine, remove DELETE policy from generated_panel_frame, add store sync between wallConfigStore and projectStore, fix BOM test comment, document obstruction boundary semantics.",
+  "status": "in_progress",
+  "steps": [
+    "1. Fix Issue 7: consultant_permissions snapshot shape mismatch - usePermissionEnforcement reads as array but snapshotBuilder writes as object. Convert the object to array in the hook.",
+    "2. Fix Issue 1: Remove @ts-nocheck from all 16 test files and fix any type errors properly.",
+    "3. Fix Issue 3: Add Math.round rounding strategy to wallConfigEngine with sum-correction to preserve total width.",
+    "4. Fix Issue 4: Remove DELETE policy from generated_panel_frame migration; add comment explaining regeneration flow.",
+    "5. Fix Issue 2: Add Zustand subscribe or middleware to sync wallConfigStore frames to projectStore.",
+    "6. Fix Issue 5: Update BOM test comment to use correct covering formula instead of floor notation.",
+    "7. Fix Issue 6: Document obstruction boundary semantics (touching is intentional, not overlap)."
+  ],
+  "acceptance_criteria": [
+    "usePermissionEnforcement correctly reads consultant_permissions from snapshot regardless of shape (object or array)",
+    "All test files pass TypeScript typecheck without @ts-nocheck",
+    "wallConfigEngine applies Math.round with sum-correction to preserve total width",
+    "generated_panel_frame migration has no DELETE policy",
+    "wallConfigStore frames sync to projectStore via subscription",
+    "BOM test comments accurately describe the covering formula",
+    "Obstruction boundary semantics are documented in the engine",
+    "TypeScript typecheck passes",
+    "All tests pass"
+  ],
+  "verification": [
+    "unset NODE_OPTIONS && cd frontend && npx tsc --noEmit",
+    "unset NODE_OPTIONS && cd frontend && npx vitest run"
+  ],
+  "blocked_reason": null,
+  "findings": null
+}

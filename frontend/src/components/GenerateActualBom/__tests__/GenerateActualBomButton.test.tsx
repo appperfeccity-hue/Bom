@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { useCanvasStore } from '@/stores/canvasStore';
@@ -27,10 +26,16 @@ import { GenerateActualBomButton } from '../GenerateActualBomButton';
 const makeProject = (overrides: Partial<Project> = {}): Project => ({
   project_id: 'proj-1',
   customer_reference: 'Test Project',
+  site_reference: null,
   template_id: 'tpl-1',
+  snapshot_id: null,
+  current_configuration_id: null,
+  current_actual_bom_id: null,
   status: ProjectStatus.VALIDATED,
   created_by: 'user-1',
   created_at: '2024-01-01T00:00:00Z',
+  updated_at: '2024-01-01T00:00:00Z',
+  finalized_at: null,
   ...overrides,
 });
 

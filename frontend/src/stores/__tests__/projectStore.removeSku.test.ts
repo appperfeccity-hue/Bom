@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useProjectStore } from '@/stores/projectStore';
 import type { SkuMaster } from '@/types/database';
@@ -63,6 +62,7 @@ const mockSku: SkuMaster = {
   status: 'ACTIVE' as never,
   created_by: 'user-1',
   created_at: '',
+  updated_at: '',
 };
 
 describe('projectStore.removeSku', () => {
@@ -102,11 +102,17 @@ describe('projectStore.removeSku', () => {
     useProjectStore.setState({
       currentProject: {
         project_id: 'proj-1',
-        name: 'Test',
+        customer_reference: 'Test',
+        site_reference: null,
         template_id: 'tmpl-1',
+        snapshot_id: null,
+        current_configuration_id: null,
+        current_actual_bom_id: null,
         status: 'FINALIZED' as never,
         created_by: 'user-1',
         created_at: '',
+        updated_at: '',
+        finalized_at: null,
       },
     });
 

@@ -319,6 +319,49 @@ function calculateAlternating(
 }
 
 /**
+ * Apply Math.round rounding with sum-correction to preserve total width.
+ *
+ * Strategy: round each width to the nearest integer, then distribute any
+ * rounding residual (difference between rounded sum and target) across the
+ * widest panels (one pixel at a time) to maintain the total width invariant.
+ * This ensures that when persisted to INT columns in Postgres, the rounded
+ * widths still sum exactly to `availableWidth` (which is itself an integer
+ * since both total_width_mm and panel_gap_mm are integers).
+ */
+function applyRoundingWithSumCorrection(widths: number[], availableWidth: number): number[] {
+  const rounded = widths.map((w) => Math.round(w));
+  let sum = rounded.reduce((s, w) => s + w, 0);
+  const target = Math.round(availableWidth);
+
+  // Distribute residual across panels (favour larger panels to minimize visible distortion)
+  while (sum !== target) {
+    // Create indices sorted by width descending for consistent correction distribution
+    const indices = rounded
+      .map((_, i) => i)
+      .sort((a, b) => rounded[b] - rounded[a]);
+
+    if (sum < target) {
+      // Need to add pixels - add 1mm to the widest panel that won't cause issues
+      rounded[indices[0]] += 1;
+      sum += 1;
+    } else {
+      // Need to remove pixels - subtract 1mm from the widest panel
+      // Only if it stays above MIN_PANEL_DIMENSION
+      const candidate = indices.find((i) => rounded[i] > MIN_PANEL_DIMENSION);
+      if (candidate !== undefined) {
+        rounded[candidate] -= 1;
+        sum -= 1;
+      } else {
+        // Cannot correct without violating minimum - break to avoid infinite loop
+        break;
+      }
+    }
+  }
+
+  return rounded;
+}
+
+/**
  * Dispatch to the appropriate fit algorithm.
  */
 function calculateColumnWidths(
@@ -327,30 +370,50 @@ function calculateColumnWidths(
   algorithm: FitAlgorithm,
   intensity: number,
 ): number[] {
+  let widths: number[];
   switch (algorithm) {
     case 'EQUAL':
-      return calculateEqual(availableWidth, columns);
+      widths = calculateEqual(availableWidth, columns);
+      break;
     case 'ADJUST_END_PANELS':
-      return calculateAdjustEndPanels(availableWidth, columns, intensity);
+      widths = calculateAdjustEndPanels(availableWidth, columns, intensity);
+      break;
     case 'SPREAD_LEFT':
-      return calculateSpreadLeft(availableWidth, columns, intensity);
+      widths = calculateSpreadLeft(availableWidth, columns, intensity);
+      break;
     case 'SPREAD_RIGHT':
-      return calculateSpreadRight(availableWidth, columns, intensity);
+      widths = calculateSpreadRight(availableWidth, columns, intensity);
+      break;
     case 'SPREAD_BOTH_ENDS':
-      return calculateSpreadBothEnds(availableWidth, columns, intensity);
+      widths = calculateSpreadBothEnds(availableWidth, columns, intensity);
+      break;
     case 'CENTRE_FOCUS':
-      return calculateCentreFocus(availableWidth, columns, intensity);
+      widths = calculateCentreFocus(availableWidth, columns, intensity);
+      break;
     case 'OUTER_FOCUS':
-      return calculateOuterFocus(availableWidth, columns, intensity);
+      widths = calculateOuterFocus(availableWidth, columns, intensity);
+      break;
     case 'ALTERNATING':
-      return calculateAlternating(availableWidth, columns, intensity);
+      widths = calculateAlternating(availableWidth, columns, intensity);
+      break;
     default:
-      return calculateEqual(availableWidth, columns);
+      widths = calculateEqual(availableWidth, columns);
+      break;
   }
+
+  // Apply rounding with sum-correction to produce integer widths suitable for
+  // persistence to INT columns while preserving the total width invariant.
+  return applyRoundingWithSumCorrection(widths, availableWidth);
 }
 
 /**
  * Check if a panel frame overlaps with any obstruction.
+ *
+ * Boundary semantics: strict less-than/greater-than is used for overlap detection.
+ * A panel whose edge exactly touches an obstruction boundary (zero-gap adjacency)
+ * is NOT excluded. This is intentional - touching means the panel ends precisely
+ * where the obstruction begins, with no physical overlap. Only panels that extend
+ * into the obstruction area are excluded.
  */
 function overlapsObstruction(
   x: number,
@@ -406,8 +469,8 @@ export function generatePanelFrames(config: WallConfigInput): PanelFrame[] {
   const availableWidth = total_width_mm - (columns - 1) * panel_gap_mm;
   const availableHeight = total_height_mm - (rows - 1) * panel_gap_mm;
 
-  // Calculate row heights (equal distribution for rows)
-  const rowHeight = availableHeight / rows;
+  // Calculate row heights (equal distribution for rows), rounded to integer
+  const rowHeight = Math.round(availableHeight / rows);
 
   // Calculate column widths based on fit algorithm
   const columnWidths = calculateColumnWidths(

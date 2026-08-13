@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { useSkuStore } from '@/stores/skuStore';
@@ -66,12 +65,14 @@ const mockSkuActive: SkuWithCatalogue = {
     status: SkuStatus.ACTIVE,
     created_by: 'user-1',
     created_at: '2024-01-01T00:00:00Z',
+    updated_at: '2024-01-01T00:00:00Z',
   },
   catalogueEntry: {
     catalogue_entry_id: 'ce-001',
     sku_id: 'sku-001',
     status: CatalogueStatus.READY,
     created_at: '2024-01-01T00:00:00Z',
+    updated_at: '2024-01-01T00:00:00Z',
   },
   thumbnailUrl: 'https://example.com/render.png',
 };
@@ -99,12 +100,14 @@ const mockSkuInactive: SkuWithCatalogue = {
     status: SkuStatus.INACTIVE,
     created_by: 'user-1',
     created_at: '2024-01-01T00:00:00Z',
+    updated_at: '2024-01-01T00:00:00Z',
   },
   catalogueEntry: {
     catalogue_entry_id: 'ce-002',
     sku_id: 'sku-002',
     status: CatalogueStatus.INCOMPLETE,
     created_at: '2024-01-01T00:00:00Z',
+    updated_at: '2024-01-01T00:00:00Z',
   },
   thumbnailUrl: null,
 };

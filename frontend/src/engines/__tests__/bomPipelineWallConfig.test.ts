@@ -316,9 +316,9 @@ describe('BOM Pipeline - Wall Config Integration', () => {
       );
       expect(line).toBeDefined();
       // W=990, H=2400, w=330, h=600, gh=0, gv=0
-      // Ncol = floor((990 + 0) / (330 + 0)) = floor(990/330) = 3
-      // Nrow = floor((2400 + 0) / (600 + 0)) = floor(2400/600) = 4
-      // required = 12
+      // Width: smallest N where N*330 >= 990 -> N=3 (990 >= 990)
+      // Height: smallest N where N*600 >= 2400 -> N=4 (2400 >= 2400)
+      // required = 3 * 4 = 12
       expect(line!.requiredQuantity).toBe(12);
     });
   });
