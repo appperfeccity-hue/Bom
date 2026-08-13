@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "fix",
   "description": "Fix database.ts TypeScript types to match actual DB column names. The Template interface uses 'id' but DB column is 'template_id'. TemplateZone uses 'id' but DB has 'zone_id'. TemplateZoneSku uses 'id' but DB has 'zone_sku_id'. Also fix Template fields: DB has design_family_id, design_subfamily_id, wall_application, priority_zone_id, waste_factor, metadata but frontend has base_width_mm, base_height_mm, version which don't exist in DB. Fix TemplateZone: DB has no 'name', 'z_index', 'updated_at' columns. DB width_strategy values are PROPORTIONAL/FIXED/LOCKED (not FIXED/FILL/PROPORTIONAL). DB height_strategy values are DERIVED_FROM_WALL/FIXED/RESIZABLE. DB position_strategy values are FIXED/FLOATING (not ABSOLUTE/RELATIVE/AUTO). Also fix all stores and components that reference these wrong field names.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "1. Update frontend/src/types/database.ts Template interface: rename 'id' to 'template_id', remove base_width_mm/base_height_mm/version, add design_family_id, design_subfamily_id, wall_application, wall_geometry (JSONB - keep as-is since it's already used), adaptation_strategy, priority_zone_id, waste_factor, metadata, status (change to DRAFT/ACTIVE/RETIRED), created_by, created_at, updated_at",
     "2. Update frontend/src/types/database.ts TemplateZone interface: rename 'id' to 'zone_id', remove 'name'/'z_index'/'updated_at', change ZoneWidthStrategy enum to PROPORTIONAL/FIXED/LOCKED, change ZoneHeightStrategy enum to DERIVED_FROM_WALL/FIXED/RESIZABLE, change ZonePositionStrategy enum to FIXED/FLOATING",
@@ -33,5 +33,5 @@
     "unset NODE_OPTIONS && cd frontend && npx vitest run"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All 21 failing test files fixed. Root causes: 1) Template fixtures missing wall_geometry object (was undefined, needed {type, base_width_mm, base_height_mm}), 2) Lighting/Furniture/Trim layer tests used old field names (name, type, x_mm, y_mm) - updated to match new DB schema fields (mounting_type, position_x_mm, orientation, trim_type), 3) adminStore tests had empty ruleSets arrays causing 'Rule set not found', 4) finalizationStore used supabase.schema but actual code uses supabase.rpc directly, 5) publishStore test asserted .eq('id') instead of .eq('template_id'), 6) TrimsPanel test used trim_trim_id instead of trim_id. TypeScript typecheck passes with only pre-existing error in ValidationOverlayLayer.tsx."
 }
