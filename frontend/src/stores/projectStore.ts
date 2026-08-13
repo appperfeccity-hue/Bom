@@ -321,12 +321,18 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   reset: () => set(initialState),
 
   setWallConfigAndFrames: (config: WallConfigInput, frames: PanelFrame[]) => {
+    // Guard: prevent mutations on a finalized project
+    if (get().currentProject?.status === 'FINALIZED') return;
+
     set({ wallConfig: config, panelFrames: frames });
     // Populate zones from frames
     get().populateZonesFromFrames(frames);
   },
 
   populateZonesFromFrames: (frames: PanelFrame[]) => {
+    // Guard: prevent mutations on a finalized project
+    if (get().currentProject?.status === 'FINALIZED') return;
+
     // Convert each PanelFrame to a TemplateZone-like object for canvas rendering.
     // Zones generated from panel frames are read-only (Rule 64, Rule 65).
     const zonesFromFrames: TemplateZone[] = frames.map((frame) => ({

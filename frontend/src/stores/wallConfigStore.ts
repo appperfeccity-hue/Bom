@@ -8,6 +8,7 @@ import type {
   Obstruction,
 } from '@/engines/types';
 import { generatePanelFrames } from '@/engines/wallConfigEngine';
+import { useProjectStore } from '@/stores/projectStore';
 
 /**
  * Consultant permission mode for wall configuration parameters.
@@ -326,3 +327,10 @@ export function initWallConfigStoreSync(
     }
   });
 }
+
+/**
+ * Self-initializing subscription: activate the store sync at module load.
+ * This ensures the wallConfigStore and projectStore stay synchronized
+ * without requiring an external consumer to call initWallConfigStoreSync.
+ */
+initWallConfigStoreSync(useProjectStore);

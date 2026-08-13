@@ -469,8 +469,10 @@ export function generatePanelFrames(config: WallConfigInput): PanelFrame[] {
   const availableWidth = total_width_mm - (columns - 1) * panel_gap_mm;
   const availableHeight = total_height_mm - (rows - 1) * panel_gap_mm;
 
-  // Calculate row heights (equal distribution for rows), rounded to integer
-  const rowHeight = Math.round(availableHeight / rows);
+  // Calculate row heights (equal distribution for rows) with sum-correction rounding
+  // to ensure heights sum exactly to availableHeight, same strategy as column widths.
+  const rawRowHeights = Array(rows).fill(availableHeight / rows) as number[];
+  const rowHeights = applyRoundingWithSumCorrection(rawRowHeights, availableHeight);
 
   // Calculate column widths based on fit algorithm
   const columnWidths = calculateColumnWidths(
@@ -489,22 +491,28 @@ export function generatePanelFrames(config: WallConfigInput): PanelFrame[] {
     }
   }
 
-  if (rowHeight < MIN_PANEL_DIMENSION) {
-    throw new EngineError(
-      `Generated panel height ${rowHeight.toFixed(2)}mm is below minimum ${MIN_PANEL_DIMENSION}mm (Rule 69) [E-FIT-001]`,
-    );
+  for (let row = 0; row < rows; row++) {
+    if (rowHeights[row] < MIN_PANEL_DIMENSION) {
+      throw new EngineError(
+        `Generated panel height ${rowHeights[row].toFixed(2)}mm at row ${row} is below minimum ${MIN_PANEL_DIMENSION}mm (Rule 69) [E-FIT-001]`,
+      );
+    }
   }
 
   // Generate panel frames
   const frames: PanelFrame[] = [];
 
   for (let row = 0; row < rows; row++) {
-    const y = row * (rowHeight + panel_gap_mm);
+    // Calculate y position using sum of previous row heights + gaps
+    let y = 0;
+    for (let r = 0; r < row; r++) {
+      y += rowHeights[r] + panel_gap_mm;
+    }
 
     let x = 0;
     for (let col = 0; col < columns; col++) {
       const width = columnWidths[col];
-      const height = rowHeight;
+      const height = rowHeights[row];
 
       // Check if this panel overlaps with any obstruction
       if (!overlapsObstruction(x, y, width, height, obstructions)) {

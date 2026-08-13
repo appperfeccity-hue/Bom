@@ -1,0 +1,24 @@
+{
+  "id": "FEAT-005-review-v2-fixes",
+  "type": "fix",
+  "description": "Address 3 issues found during v2 semantic code review (2026-08-13-073400-review.md). Wire up initWallConfigStoreSync as a self-initializing subscription, apply sum-correction rounding to row heights, and add finalization guard to setWallConfigAndFrames and populateZonesFromFrames.",
+  "status": "in_progress",
+  "steps": [
+    "1. Wire up initWallConfigStoreSync - call it at module level in wallConfigStore.ts as a self-initializing subscription so the stores stay synchronized without needing external wiring.",
+    "2. Apply applyRoundingWithSumCorrection to row heights in wallConfigEngine.ts instead of plain Math.round.",
+    "3. Add finalization guard (if (get().currentProject?.status === 'FINALIZED') return;) to setWallConfigAndFrames and populateZonesFromFrames in projectStore.ts."
+  ],
+  "acceptance_criteria": [
+    "initWallConfigStoreSync is called and active (not dead code)",
+    "Row heights use the same sum-correction strategy as column widths",
+    "setWallConfigAndFrames and populateZonesFromFrames early-return when project is FINALIZED",
+    "TypeScript typecheck passes",
+    "All tests pass"
+  ],
+  "verification": [
+    "unset NODE_OPTIONS && cd frontend && npx tsc --noEmit",
+    "unset NODE_OPTIONS && cd frontend && npx vitest run"
+  ],
+  "blocked_reason": null,
+  "findings": null
+}
