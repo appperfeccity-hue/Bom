@@ -125,6 +125,33 @@ export function DashboardPage() {
   const cards = getCardsForRole(role, navigate, openPanel);
   const displayName = user?.email?.split('@')[0] ?? 'there';
 
+  // If no role detected, show a helpful message instead of blank page
+  if (!role) {
+    return (
+      <div data-testid="dashboard-page" style={{ minHeight: '100vh', backgroundColor: '#fafafa', padding: '32px' }}>
+        <div style={{ maxWidth: '960px', margin: '0 auto', textAlign: 'center', paddingTop: '60px' }}>
+          <h1 style={{ fontSize: '24px', fontWeight: 700, color: '#212121' }}>Welcome, {displayName}!</h1>
+          <p style={{ color: '#757575', margin: '12px 0' }}>Your role could not be determined from the session.</p>
+          <p style={{ color: '#9e9e9e', fontSize: '13px', margin: '8px 0' }}>
+            This usually means the Custom Access Token Hook is not enabled in Supabase.
+          </p>
+          <p style={{ color: '#9e9e9e', fontSize: '13px', margin: '8px 0' }}>
+            app_metadata: {JSON.stringify(user?.app_metadata ?? {})}
+          </p>
+          <p style={{ color: '#9e9e9e', fontSize: '13px', margin: '8px 0' }}>
+            user_metadata: {JSON.stringify(user?.user_metadata ?? {})}
+          </p>
+          <button
+            onClick={() => navigate('/canvas')}
+            style={{ marginTop: '20px', padding: '10px 20px', fontSize: '14px', fontWeight: 600, backgroundColor: '#1976d2', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
+          >
+            Open Canvas Anyway
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       data-testid="dashboard-page"

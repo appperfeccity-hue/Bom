@@ -28,10 +28,18 @@ export type AuthStore = AuthState & AuthActions;
  */
 function extractRole(user: User | null): UserRole | null {
   if (!user) return null;
-  const role = (user.app_metadata?.role ?? user.user_metadata?.role) as UserRole | undefined;
-  if (role && ['ADMIN', 'DESIGNER', 'CONSULTANT'].includes(role)) {
-    return role;
+  // Check JWT app_metadata (set by Custom Access Token Hook)
+  const appRole = user.app_metadata?.role as UserRole | undefined;
+  if (appRole && ['ADMIN', 'DESIGNER', 'CONSULTANT'].includes(appRole)) {
+    return appRole;
   }
+  // Fallback: check user_metadata (set during signup)
+  const userRole = user.user_metadata?.role as UserRole | undefined;
+  if (userRole && ['ADMIN', 'DESIGNER', 'CONSULTANT'].includes(userRole)) {
+    return userRole;
+  }
+  // Last resort: decode from raw_app_meta_data via identities
+  // Supabase includes app_metadata in the user object from getUser/getSession
   return null;
 }
 
@@ -50,6 +58,11 @@ export const useAuthStore = create<AuthStore>((set) => ({
     });
     if (error) throw error;
     const user = data.user;
+    // Debug: log what metadata we received
+    console.log('[Auth] Login user metadata:', {
+      app_metadata: user?.app_metadata,
+      user_metadata: user?.user_metadata,
+    });
     set({
       user,
       role: extractRole(user),
