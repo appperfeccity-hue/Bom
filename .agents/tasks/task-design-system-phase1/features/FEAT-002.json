@@ -1,0 +1,42 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "Implement the full Perfeccity design system: CSS custom properties, typography, layout shell with icon rail, top bar, collapsible panels, status bar, and integrate into App.tsx and DashboardPage.tsx. Apply warm architectural color palette throughout.",
+  "status": "pending",
+  "steps": [
+    "Create src/styles/design-system.css with CSS custom properties for the full color palette (canvas bg: #F6F5F3, surface: #FFFFFF, primary ink: #1A1A1A, secondary text: #6E6E6E, hairline border: #E3E1DD, accent: #9A7B4F, success: #3F6B4F, error: #B0413E, warning: #A66A2D, disabled: #D8D5D0), spacing scale (4/8/12/16/20/24/32/48/64), border radii, and shadows.",
+    "Create src/styles/typography.css with @import for Google Fonts (Inter 400/500/600/700, IBM Plex Mono 400/500), define font-family variables, size scale (xs through 2xl), weight scale, and utility classes.",
+    "Create src/styles/layout.css with CSS for the AppShell grid layout: 56px icon rail, 56px top bar, 280px collapsible left panel, 320px collapsible right panel, flexible main canvas area, 24px status bar at bottom.",
+    "Modify frontend/index.html to add Google Fonts preconnect links in <head> (preconnect to fonts.googleapis.com and fonts.gstatic.com).",
+    "Modify frontend/src/main.tsx to import the three CSS files: '@/styles/design-system.css', '@/styles/typography.css', '@/styles/layout.css'.",
+    "Create src/components/Layout/IconRail.tsx - 56px vertical icon rail with items: Dashboard, SKU Master, Catalogue, Templates, Design Library, Projects, Settings. Active state: 2px accent left border + #EFEDE9 bg. Inactive: #6E6E6E on transparent. Include tooltip on 300ms hover delay. Use react-router-dom useLocation to determine active state based on current path.",
+    "Create src/components/Layout/TopBar.tsx - 56px height bar showing project/template name, mode indicator (Designer/Consultant), autosave status, and primary action buttons. Wire to existing canvasStore for mode and saveStatus.",
+    "Create src/components/Layout/StatusBar.tsx - 24px monospace bar at bottom showing snapshot hash, engine version, and error count. Use IBM Plex Mono font.",
+    "Create src/components/Layout/AppShell.tsx - Main wrapper using CSS Grid that composes IconRail, TopBar, StatusBar, and accepts children for the main content area and side panels. Include collapsible left (280px) and right (320px) panel slots.",
+    "Create src/components/Layout/index.ts - Barrel export for AppShell, IconRail, TopBar, StatusBar.",
+    "Modify src/App.tsx to use the AppShell layout component. Keep the existing Navigation and Toolbar as part of the top area or integrate their controls into TopBar. Preserve ALL existing business logic, overlays (SkuBrowser, BomPanel, PublishWorkflow, ProjectCreationWizard, TemplateManagementPanel), and conditional rendering exactly as-is.",
+    "Modify src/pages/DashboardPage.tsx to use design tokens (CSS variables) for colors and spacing instead of hardcoded hex values. Apply the warm architectural palette.",
+    "Ensure all existing data-testid attributes remain unchanged so tests continue passing."
+  ],
+  "acceptance_criteria": [
+    "CSS custom properties file exists at src/styles/design-system.css with all specified colors, spacing, and radii",
+    "Typography CSS imports Inter and IBM Plex Mono via Google Fonts",
+    "AppShell renders the correct CSS Grid layout with icon rail (56px), top bar (56px), main area, and status bar (24px)",
+    "IconRail displays all 7 navigation items with correct active/inactive styling",
+    "Tooltips appear on icon rail items with 300ms hover delay",
+    "StatusBar uses monospace font and displays hash, engine, error count",
+    "TopBar shows mode indicator and save status",
+    "npm run build succeeds with no TypeScript errors",
+    "npm run typecheck succeeds",
+    "npm run test -- --run passes all existing tests",
+    "No business logic, stores, or engines are modified",
+    "All existing data-testid attributes remain present"
+  ],
+  "verification": [
+    "cd frontend && npm run build",
+    "cd frontend && npm run typecheck",
+    "cd frontend && npm run test -- --run"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

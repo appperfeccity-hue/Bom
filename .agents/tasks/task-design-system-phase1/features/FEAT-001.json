@@ -1,0 +1,25 @@
+{
+  "id": "FEAT-001",
+  "type": "chore",
+  "description": "Install dependencies and verify baseline builds cleanly before making changes",
+  "status": "completed",
+  "steps": [
+    "Run 'cd frontend && npm ci' to install dependencies",
+    "Run 'cd frontend && npm run build' to confirm the project builds",
+    "Run 'cd frontend && npm run typecheck' to confirm TypeScript type-checks cleanly",
+    "Run 'cd frontend && npm run test -- --run' to confirm all existing tests pass"
+  ],
+  "acceptance_criteria": [
+    "npm ci exits 0",
+    "npm run build exits 0 producing dist/ output",
+    "npm run typecheck exits 0 with no errors",
+    "npm run test -- --run exits 0 with all tests passing"
+  ],
+  "verification": [
+    "cd frontend && npm run build",
+    "cd frontend && npm run typecheck",
+    "cd frontend && npm run test -- --run"
+  ],
+  "blocked_reason": null,
+  "findings": "npm ci: exit 0 (380 packages, 5 vulnerabilities reported by npm audit). Build: exit 0 (6 chunks). Tests: exit 0 (77 test files, 1094 tests passed). Typecheck: exit 2 - PRE-EXISTING error in src/canvas/layers/ValidationOverlayLayer.tsx line 35: TS6133 'errorCount' is declared but its value is never read. This error exists on the base branch before any task changes. Must use 'unset NODE_OPTIONS' before npm commands due to missing /opt/amazon/kiro-agent/proxy-bootstrap.js in this sandbox."
+}
