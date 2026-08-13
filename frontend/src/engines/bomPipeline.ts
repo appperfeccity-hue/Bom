@@ -110,6 +110,37 @@ export interface SnapshotData {
   lighting?: SnapshotLighting[];
   furniture?: SnapshotFurniture[];
   hiddenComponents?: SnapshotHiddenComponent[];
+  /** Generated panel frames from wallConfigEngine (Amendment 001). When present, these override zone dimensions for panel calculation. */
+  generatedPanelFrames?: SnapshotPanelFrame[];
+}
+
+/**
+ * A generated panel frame from the wall config engine, stored in the snapshot.
+ * When present, each frame's width_mm/height_mm become the W/H for wall panel calculation.
+ * Rule 63: panel_gap_mm is the structural gap between frames, independent from SKU gh_mm/gv_mm.
+ */
+export interface SnapshotPanelFrame {
+  frameId: string;
+  rowIndex: number;
+  colIndex: number;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  segment: string | null;
+  isEdgePanel: boolean;
+  /** SKU ID assigned to this frame (inherited from zone or directly assigned) */
+  skuId?: string;
+  /** Panel width from SKU */
+  panelWidth?: number;
+  /** Panel height from SKU */
+  panelHeight?: number;
+  /** Horizontal gap from SKU (gh_mm) - NOT the same as panel_gap_mm (Rule 63) */
+  gapHorizontal?: number;
+  /** Vertical gap from SKU (gv_mm) - NOT the same as panel_gap_mm (Rule 63) */
+  gapVertical?: number;
+  /** Waste factor */
+  wasteFactor?: number;
 }
 
 export interface BomMeasurements {
@@ -445,42 +476,88 @@ function runQuantityCalculation(
   const errors: PipelineError[] = [];
   const warnings: PipelineError[] = [];
 
-  // Wall panel calculations for each zone
-  for (const zone of adaptedZones) {
-    if (!zone.panelWidth || !zone.panelHeight) continue;
+  // When generated panel frames are present (Amendment 001), use frame dimensions
+  // as W and H for wall panel calculation instead of zone dimensions.
+  // Rule 63: panel_gap_mm is structural gap between frames; SKU gh_mm/gv_mm are joint gaps.
+  const panelFrames = input.snapshotData.generatedPanelFrames;
 
-    const panelInput: WallPanelInput = {
-      W: zone.width,
-      H: zone.height,
-      w: zone.panelWidth,
-      h: zone.panelHeight,
-      gh: zone.gapHorizontal ?? 0,
-      gv: zone.gapVertical ?? 0,
-      wasteFactor: zone.wasteFactor ?? 0.05,
-    };
+  if (panelFrames && panelFrames.length > 0) {
+    // Use panel frames for wall panel calculations
+    for (const frame of panelFrames) {
+      if (!frame.panelWidth || !frame.panelHeight) continue;
 
-    try {
-      const panelOutput = calculateWallPanels(panelInput);
-      lines.push({
-        lineId: `panel-${zone.zoneId}`,
-        componentId: zone.zoneId,
-        skuId: zone.skuId,
-        quantity: panelOutput.procurementQuantity,
-        requiredQuantity: panelOutput.requiredQuantity,
-        wasteQuantity: panelOutput.wasteQuantity,
-        unitOfMeasure: 'PCS',
-        calculationRule: 'WALL_PANEL',
-      });
-    } catch {
-      errors.push(
-        createPipelineError(ErrorCode.QTY_PANEL_NO_VALID_ARRANGEMENT, {
-          zoneId: zone.zoneId,
-          width: zone.width,
-          height: zone.height,
-          panelWidth: zone.panelWidth,
-          panelHeight: zone.panelHeight,
-        })
-      );
+      const panelInput: WallPanelInput = {
+        W: frame.width,
+        H: frame.height,
+        w: frame.panelWidth,
+        h: frame.panelHeight,
+        gh: frame.gapHorizontal ?? 0,
+        gv: frame.gapVertical ?? 0,
+        wasteFactor: frame.wasteFactor ?? 0.05,
+      };
+
+      try {
+        const panelOutput = calculateWallPanels(panelInput);
+        lines.push({
+          lineId: `panel-${frame.frameId}`,
+          componentId: frame.frameId,
+          skuId: frame.skuId ?? '',
+          quantity: panelOutput.procurementQuantity,
+          requiredQuantity: panelOutput.requiredQuantity,
+          wasteQuantity: panelOutput.wasteQuantity,
+          unitOfMeasure: 'PCS',
+          calculationRule: 'WALL_PANEL',
+        });
+      } catch {
+        errors.push(
+          createPipelineError(ErrorCode.QTY_PANEL_NO_VALID_ARRANGEMENT, {
+            frameId: frame.frameId,
+            width: frame.width,
+            height: frame.height,
+            panelWidth: frame.panelWidth,
+            panelHeight: frame.panelHeight,
+          })
+        );
+      }
+    }
+  } else {
+    // Fallback: use adapted zones for wall panel calculations (legacy path)
+    for (const zone of adaptedZones) {
+      if (!zone.panelWidth || !zone.panelHeight) continue;
+
+      const panelInput: WallPanelInput = {
+        W: zone.width,
+        H: zone.height,
+        w: zone.panelWidth,
+        h: zone.panelHeight,
+        gh: zone.gapHorizontal ?? 0,
+        gv: zone.gapVertical ?? 0,
+        wasteFactor: zone.wasteFactor ?? 0.05,
+      };
+
+      try {
+        const panelOutput = calculateWallPanels(panelInput);
+        lines.push({
+          lineId: `panel-${zone.zoneId}`,
+          componentId: zone.zoneId,
+          skuId: zone.skuId,
+          quantity: panelOutput.procurementQuantity,
+          requiredQuantity: panelOutput.requiredQuantity,
+          wasteQuantity: panelOutput.wasteQuantity,
+          unitOfMeasure: 'PCS',
+          calculationRule: 'WALL_PANEL',
+        });
+      } catch {
+        errors.push(
+          createPipelineError(ErrorCode.QTY_PANEL_NO_VALID_ARRANGEMENT, {
+            zoneId: zone.zoneId,
+            width: zone.width,
+            height: zone.height,
+            panelWidth: zone.panelWidth,
+            panelHeight: zone.panelHeight,
+          })
+        );
+      }
     }
   }
 

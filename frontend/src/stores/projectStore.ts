@@ -11,11 +11,13 @@ import type {
   SkuMaster,
   WallGeometryType,
 } from '@/types/database';
+import type { WallConfigInput, PanelFrame } from '@/engines/types';
 import { fromTable } from '@/lib/supabase';
 import { createDebouncedSave } from '@/lib/autosave';
 import type { SaveStatus } from '@/types/canvas';
 import { useCanvasStore } from '@/stores/canvasStore';
 import { assignSegment } from '@/canvas/utils/segmentAssignment';
+import { ZoneWidthStrategy, ZoneHeightStrategy, ZonePositionStrategy } from '@/types/database';
 
 export interface ProjectState {
   currentTemplate: Template | null;
@@ -28,6 +30,10 @@ export interface ProjectState {
   trims: TemplateTrim[];
   measurements: ProjectMeasurement | null;
   wallGeometry: WallGeometryType;
+  /** Wall configuration from Amendment 001 */
+  wallConfig: WallConfigInput | null;
+  /** Generated panel frames from wall config engine */
+  panelFrames: PanelFrame[];
   isLoading: boolean;
   error: string | null;
 }
@@ -41,6 +47,10 @@ export interface ProjectActions {
   assignSku: (zoneId: string, skuId: string) => Promise<void>;
   removeSku: (zoneId: string) => Promise<void>;
   updateMeasurements: (measurements: Partial<ProjectMeasurement>) => Promise<void>;
+  /** Set wall config and generated panel frames; populates zones from frames */
+  setWallConfigAndFrames: (config: WallConfigInput, frames: PanelFrame[]) => void;
+  /** Populate the zones array from generated panel frames (each frame becomes a read-only zone) */
+  populateZonesFromFrames: (frames: PanelFrame[]) => void;
   reset: () => void;
 }
 
@@ -57,6 +67,8 @@ const initialState: ProjectState = {
   trims: [],
   measurements: null,
   wallGeometry: 'STRAIGHT',
+  wallConfig: null,
+  panelFrames: [],
   isLoading: false,
   error: null,
 };
@@ -307,4 +319,29 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   },
 
   reset: () => set(initialState),
+
+  setWallConfigAndFrames: (config: WallConfigInput, frames: PanelFrame[]) => {
+    set({ wallConfig: config, panelFrames: frames });
+    // Populate zones from frames
+    get().populateZonesFromFrames(frames);
+  },
+
+  populateZonesFromFrames: (frames: PanelFrame[]) => {
+    // Convert each PanelFrame to a TemplateZone-like object for canvas rendering.
+    // Zones generated from panel frames are read-only (Rule 64, Rule 65).
+    const zonesFromFrames: TemplateZone[] = frames.map((frame) => ({
+      zone_id: frame.frame_id,
+      template_id: get().currentTemplate?.template_id ?? '',
+      segment: frame.segment,
+      x_mm: frame.x_mm,
+      y_mm: frame.y_mm,
+      width_mm: frame.width_mm,
+      height_mm: frame.height_mm,
+      width_strategy: ZoneWidthStrategy.LOCKED,
+      height_strategy: ZoneHeightStrategy.FIXED,
+      position_strategy: ZonePositionStrategy.FIXED,
+      created_at: new Date().toISOString(),
+    }));
+    set({ zones: zonesFromFrames });
+  },
 }));

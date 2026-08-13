@@ -2,6 +2,7 @@ import { useCallback, useMemo } from 'react';
 import { useCanvasStore } from '@/stores/canvasStore';
 import { useProjectStore } from '@/stores/projectStore';
 import { CanvasMode } from '@/types/database';
+import type { WallParamPermissionMode } from '@/types/database';
 
 export type EditMode = 'LOCKED' | 'RESTRICTED' | 'FREE';
 
@@ -16,6 +17,15 @@ export interface SnapshotPermission {
   allowed_values: string[] | null;
 }
 
+/**
+ * Wall configuration permission entry from the snapshot.
+ * Rule 72: Consultant can only change parameters explicitly marked ALLOWED by Designer.
+ */
+export interface WallConfigPermission {
+  parameter_key: string;
+  permission_mode: WallParamPermissionMode;
+}
+
 export interface ValidationResult {
   valid: boolean;
   error?: string;
@@ -26,6 +36,8 @@ export interface PermissionEnforcement {
   isFieldLocked: (parameterKey: string) => boolean;
   validateField: (parameterKey: string, value: unknown) => ValidationResult;
   canEditZone: (zoneId: string) => boolean;
+  /** Check if a wall config parameter is allowed for consultant editing (Rule 72) */
+  isWallParamAllowed: (param: string) => boolean;
 }
 
 /**
@@ -45,6 +57,21 @@ export function usePermissionEnforcement(): PermissionEnforcement {
       return [];
     }
     return snapshotData.permissions as SnapshotPermission[];
+  }, [mode, currentSnapshot]);
+
+  /**
+   * Wall configuration permissions from the snapshot.
+   * Rule 72: Consultant can only change parameters explicitly marked ALLOWED.
+   */
+  const wallConfigPermissions: WallConfigPermission[] = useMemo(() => {
+    if (mode !== CanvasMode.CONSULTANT || !currentSnapshot) {
+      return [];
+    }
+    const snapshotData = currentSnapshot.snapshot_data;
+    if (!snapshotData || !Array.isArray(snapshotData.consultant_permissions)) {
+      return [];
+    }
+    return snapshotData.consultant_permissions as WallConfigPermission[];
   }, [mode, currentSnapshot]);
 
   const getFieldPermission = useCallback(
@@ -156,10 +183,49 @@ export function usePermissionEnforcement(): PermissionEnforcement {
     [mode, currentSnapshot, permissions],
   );
 
+  /**
+   * Check if a wall configuration parameter is allowed for consultant editing.
+   * Rule 72: Consultant can only change parameters explicitly marked ALLOWED by Designer.
+   * Rule 73: Consultant cannot manually edit panel frames.
+   *
+   * Parameters: wall_width, wall_height, panel_gap, fit_algorithm, fit_intensity,
+   * mounting_type, rows, columns.
+   *
+   * In DESIGNER mode, all parameters are always allowed.
+   * In CONSULTANT mode, only parameters with permission_mode === 'ALLOWED' can be changed.
+   */
+  const isWallParamAllowed = useCallback(
+    (param: string): boolean => {
+      // In DESIGNER mode, always allowed
+      if (mode !== CanvasMode.CONSULTANT) {
+        return true;
+      }
+
+      // No snapshot means no permissions loaded - default to locked (Rule 72)
+      if (!currentSnapshot) {
+        return false;
+      }
+
+      // Find the permission for this wall config parameter
+      const wallPermission = wallConfigPermissions.find(
+        (p) => p.parameter_key === param,
+      );
+
+      // If no explicit permission exists, default to LOCKED (Rule 72)
+      if (!wallPermission) {
+        return false;
+      }
+
+      return wallPermission.permission_mode === 'ALLOWED';
+    },
+    [mode, currentSnapshot, wallConfigPermissions],
+  );
+
   return {
     getFieldPermission,
     isFieldLocked,
     validateField,
     canEditZone,
+    isWallParamAllowed,
   };
 }

@@ -7,6 +7,8 @@ import type {
   SkuMaster,
   WallGeometry,
 } from '@/types/database';
+import type { WallConfigInput, PanelFrame, Obstruction } from '@/engines/types';
+import type { ConsultantWallPermissions } from '@/stores/wallConfigStore';
 
 export interface SnapshotZone {
   zone_id: string;
@@ -21,6 +23,18 @@ export interface SnapshotZone {
   alternatives: unknown[];
 }
 
+export interface SnapshotPanelFrameData {
+  frame_id: string;
+  row_index: number;
+  col_index: number;
+  x_mm: number;
+  y_mm: number;
+  width_mm: number;
+  height_mm: number;
+  segment: string | null;
+  is_edge_panel: boolean;
+}
+
 export interface SnapshotData {
   wall_geometry: WallGeometry;
   base_dimensions: {
@@ -33,12 +47,34 @@ export interface SnapshotData {
   trims: TemplateTrim[];
   hidden_components: unknown[];
   calculation_parameters: Record<string, unknown>;
+  /** Template-level wall configuration (Amendment 001) */
+  template_wall_configuration: WallConfigInput | null;
+  /** Consultant permissions for wall parameters (Amendment 001) */
+  consultant_permissions: ConsultantWallPermissions | null;
+  /** Project-level wall configuration with possible consultant overrides (Amendment 001) */
+  project_wall_configuration: WallConfigInput | null;
+  /** Site obstructions (Amendment 001) */
+  site_obstructions: Obstruction[];
+  /** Generated panel frames from wallConfigEngine (Amendment 001) */
+  generated_panel_frames: SnapshotPanelFrameData[];
+}
+
+/**
+ * Optional wall configuration data for snapshot building (Amendment 001).
+ */
+export interface WallConfigSnapshotInput {
+  templateWallConfig?: WallConfigInput | null;
+  consultantPermissions?: ConsultantWallPermissions | null;
+  projectWallConfig?: WallConfigInput | null;
+  siteObstructions?: Obstruction[];
+  generatedPanelFrames?: PanelFrame[];
 }
 
 /**
  * Assembles the complete frozen JSONB snapshot for a project creation.
  * Includes wall_geometry, base_dimensions, zones with frozen SKU data,
- * lighting, furniture, trims, hidden_components and calculation_parameters.
+ * lighting, furniture, trims, hidden_components, calculation_parameters,
+ * and Amendment 001 wall configuration fields.
  */
 export function buildSnapshotData(
   template: Template,
@@ -47,6 +83,7 @@ export function buildSnapshotData(
   furniture: TemplateFurniture[],
   trims: TemplateTrim[],
   zoneSku: Map<string, SkuMaster>,
+  wallConfigInput?: WallConfigSnapshotInput,
 ): SnapshotData {
   const snapshotZones: SnapshotZone[] = zones.map((zone) => ({
     zone_id: zone.zone_id,
@@ -61,6 +98,20 @@ export function buildSnapshotData(
     alternatives: [],
   }));
 
+  const panelFrameSnapshots: SnapshotPanelFrameData[] = (wallConfigInput?.generatedPanelFrames ?? []).map(
+    (frame) => ({
+      frame_id: frame.frame_id,
+      row_index: frame.row_index,
+      col_index: frame.col_index,
+      x_mm: frame.x_mm,
+      y_mm: frame.y_mm,
+      width_mm: frame.width_mm,
+      height_mm: frame.height_mm,
+      segment: frame.segment,
+      is_edge_panel: frame.is_edge_panel,
+    }),
+  );
+
   return {
     wall_geometry: template.wall_geometry,
     base_dimensions: {
@@ -73,6 +124,11 @@ export function buildSnapshotData(
     trims,
     hidden_components: [],
     calculation_parameters: {},
+    template_wall_configuration: wallConfigInput?.templateWallConfig ?? null,
+    consultant_permissions: wallConfigInput?.consultantPermissions ?? null,
+    project_wall_configuration: wallConfigInput?.projectWallConfig ?? null,
+    site_obstructions: wallConfigInput?.siteObstructions ?? [],
+    generated_panel_frames: panelFrameSnapshots,
   };
 }
 

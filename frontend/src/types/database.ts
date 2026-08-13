@@ -463,3 +463,98 @@ export interface ReconciliationLine {
   actual_line: ActualBomLine | null;
   result_type: ReconciliationResultType;
 }
+
+// --- Wall Configuration Permission Types (Amendment 001) ---
+
+/**
+ * Permission mode for consultant wall configuration parameters.
+ * Rule 72: Consultant can only change parameters explicitly marked ALLOWED.
+ * Rule 73: Consultant cannot manually edit panel frames.
+ */
+export type WallParamPermissionMode = 'LOCKED' | 'ALLOWED';
+
+/**
+ * A single consultant wall permission record stored in the database.
+ */
+export interface ConsultantWallPermission {
+  permission_id: string;
+  template_id: string;
+  parameter_key: string;
+  permission_mode: WallParamPermissionMode;
+  created_at: string;
+  updated_at: string;
+}
+
+// --- Wall Configuration Tables (Amendment 001) ---
+
+/**
+ * Template-level wall configuration (designer-defined).
+ */
+export interface TemplateWallConfiguration {
+  wall_config_id: string;
+  template_id: string;
+  wall_type: 'STRAIGHT' | 'L_CORNER';
+  total_width_mm: number;
+  total_height_mm: number;
+  rows: number;
+  columns: number;
+  panel_gap_mm: number;
+  fit_algorithm: string;
+  fit_intensity_percent: number;
+  mounting_type: string;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * Project-level wall configuration (may include consultant overrides).
+ */
+export interface ProjectWallConfiguration {
+  project_wall_config_id: string;
+  project_id: string;
+  wall_type: 'STRAIGHT' | 'L_CORNER';
+  total_width_mm: number;
+  total_height_mm: number;
+  rows: number;
+  columns: number;
+  panel_gap_mm: number;
+  fit_algorithm: string;
+  fit_intensity_percent: number;
+  mounting_type: string;
+  consultant_overrides: Record<string, unknown> | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * A project obstruction (protected area on wall).
+ */
+export interface ProjectObstruction {
+  obstruction_id: string;
+  project_id: string;
+  x_mm: number;
+  y_mm: number;
+  width_mm: number;
+  height_mm: number;
+  obstruction_type: 'WINDOW' | 'DOOR' | 'PILLAR' | 'CUSTOM';
+  label: string | null;
+  created_at: string;
+}
+
+/**
+ * A generated panel frame stored in the database.
+ */
+export interface GeneratedPanelFrame {
+  frame_id: string;
+  project_id: string;
+  row_index: number;
+  col_index: number;
+  x_mm: number;
+  y_mm: number;
+  width_mm: number;
+  height_mm: number;
+  segment: string | null;
+  is_edge_panel: boolean;
+  generation_hash: string;
+  created_at: string;
+}
