@@ -116,8 +116,8 @@ describe('ZonesLayer - validation styling', () => {
 
     render(<ZonesLayer wallHeight={2400} />);
     const rects = screen.getAllByTestId('konva-rect');
-    // The zone rect should have teal stroke (system-generated zones)
-    expect(rects[0]).toHaveAttribute('stroke', '#4db6ac');
+    // The zone rect should have secondary stroke (system-generated zones)
+    expect(rects[0]).toHaveAttribute('stroke', '#6E6E6E');
   });
 
   it('renders zones with red stroke when they have overlap errors', () => {
@@ -131,8 +131,8 @@ describe('ZonesLayer - validation styling', () => {
 
     render(<ZonesLayer wallHeight={2400} />);
     const rects = screen.getAllByTestId('konva-rect');
-    expect(rects[0]).toHaveAttribute('stroke', '#f44336');
-    expect(rects[1]).toHaveAttribute('stroke', '#f44336');
+    expect(rects[0]).toHaveAttribute('stroke', '#B0413E');
+    expect(rects[1]).toHaveAttribute('stroke', '#B0413E');
   });
 
   it('renders zones with red stroke when out of bounds', () => {
@@ -144,7 +144,7 @@ describe('ZonesLayer - validation styling', () => {
 
     render(<ZonesLayer wallHeight={2400} />);
     const rects = screen.getAllByTestId('konva-rect');
-    expect(rects[0]).toHaveAttribute('stroke', '#f44336');
+    expect(rects[0]).toHaveAttribute('stroke', '#B0413E');
   });
 
   it('renders zones with red stroke when undersized', () => {
@@ -156,7 +156,7 @@ describe('ZonesLayer - validation styling', () => {
 
     render(<ZonesLayer wallHeight={2400} />);
     const rects = screen.getAllByTestId('konva-rect');
-    expect(rects[0]).toHaveAttribute('stroke', '#f44336');
+    expect(rects[0]).toHaveAttribute('stroke', '#B0413E');
   });
 
   it('uses thicker stroke for invalid zones (red stroke applied)', () => {
@@ -169,7 +169,7 @@ describe('ZonesLayer - validation styling', () => {
     render(<ZonesLayer wallHeight={2400} />);
     const rects = screen.getAllByTestId('konva-rect');
     // Invalid zone gets the red stroke color indicating it has errors + thicker stroke
-    expect(rects[0]).toHaveAttribute('stroke', '#f44336');
+    expect(rects[0]).toHaveAttribute('stroke', '#B0413E');
   });
 
   it('returns null when zones layer is not visible', () => {

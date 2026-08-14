@@ -2,6 +2,24 @@ import { useCallback, useState } from 'react';
 import { useProjectStore } from '@/stores/projectStore';
 import { usePermissionEnforcement } from '@/canvas/permissions/usePermissionEnforcement';
 
+/* --- Design system inline style constants --- */
+const LABEL_STYLE: React.CSSProperties = {
+  fontSize: '13px',
+  color: '#6E6E6E', /* --color-ink-secondary */
+};
+
+const INPUT_STYLE: React.CSSProperties = {
+  display: 'block',
+  width: '100%',
+  marginTop: '4px',
+  padding: '6px 8px',
+  height: '32px',
+  boxSizing: 'border-box',
+  border: '1px solid #D8D5D0', /* --color-disabled */
+  borderRadius: '4px',
+  backgroundColor: '#FFFFFF', /* --color-surface */
+};
+
 /**
  * Side panel for CONSULTANT mode.
  * Shows form fields for actual site measurements:
@@ -67,22 +85,23 @@ export function MeasurementPanel() {
     <div
       className="measurement-panel"
       style={{
-        width: '280px',
+        width: '320px',
         padding: '16px',
-        borderLeft: '1px solid #e0e0e0',
+        borderLeft: '1px solid #E3E1DD', /* --color-hairline */
+        backgroundColor: '#FFFFFF', /* --color-surface */
         overflowY: 'auto',
       }}
       data-testid="measurement-panel"
     >
-      <h3 style={{ margin: '0 0 16px', fontSize: '14px', fontWeight: 600 }}>
+      <h3 style={{ margin: '0 0 16px', fontSize: '14px', fontWeight: 600, color: '#1A1A1A' /* --color-ink-primary */ }}>
         Site Measurements
       </h3>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        <label style={{ fontSize: '13px' }}>
+        <label style={LABEL_STYLE}>
           Wall Width (mm)
           {isFieldLocked('wall_width_mm') && (
-            <span data-testid="field-locked-wall_width_mm" style={{ marginLeft: '6px', color: '#999' }}>
+            <span data-testid="field-locked-wall_width_mm" style={{ marginLeft: '6px', color: '#D8D5D0' /* --color-disabled */ }}>
               &#x1F512;
             </span>
           )}
@@ -94,23 +113,23 @@ export function MeasurementPanel() {
             onChange={(e) => handleChange('wall_width_mm', e.target.value)}
             onBlur={(e) => handleBlur('wall_width_mm', e.target.value)}
             disabled={isFieldLocked('wall_width_mm')}
-            style={{ display: 'block', width: '100%', marginTop: '4px', padding: '6px' }}
+            style={INPUT_STYLE}
             data-testid="input-wall-width"
           />
           {fieldErrors.wall_width_mm && (
-            <span data-testid="error-wall_width_mm" style={{ fontSize: '11px', color: '#d32f2f' }}>
+            <span data-testid="error-wall_width_mm" style={{ fontSize: '11px', color: '#B0413E' /* --color-error */ }}>
               {fieldErrors.wall_width_mm}
             </span>
           )}
-          <span style={{ fontSize: '11px', color: '#666' }}>
+          <span style={{ fontSize: '11px', color: '#6E6E6E' /* --color-ink-secondary */ }}>
             {getFieldHint('wall_width_mm') ?? '600 - 12000 mm'}
           </span>
         </label>
 
-        <label style={{ fontSize: '13px' }}>
+        <label style={LABEL_STYLE}>
           Wall Height (mm)
           {isFieldLocked('wall_height_mm') && (
-            <span data-testid="field-locked-wall_height_mm" style={{ marginLeft: '6px', color: '#999' }}>
+            <span data-testid="field-locked-wall_height_mm" style={{ marginLeft: '6px', color: '#D8D5D0' /* --color-disabled */ }}>
               &#x1F512;
             </span>
           )}
@@ -122,25 +141,25 @@ export function MeasurementPanel() {
             onChange={(e) => handleChange('wall_height_mm', e.target.value)}
             onBlur={(e) => handleBlur('wall_height_mm', e.target.value)}
             disabled={isFieldLocked('wall_height_mm')}
-            style={{ display: 'block', width: '100%', marginTop: '4px', padding: '6px' }}
+            style={INPUT_STYLE}
             data-testid="input-wall-height"
           />
           {fieldErrors.wall_height_mm && (
-            <span data-testid="error-wall_height_mm" style={{ fontSize: '11px', color: '#d32f2f' }}>
+            <span data-testid="error-wall_height_mm" style={{ fontSize: '11px', color: '#B0413E' /* --color-error */ }}>
               {fieldErrors.wall_height_mm}
             </span>
           )}
-          <span style={{ fontSize: '11px', color: '#666' }}>
+          <span style={{ fontSize: '11px', color: '#6E6E6E' /* --color-ink-secondary */ }}>
             {getFieldHint('wall_height_mm') ?? '300 - 6000 mm'}
           </span>
         </label>
 
         {wallGeometry === 'L_CORNER' && (
           <>
-            <label style={{ fontSize: '13px' }}>
+            <label style={LABEL_STYLE}>
               Segment A Width (mm)
               {isFieldLocked('segment_a_width_mm') && (
-                <span data-testid="field-locked-segment_a_width_mm" style={{ marginLeft: '6px', color: '#999' }}>
+                <span data-testid="field-locked-segment_a_width_mm" style={{ marginLeft: '6px', color: '#D8D5D0' /* --color-disabled */ }}>
                   &#x1F512;
                 </span>
               )}
@@ -151,20 +170,20 @@ export function MeasurementPanel() {
                 onChange={(e) => handleChange('segment_a_width_mm', e.target.value)}
                 onBlur={(e) => handleBlur('segment_a_width_mm', e.target.value)}
                 disabled={isFieldLocked('segment_a_width_mm')}
-                style={{ display: 'block', width: '100%', marginTop: '4px', padding: '6px' }}
+                style={INPUT_STYLE}
                 data-testid="input-segment-a"
               />
               {fieldErrors.segment_a_width_mm && (
-                <span data-testid="error-segment_a_width_mm" style={{ fontSize: '11px', color: '#d32f2f' }}>
+                <span data-testid="error-segment_a_width_mm" style={{ fontSize: '11px', color: '#B0413E' /* --color-error */ }}>
                   {fieldErrors.segment_a_width_mm}
                 </span>
               )}
             </label>
 
-            <label style={{ fontSize: '13px' }}>
+            <label style={LABEL_STYLE}>
               Segment B Width (mm)
               {isFieldLocked('segment_b_width_mm') && (
-                <span data-testid="field-locked-segment_b_width_mm" style={{ marginLeft: '6px', color: '#999' }}>
+                <span data-testid="field-locked-segment_b_width_mm" style={{ marginLeft: '6px', color: '#D8D5D0' /* --color-disabled */ }}>
                   &#x1F512;
                 </span>
               )}
@@ -175,11 +194,11 @@ export function MeasurementPanel() {
                 onChange={(e) => handleChange('segment_b_width_mm', e.target.value)}
                 onBlur={(e) => handleBlur('segment_b_width_mm', e.target.value)}
                 disabled={isFieldLocked('segment_b_width_mm')}
-                style={{ display: 'block', width: '100%', marginTop: '4px', padding: '6px' }}
+                style={INPUT_STYLE}
                 data-testid="input-segment-b"
               />
               {fieldErrors.segment_b_width_mm && (
-                <span data-testid="error-segment_b_width_mm" style={{ fontSize: '11px', color: '#d32f2f' }}>
+                <span data-testid="error-segment_b_width_mm" style={{ fontSize: '11px', color: '#B0413E' /* --color-error */ }}>
                   {fieldErrors.segment_b_width_mm}
                 </span>
               )}

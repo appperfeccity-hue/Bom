@@ -72,14 +72,25 @@ export function ZonesLayer({ wallHeight }: ZonesLayerProps) {
         // Convert from bottom-left origin to top-left (Konva)
         const screenY = wallHeight - zone.y_mm - zone.height_mm;
 
-        // Determine stroke color: red for invalid, gold for highlighted, blue for selected, teal for system-generated
+        // Determine stroke color based on zone state
+        // --color-error, --color-accent, --color-accent, --color-ink-secondary
         const strokeColor = hasErrors
-          ? '#f44336'
+          ? '#B0413E'
           : isHighlighted
-            ? '#ffc107'
+            ? '#9A7B4F'
             : isSelected
-              ? '#1976d2'
-              : '#4db6ac'; // Teal color indicates system-generated zones
+              ? '#9A7B4F'
+              : '#6E6E6E';
+
+        // Determine fill color based on zone state
+        // error 4%, accent 12%, accent 8%, canvas tint 50%
+        const fillColor = hasErrors
+          ? 'rgba(176, 65, 62, 0.04)'
+          : isHighlighted
+            ? 'rgba(154, 123, 79, 0.12)'
+            : isSelected
+              ? 'rgba(154, 123, 79, 0.08)'
+              : 'rgba(246, 245, 243, 0.5)';
 
         return (
           <Rect
@@ -88,9 +99,9 @@ export function ZonesLayer({ wallHeight }: ZonesLayerProps) {
             y={screenY}
             width={zone.width_mm}
             height={zone.height_mm}
-            fill={isHighlighted ? '#fff8e1' : isSelected ? '#bbdefb' : '#e0f2f1'}
+            fill={fillColor}
             stroke={strokeColor}
-            strokeWidth={(isHighlighted ? 3 : isSelected || hasErrors ? 2 : 1) / zoom}
+            strokeWidth={(isHighlighted ? 2 : isSelected ? 1.5 : hasErrors ? 1.5 : 1) / zoom}
             hitStrokeWidth={isTouchDevice() ? TOUCH_HIT_PADDING / zoom : 0}
             onClick={(e) => handleZoneClick(zone, e)}
             onTap={(e) => handleZoneClick(zone, e)}
@@ -112,7 +123,7 @@ export function ZonesLayer({ wallHeight }: ZonesLayerProps) {
             y={screenY + 10}
             text={label}
             fontSize={14 / zoom}
-            fill="#333333"
+            fill="#1A1A1A" /* --color-ink-primary */
             listening={false}
           />
         );

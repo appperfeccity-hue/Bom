@@ -1,0 +1,36 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "Canvas redesign + Panel restyle + Toolbar restyle: Replace all Material-blue hardcoded colors with design system CSS variables across canvas layers, panels, and toolbar",
+  "status": "in_progress",
+  "steps": [
+    "1. CANVAS - GridLayer (frontend/src/canvas/layers/GridLayer.tsx): Replace '#c0c0c0' and '#e0e0e0' with a warm subtle grid color. Use rgba version of hairline color at 0.3 opacity. Since Konva stroke doesn't support CSS vars, use the literal values from the design system: stroke for minor lines = 'rgba(227, 225, 221, 0.3)' (hairline at 0.3 opacity), stroke for major lines = 'rgba(227, 225, 221, 0.6)' (hairline at 0.6 opacity for distinction). Comment the source variable name.",
+    "2. CANVAS - WallOutlineLayer (frontend/src/canvas/layers/WallOutlineLayer.tsx): Replace '#000000' stroke with '#1A1A1A' (ink color). Add comment referencing --color-ink-primary.",
+    "3. CANVAS - ZonesLayer (frontend/src/canvas/layers/ZonesLayer.tsx): Replace all Material-blue colors. Default zone: stroke '#6E6E6E' (secondary) at 1px strokeWidth. Selected zone: stroke '#9A7B4F' (accent) at 1.5px. Highlighted zone: keep '#ffc107' or change to accent. Error zone: '#B0413E' (error). Fill colors: default = 'rgba(246, 245, 243, 0.5)' (warm canvas tint), selected = 'rgba(154, 123, 79, 0.08)' (accent at 8%), highlighted = 'rgba(154, 123, 79, 0.12)'. Error fill = 'rgba(176, 65, 62, 0.04)'. Zone label fill: '#1A1A1A'. Teal system-generated color '#4db6ac' -> '#6E6E6E' (secondary).",
+    "4. CANVAS - SelectionLayer (frontend/src/canvas/layers/SelectionLayer.tsx): Replace '#1976d2' with '#9A7B4F' (accent) for selection outlines and bounding box. Marquee fill: 'rgba(154, 123, 79, 0.08)', marquee stroke: '#9A7B4F'.",
+    "5. CANVAS - CanvasContainer (frontend/src/canvas/CanvasContainer.tsx): The container div currently has no explicit background. Add backgroundColor using the warm canvas color. Since it's in a style prop, set backgroundColor: '#F6F5F3'. Comment referencing --color-canvas.",
+    "6. TOOLBAR - Toolbar.tsx (frontend/src/components/Toolbar.tsx): Replace ALL inline styles with design system values. Specifically: toolbar bg '#fafafa' -> '#FFFFFF' (surface). Border bottom '#e0e0e0' -> '1px solid #E3E1DD' (hairline). Mode badge: replace blue/orange with accent pill (bg: 'rgba(154, 123, 79, 0.12)', color: '#9A7B4F' for both modes). Container height should be 40px (add height: '40px' to container style, adjust padding). Publish button bg '#7b1fa2' -> '#9A7B4F' (accent). Save status colors: saving '#ff9800' -> '#A66A2D' (warning), saved '#4caf50' -> '#3F6B4F' (success), unsaved/error '#f44336' -> '#B0413E' (error). Finalized badge: use success color scheme (#3F6B4F text, light green bg).",
+    "7. WALL CONFIG PANEL - WallConfigPanel.tsx (frontend/src/components/WallConfigPanel.tsx): Replace all inline styles. Panel: width '320px', padding using space-4 value '16px', borderLeft '1px solid #E3E1DD', bg '#FFFFFF'. Section headers <h4>: fontSize '12px', fontWeight 600, color '#6E6E6E', textTransform uppercase (keep existing pattern but ensure color). Labels: fontSize '13px', color '#6E6E6E'. Inputs: height '32px' (use padding to achieve), borderRadius '4px', border '1px solid #D8D5D0', bg '#FFFFFF'. Read-only inputs: bg '#F6F5F3'. Focus state: add CSS class for focus (will be in components.css). Buttons: primary = bg '#9A7B4F' + color '#FFFFFF', secondary = border '1px solid #D8D5D0' + bg transparent. Error box: border '#B0413E', bg 'rgba(176, 65, 62, 0.06)', color '#B0413E'. Success box (frame count): border '1px solid #3F6B4F', bg 'rgba(63, 107, 79, 0.06)', color '#3F6B4F'. Remove buttons in lighting/furniture: border '#B0413E', bg 'rgba(176, 65, 62, 0.06)', color '#B0413E'.",
+    "8. MEASUREMENT PANEL - MeasurementPanel.tsx (frontend/src/components/MeasurementPanel.tsx): Same pattern as WallConfigPanel. Width '320px', borderLeft '1px solid #E3E1DD', bg '#FFFFFF'. Labels '13px' '#6E6E6E'. Inputs: height '32px', border '1px solid #D8D5D0', borderRadius '4px'. Error text: '#B0413E'. Hint text: '#6E6E6E'. Lock icon color: '#D8D5D0'. Panel title: fontSize '14px', fontWeight 600, color '#1A1A1A'."
+  ],
+  "acceptance_criteria": [
+    "No Material Design blue (#1976d2, #bbdefb, #e3f2fd, #4db6ac) colors remain in any canvas layer or panel file",
+    "Grid lines use hairline color at 0.3 opacity (very subtle)",
+    "Wall outline uses #1A1A1A (not black #000000)",
+    "Zone default outline is #6E6E6E, selected is #9A7B4F at 1.5px",
+    "Selection handles and marquee use accent color #9A7B4F",
+    "Canvas background is #F6F5F3",
+    "WallConfigPanel width is 320px with left hairline border",
+    "MeasurementPanel width is 320px with left hairline border",
+    "Toolbar height is 40px with white bg and bottom hairline border",
+    "Mode badge uses accent color (not blue/orange)",
+    "All existing tests (1094+) still pass",
+    "TypeScript typecheck passes"
+  ],
+  "verification": [
+    "cd /projects/sandbox/Bom/frontend && unset NODE_OPTIONS && npx tsc --noEmit",
+    "cd /projects/sandbox/Bom/frontend && unset NODE_OPTIONS && npx vitest run"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

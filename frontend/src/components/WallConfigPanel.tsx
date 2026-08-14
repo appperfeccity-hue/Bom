@@ -32,6 +32,56 @@ const FIT_ALGORITHMS: FitAlgorithm[] = [
 
 const MOUNTING_TYPES: WallMountingType[] = ['DIRECT', 'PROFILE', 'RAIL'];
 
+/* --- Design system inline style constants --- */
+const SECTION_HEADER_STYLE: React.CSSProperties = {
+  margin: '0 0 8px',
+  fontSize: '12px',
+  fontWeight: 600,
+  color: '#6E6E6E', /* --color-ink-secondary */
+  textTransform: 'uppercase',
+};
+
+const LABEL_STYLE: React.CSSProperties = {
+  fontSize: '13px',
+  color: '#6E6E6E', /* --color-ink-secondary */
+};
+
+const INPUT_STYLE: React.CSSProperties = {
+  display: 'block',
+  width: '100%',
+  marginTop: '4px',
+  padding: '6px 8px',
+  height: '32px',
+  boxSizing: 'border-box',
+  border: '1px solid #D8D5D0', /* --color-disabled */
+  borderRadius: '4px',
+  backgroundColor: '#FFFFFF', /* --color-surface */
+};
+
+const INPUT_READONLY_STYLE: React.CSSProperties = {
+  ...INPUT_STYLE,
+  backgroundColor: '#F6F5F3', /* --color-canvas */
+};
+
+const BUTTON_SECONDARY_STYLE: React.CSSProperties = {
+  padding: '6px 12px',
+  fontSize: '13px',
+  border: '1px solid #D8D5D0', /* --color-disabled */
+  borderRadius: '4px',
+  cursor: 'pointer',
+  backgroundColor: 'transparent',
+};
+
+const REMOVE_BUTTON_STYLE: React.CSSProperties = {
+  padding: '2px 8px',
+  fontSize: '11px',
+  border: '1px solid #B0413E', /* --color-error */
+  borderRadius: '4px',
+  backgroundColor: 'rgba(176, 65, 62, 0.06)', /* --color-error 6% */
+  color: '#B0413E', /* --color-error */
+  cursor: 'pointer',
+};
+
 /**
  * Right-side panel for DESIGNER mode showing wall configuration controls.
  * Always visible in DESIGNER mode (not conditional on zone selection).
@@ -81,14 +131,15 @@ export function WallConfigPanel() {
     <div
       className="wall-config-panel"
       style={{
-        width: '280px',
+        width: '320px',
         padding: '16px',
-        borderLeft: '1px solid #e0e0e0',
+        borderLeft: '1px solid #E3E1DD', /* --color-hairline */
+        backgroundColor: '#FFFFFF', /* --color-surface */
         overflowY: 'auto',
       }}
       data-testid="wall-config-panel"
     >
-      <h3 style={{ margin: '0 0 16px', fontSize: '14px', fontWeight: 600 }}>
+      <h3 style={{ margin: '0 0 16px', fontSize: '14px', fontWeight: 600, color: '#1A1A1A' /* --color-ink-primary */ }}>
         Wall Configuration
       </h3>
 
@@ -98,11 +149,11 @@ export function WallConfigPanel() {
           style={{
             marginBottom: '16px',
             padding: '10px 12px',
-            backgroundColor: '#fbe9e7',
+            backgroundColor: 'rgba(176, 65, 62, 0.06)', /* --color-error 6% */
             borderRadius: '4px',
-            border: '1px solid #f44336',
+            border: '1px solid #B0413E', /* --color-error */
             fontSize: '12px',
-            color: '#c62828',
+            color: '#B0413E', /* --color-error */
           }}
           data-testid="generation-error"
         >
@@ -113,66 +164,44 @@ export function WallConfigPanel() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
         {/* Wall Configuration Section */}
         <section>
-          <h4 style={{ margin: '0 0 8px', fontSize: '12px', fontWeight: 600, color: '#666', textTransform: 'uppercase' }}>
+          <h4 style={SECTION_HEADER_STYLE}>
             Wall
           </h4>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {/* Wall Type - read only */}
-            <label style={{ fontSize: '13px' }}>
+            <label style={LABEL_STYLE}>
               Wall Type
               <input
                 type="text"
                 value={config.wall_type}
                 readOnly
-                style={{
-                  display: 'block',
-                  width: '100%',
-                  marginTop: '4px',
-                  padding: '6px',
-                  backgroundColor: '#f5f5f5',
-                  border: '1px solid #e0e0e0',
-                  borderRadius: '3px',
-                }}
+                style={INPUT_READONLY_STYLE}
                 data-testid="input-wall-type"
               />
             </label>
 
             {/* Total Width */}
-            <label style={{ fontSize: '13px' }}>
+            <label style={LABEL_STYLE}>
               Total Width (mm)
               <input
                 type="number"
                 value={config.total_width_mm}
                 onChange={(e) => handleNumberChange('total_width_mm', e.target.value)}
                 min={1}
-                style={{
-                  display: 'block',
-                  width: '100%',
-                  marginTop: '4px',
-                  padding: '6px',
-                  border: '1px solid #ccc',
-                  borderRadius: '3px',
-                }}
+                style={INPUT_STYLE}
                 data-testid="input-total-width"
               />
             </label>
 
             {/* Total Height */}
-            <label style={{ fontSize: '13px' }}>
+            <label style={LABEL_STYLE}>
               Total Height (mm)
               <input
                 type="number"
                 value={config.total_height_mm}
                 onChange={(e) => handleNumberChange('total_height_mm', e.target.value)}
                 min={1}
-                style={{
-                  display: 'block',
-                  width: '100%',
-                  marginTop: '4px',
-                  padding: '6px',
-                  border: '1px solid #ccc',
-                  borderRadius: '3px',
-                }}
+                style={INPUT_STYLE}
                 data-testid="input-total-height"
               />
             </label>
@@ -181,24 +210,17 @@ export function WallConfigPanel() {
 
         {/* Panel Layout Section */}
         <section>
-          <h4 style={{ margin: '0 0 8px', fontSize: '12px', fontWeight: 600, color: '#666', textTransform: 'uppercase' }}>
+          <h4 style={SECTION_HEADER_STYLE}>
             Panel Layout
           </h4>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {/* Rows */}
-            <label style={{ fontSize: '13px' }}>
+            <label style={LABEL_STYLE}>
               Rows
               <select
                 value={config.rows}
                 onChange={(e) => handleNumberChange('rows', e.target.value)}
-                style={{
-                  display: 'block',
-                  width: '100%',
-                  marginTop: '4px',
-                  padding: '6px',
-                  border: '1px solid #ccc',
-                  borderRadius: '3px',
-                }}
+                style={INPUT_STYLE}
                 data-testid="select-rows"
               >
                 <option value={1}>1</option>
@@ -207,7 +229,7 @@ export function WallConfigPanel() {
             </label>
 
             {/* Columns */}
-            <label style={{ fontSize: '13px' }}>
+            <label style={LABEL_STYLE}>
               Columns
               <input
                 type="number"
@@ -215,32 +237,18 @@ export function WallConfigPanel() {
                 onChange={(e) => handleNumberChange('columns', e.target.value)}
                 min={1}
                 max={12}
-                style={{
-                  display: 'block',
-                  width: '100%',
-                  marginTop: '4px',
-                  padding: '6px',
-                  border: '1px solid #ccc',
-                  borderRadius: '3px',
-                }}
+                style={INPUT_STYLE}
                 data-testid="input-columns"
               />
             </label>
 
             {/* Panel Fit */}
-            <label style={{ fontSize: '13px' }}>
+            <label style={LABEL_STYLE}>
               Panel Fit
               <select
                 value={config.fit_algorithm}
                 onChange={(e) => handleFitAlgorithmChange(e.target.value)}
-                style={{
-                  display: 'block',
-                  width: '100%',
-                  marginTop: '4px',
-                  padding: '6px',
-                  border: '1px solid #ccc',
-                  borderRadius: '3px',
-                }}
+                style={INPUT_STYLE}
                 data-testid="select-fit-algorithm"
               >
                 {FIT_ALGORITHMS.map((alg) => (
@@ -252,7 +260,7 @@ export function WallConfigPanel() {
             </label>
 
             {/* Fit Intensity */}
-            <label style={{ fontSize: '13px' }}>
+            <label style={LABEL_STYLE}>
               Fit Intensity: {config.fit_intensity_percent}%
               <input
                 type="range"
@@ -274,66 +282,45 @@ export function WallConfigPanel() {
 
         {/* Spacing Section */}
         <section>
-          <h4 style={{ margin: '0 0 8px', fontSize: '12px', fontWeight: 600, color: '#666', textTransform: 'uppercase' }}>
+          <h4 style={SECTION_HEADER_STYLE}>
             Spacing
           </h4>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {/* Panel Gap */}
-            <label style={{ fontSize: '13px' }}>
+            <label style={LABEL_STYLE}>
               Panel Gap (mm)
               <input
                 type="number"
                 value={config.panel_gap_mm}
                 onChange={(e) => handleNumberChange('panel_gap_mm', e.target.value)}
                 min={0}
-                style={{
-                  display: 'block',
-                  width: '100%',
-                  marginTop: '4px',
-                  padding: '6px',
-                  border: '1px solid #ccc',
-                  borderRadius: '3px',
-                }}
+                style={INPUT_STYLE}
                 data-testid="input-panel-gap"
               />
             </label>
 
             {/* Edge Margin Left */}
-            <label style={{ fontSize: '13px' }}>
+            <label style={LABEL_STYLE}>
               Edge Margin Left (mm)
               <input
                 type="number"
                 value={config.edge_margin_left_mm ?? 0}
                 onChange={(e) => handleNumberChange('edge_margin_left_mm', e.target.value)}
                 min={0}
-                style={{
-                  display: 'block',
-                  width: '100%',
-                  marginTop: '4px',
-                  padding: '6px',
-                  border: '1px solid #ccc',
-                  borderRadius: '3px',
-                }}
+                style={INPUT_STYLE}
                 data-testid="input-edge-margin-left"
               />
             </label>
 
             {/* Edge Margin Right */}
-            <label style={{ fontSize: '13px' }}>
+            <label style={LABEL_STYLE}>
               Edge Margin Right (mm)
               <input
                 type="number"
                 value={config.edge_margin_right_mm ?? 0}
                 onChange={(e) => handleNumberChange('edge_margin_right_mm', e.target.value)}
                 min={0}
-                style={{
-                  display: 'block',
-                  width: '100%',
-                  marginTop: '4px',
-                  padding: '6px',
-                  border: '1px solid #ccc',
-                  borderRadius: '3px',
-                }}
+                style={INPUT_STYLE}
                 data-testid="input-edge-margin-right"
               />
             </label>
@@ -342,23 +329,16 @@ export function WallConfigPanel() {
 
         {/* Mounting Section */}
         <section>
-          <h4 style={{ margin: '0 0 8px', fontSize: '12px', fontWeight: 600, color: '#666', textTransform: 'uppercase' }}>
+          <h4 style={SECTION_HEADER_STYLE}>
             Mounting
           </h4>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <label style={{ fontSize: '13px' }}>
+            <label style={LABEL_STYLE}>
               Mounting Type
               <select
                 value={config.mounting_type}
                 onChange={(e) => handleMountingTypeChange(e.target.value)}
-                style={{
-                  display: 'block',
-                  width: '100%',
-                  marginTop: '4px',
-                  padding: '6px',
-                  border: '1px solid #ccc',
-                  borderRadius: '3px',
-                }}
+                style={INPUT_STYLE}
                 data-testid="select-mounting-type"
               >
                 {MOUNTING_TYPES.map((mt) => (
@@ -382,10 +362,11 @@ export function WallConfigPanel() {
           style={{
             marginTop: '8px',
             padding: '10px 12px',
-            backgroundColor: '#e8f5e9',
+            backgroundColor: 'rgba(63, 107, 79, 0.06)', /* --color-success 6% */
             borderRadius: '4px',
+            border: '1px solid #3F6B4F', /* --color-success */
             fontSize: '13px',
-            color: '#2e7d32',
+            color: '#3F6B4F', /* --color-success */
             textAlign: 'center',
           }}
           data-testid="frame-count"
@@ -433,24 +414,17 @@ function LightingSection() {
 
   return (
     <section data-testid="lighting-section">
-      <h4 style={{ margin: '0 0 8px', fontSize: '12px', fontWeight: 600, color: '#666', textTransform: 'uppercase' }}>
+      <h4 style={SECTION_HEADER_STYLE}>
         Lighting
       </h4>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
         {/* Inline form */}
-        <label style={{ fontSize: '13px' }}>
+        <label style={LABEL_STYLE}>
           Edge Selection
           <select
             value={newEdgeSelection}
             onChange={(e) => setNewEdgeSelection(e.target.value)}
-            style={{
-              display: 'block',
-              width: '100%',
-              marginTop: '4px',
-              padding: '6px',
-              border: '1px solid #ccc',
-              borderRadius: '3px',
-            }}
+            style={INPUT_STYLE}
             data-testid="select-edge-selection"
           >
             {EDGE_SELECTIONS.map((es) => (
@@ -461,19 +435,12 @@ function LightingSection() {
           </select>
         </label>
 
-        <label style={{ fontSize: '13px' }}>
+        <label style={LABEL_STYLE}>
           Mounting Type
           <select
             value={newMountingType}
             onChange={(e) => setNewMountingType(e.target.value as TemplateLighting['mounting_type'])}
-            style={{
-              display: 'block',
-              width: '100%',
-              marginTop: '4px',
-              padding: '6px',
-              border: '1px solid #ccc',
-              borderRadius: '3px',
-            }}
+            style={INPUT_STYLE}
             data-testid="select-lighting-mounting-type"
           >
             {LIGHTING_MOUNTING_TYPES.map((mt) => (
@@ -486,14 +453,7 @@ function LightingSection() {
 
         <button
           onClick={handleAddLight}
-          style={{
-            padding: '6px 12px',
-            fontSize: '13px',
-            border: '1px solid #ccc',
-            borderRadius: '3px',
-            cursor: 'pointer',
-            backgroundColor: '#f5f5f5',
-          }}
+          style={BUTTON_SECONDARY_STYLE}
           data-testid="add-light-btn"
         >
           Add Light
@@ -508,9 +468,9 @@ function LightingSection() {
               alignItems: 'center',
               justifyContent: 'space-between',
               padding: '6px 8px',
-              backgroundColor: '#f9f9f9',
-              border: '1px solid #e0e0e0',
-              borderRadius: '3px',
+              backgroundColor: '#F6F5F3', /* --color-canvas */
+              border: '1px solid #E3E1DD', /* --color-hairline */
+              borderRadius: '4px',
               fontSize: '12px',
             }}
             data-testid={`lighting-item-${item.lighting_id}`}
@@ -520,15 +480,7 @@ function LightingSection() {
             </span>
             <button
               onClick={() => handleRemoveLight(item.lighting_id)}
-              style={{
-                padding: '2px 8px',
-                fontSize: '11px',
-                border: '1px solid #e57373',
-                borderRadius: '3px',
-                backgroundColor: '#ffebee',
-                color: '#c62828',
-                cursor: 'pointer',
-              }}
+              style={REMOVE_BUTTON_STYLE}
               data-testid={`remove-light-${item.lighting_id}`}
             >
               Remove
@@ -577,62 +529,41 @@ function FurnitureSection() {
 
   return (
     <section data-testid="furniture-section">
-      <h4 style={{ margin: '0 0 8px', fontSize: '12px', fontWeight: 600, color: '#666', textTransform: 'uppercase' }}>
+      <h4 style={SECTION_HEADER_STYLE}>
         Furniture
       </h4>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
         {/* Inline form */}
-        <label style={{ fontSize: '13px' }}>
+        <label style={LABEL_STYLE}>
           Position X (mm)
           <input
             type="number"
             value={positionX}
             onChange={(e) => setPositionX(parseInt(e.target.value, 10) || 0)}
             min={0}
-            style={{
-              display: 'block',
-              width: '100%',
-              marginTop: '4px',
-              padding: '6px',
-              border: '1px solid #ccc',
-              borderRadius: '3px',
-            }}
+            style={INPUT_STYLE}
             data-testid="input-position-x"
           />
         </label>
 
-        <label style={{ fontSize: '13px' }}>
+        <label style={LABEL_STYLE}>
           Position Y (mm)
           <input
             type="number"
             value={positionY}
             onChange={(e) => setPositionY(parseInt(e.target.value, 10) || 0)}
             min={0}
-            style={{
-              display: 'block',
-              width: '100%',
-              marginTop: '4px',
-              padding: '6px',
-              border: '1px solid #ccc',
-              borderRadius: '3px',
-            }}
+            style={INPUT_STYLE}
             data-testid="input-position-y"
           />
         </label>
 
-        <label style={{ fontSize: '13px' }}>
+        <label style={LABEL_STYLE}>
           Orientation
           <select
             value={orientation}
             onChange={(e) => setOrientation(e.target.value as TemplateFurniture['orientation'])}
-            style={{
-              display: 'block',
-              width: '100%',
-              marginTop: '4px',
-              padding: '6px',
-              border: '1px solid #ccc',
-              borderRadius: '3px',
-            }}
+            style={INPUT_STYLE}
             data-testid="select-orientation"
           >
             {ORIENTATIONS.map((o) => (
@@ -645,14 +576,7 @@ function FurnitureSection() {
 
         <button
           onClick={handleAddFurniture}
-          style={{
-            padding: '6px 12px',
-            fontSize: '13px',
-            border: '1px solid #ccc',
-            borderRadius: '3px',
-            cursor: 'pointer',
-            backgroundColor: '#f5f5f5',
-          }}
+          style={BUTTON_SECONDARY_STYLE}
           data-testid="add-furniture-btn"
         >
           Add Furniture
@@ -667,9 +591,9 @@ function FurnitureSection() {
               alignItems: 'center',
               justifyContent: 'space-between',
               padding: '6px 8px',
-              backgroundColor: '#f9f9f9',
-              border: '1px solid #e0e0e0',
-              borderRadius: '3px',
+              backgroundColor: '#F6F5F3', /* --color-canvas */
+              border: '1px solid #E3E1DD', /* --color-hairline */
+              borderRadius: '4px',
               fontSize: '12px',
             }}
             data-testid={`furniture-item-${item.furniture_id}`}
@@ -679,15 +603,7 @@ function FurnitureSection() {
             </span>
             <button
               onClick={() => handleRemoveFurniture(item.furniture_id)}
-              style={{
-                padding: '2px 8px',
-                fontSize: '11px',
-                border: '1px solid #e57373',
-                borderRadius: '3px',
-                backgroundColor: '#ffebee',
-                color: '#c62828',
-                cursor: 'pointer',
-              }}
+              style={REMOVE_BUTTON_STYLE}
               data-testid={`remove-furniture-${item.furniture_id}`}
             >
               Remove

@@ -50,7 +50,7 @@ export function WallOutlineLayer({
       <Layer listening={false}>
         <Line
           points={points}
-          stroke="#000000"
+          stroke="#1A1A1A" /* --color-ink-primary */
           strokeWidth={strokeWidth}
           closed
           listening={false}
@@ -71,7 +71,7 @@ export function WallOutlineLayer({
     <Layer listening={false}>
       <Line
         points={points}
-        stroke="#000000"
+        stroke="#1A1A1A" /* --color-ink-primary */
         strokeWidth={strokeWidth}
         closed
         listening={false}

@@ -28,7 +28,7 @@ export function GridLayer({ wallWidth, wallHeight }: GridLayerProps) {
       <Line
         key={`v-${x}`}
         points={[x, 0, x, wallHeight]}
-        stroke={isMajor ? '#c0c0c0' : '#e0e0e0'}
+        stroke={isMajor ? 'rgba(227, 225, 221, 0.6)' : 'rgba(227, 225, 221, 0.3)'} /* --color-hairline */
         strokeWidth={isMajor ? 0.5 : 0.25}
         listening={false}
       />,
@@ -42,7 +42,7 @@ export function GridLayer({ wallWidth, wallHeight }: GridLayerProps) {
       <Line
         key={`h-${y}`}
         points={[0, y, wallWidth, y]}
-        stroke={isMajor ? '#c0c0c0' : '#e0e0e0'}
+        stroke={isMajor ? 'rgba(227, 225, 221, 0.6)' : 'rgba(227, 225, 221, 0.3)'} /* --color-hairline */
         strokeWidth={isMajor ? 0.5 : 0.25}
         listening={false}
       />,

@@ -167,7 +167,7 @@ export function CanvasContainer({ mode }: CanvasContainerProps) {
     <div
       ref={containerRef}
       className="canvas-container"
-      style={{ width: '100%', height: '100%', overflow: 'hidden', position: 'relative' }}
+      style={{ width: '100%', height: '100%', overflow: 'hidden', position: 'relative', backgroundColor: '#F6F5F3' /* --color-canvas */ }}
       data-testid="canvas-container"
     >
       <Stage

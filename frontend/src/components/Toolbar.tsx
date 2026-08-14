@@ -98,10 +98,10 @@ export function Toolbar() {
   };
 
   const saveStatusDisplay: Record<string, { text: string; color: string }> = {
-    saving: { text: 'Saving...', color: '#ff9800' },
-    saved: { text: 'Saved', color: '#4caf50' },
-    unsaved: { text: 'Unsaved changes', color: '#f44336' },
-    error: { text: 'Error saving', color: '#f44336' },
+    saving: { text: 'Saving...', color: '#A66A2D' }, /* --color-warning */
+    saved: { text: 'Saved', color: '#3F6B4F' }, /* --color-success */
+    unsaved: { text: 'Unsaved changes', color: '#B0413E' }, /* --color-error */
+    error: { text: 'Error saving', color: '#B0413E' }, /* --color-error */
   };
 
   const status = saveStatusDisplay[saveStatus] ?? saveStatusDisplay.saved;
@@ -114,9 +114,10 @@ export function Toolbar() {
         display: 'flex',
         alignItems: 'center',
         gap: isCompact ? '8px' : '12px',
-        padding: '8px 16px',
-        borderBottom: '1px solid #e0e0e0',
-        backgroundColor: '#fafafa',
+        padding: '0 16px',
+        height: '40px',
+        borderBottom: '1px solid #E3E1DD', /* --color-hairline */
+        backgroundColor: '#FFFFFF', /* --color-surface */
         flexWrap: 'wrap',
       }}
       data-testid="toolbar"
@@ -128,8 +129,8 @@ export function Toolbar() {
           borderRadius: '4px',
           fontSize: '12px',
           fontWeight: 600,
-          backgroundColor: isDesigner ? '#e3f2fd' : '#fff3e0',
-          color: isDesigner ? '#1565c0' : '#e65100',
+          backgroundColor: 'rgba(154, 123, 79, 0.12)', /* --color-accent 12% */
+          color: '#9A7B4F', /* --color-accent */
         }}
         data-testid="mode-badge"
       >
@@ -231,8 +232,8 @@ export function Toolbar() {
                 padding: isCompact ? '12px' : '4px 12px',
                 fontSize: isCompact ? '16px' : '13px',
                 fontWeight: 600,
-                backgroundColor: '#7b1fa2',
-                color: '#ffffff',
+                backgroundColor: '#9A7B4F', /* --color-accent */
+                color: '#FFFFFF', /* --color-surface */
                 border: 'none',
                 borderRadius: '4px',
                 cursor: 'pointer',
@@ -253,9 +254,9 @@ export function Toolbar() {
             borderRadius: '4px',
             fontSize: '12px',
             fontWeight: 600,
-            backgroundColor: '#e8f5e9',
-            color: '#2e7d32',
-            border: '1px solid #a5d6a7',
+            backgroundColor: 'rgba(63, 107, 79, 0.06)', /* --color-success 6% */
+            color: '#3F6B4F', /* --color-success */
+            border: '1px solid #3F6B4F', /* --color-success */
           }}
         >
           Finalized (Immutable)

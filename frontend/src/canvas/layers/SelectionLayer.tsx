@@ -67,7 +67,7 @@ export function SelectionLayer({ wallHeight }: SelectionLayerProps) {
             y={screenY}
             width={zone.width_mm}
             height={zone.height_mm}
-            stroke="#1976d2"
+            stroke="#9A7B4F" /* --color-accent */
             strokeWidth={2 / zoom}
             dash={[6 / zoom, 3 / zoom]}
             listening={false}
@@ -82,7 +82,7 @@ export function SelectionLayer({ wallHeight }: SelectionLayerProps) {
           y={groupScreenY}
           width={groupW}
           height={groupH}
-          stroke="#1976d2"
+          stroke="#9A7B4F" /* --color-accent */
           strokeWidth={1 / zoom}
           dash={[4 / zoom, 4 / zoom]}
           listening={false}
@@ -96,8 +96,8 @@ export function SelectionLayer({ wallHeight }: SelectionLayerProps) {
           y={wallHeight - marqueeRect.y - marqueeRect.height}
           width={marqueeRect.width}
           height={marqueeRect.height}
-          fill="rgba(25, 118, 210, 0.08)"
-          stroke="#1976d2"
+          fill="rgba(154, 123, 79, 0.08)" /* --color-accent 8% */
+          stroke="#9A7B4F" /* --color-accent */
           strokeWidth={1 / zoom}
           dash={[4 / zoom, 2 / zoom]}
           listening={false}
