@@ -2,7 +2,7 @@
   "id": "FEAT-002",
   "type": "feat",
   "description": "Restyle Admin pages (AdminLayout sidebar + all 6 admin pages) and Dashboard to use the PERFECCITY design system warm palette and CSS utility classes",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "STEP 1 - AdminLayout.tsx sidebar restyle: Replace dark #1e293b sidebar with warm palette (bg: var(--color-surface), border-right: 1px solid var(--color-hairline)). Active nav item should have border-left: 3px solid var(--color-accent) and bg: var(--color-nav-active-bg). Inactive items: color var(--color-ink-secondary). Header text: var(--color-ink-primary). User email text: var(--color-ink-secondary). Content area bg: var(--color-canvas) (#F6F5F3).",
     "STEP 2 - Create shared admin StatusBadge pattern: In each admin page (CataloguePage, SkuMasterPage, RuleSetPage, SkuCompatibilityPage), replace the inline StatusBadge components with .status-chip class variants. Map: ACTIVE -> status-chip--active (success green), INACTIVE -> status-chip--inactive (gray), READY -> status-chip--active, INCOMPLETE -> status-chip--blocked, DRAFT -> status-chip--inactive, SUPERSEDED -> status-chip--inactive.",
@@ -31,5 +31,5 @@
     "cd /projects/sandbox/Bom/frontend && npx vitest run"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All 8 files restyled successfully. Build clean, all 1094 tests pass. Used inline styles with CSS custom properties for dynamic elements and className='table-minimal' for all tables. Only #ffffff remains as button text color on colored backgrounds (appropriate per design system). The DashboardPage was already partially using design tokens from a prior phase - updated card shadows and role label accent color."
 }
