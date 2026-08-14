@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "fix",
   "description": "Fix Phase 1 issues: AppShell on all authenticated routes, IconRail active states, tooltip timer cleanup, TopBar type casts",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "1. In frontend/src/main.tsx: Move AppShell to wrap ALL authenticated routes. Currently AppShell only wraps the /canvas route via App.tsx. Instead, wrap the ProtectedRoute's Outlet with AppShell so Dashboard, Admin, and Canvas routes all get the shell. This means extracting AppShell from App.tsx and placing it in main.tsx around the protected <Outlet />. The DashboardPage and Admin routes also need to render inside the shell. Option: Create a new layout route component (e.g., AuthenticatedLayout) that renders <AppShell><Outlet /></AppShell> and use it as a layout route wrapping all protected routes.",
     "2. In frontend/src/App.tsx: Remove the <AppShell> wrapper since it now lives at the routing level. App.tsx should just render its content (Navigation, Toolbar, canvas, panels) without the shell wrapper.",
@@ -24,5 +24,5 @@
     "cd /projects/sandbox/Bom/frontend && unset NODE_OPTIONS && npx vitest run"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All 1094 tests pass. Typecheck passes (only pre-existing TS6133 unused var in ValidationOverlayLayer.tsx). Build succeeds. AuthenticatedLayout wraps all protected routes. AdminLayout still nested inside for admin sub-routes. Projects path changed from /canvas to /projects (no route exists yet, but path is unique). TopBar uses CSS classes instead of inline styles with type casts."
 }
