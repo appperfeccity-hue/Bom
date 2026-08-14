@@ -1,22 +1,22 @@
 import { useBomStore } from '@/stores/bomStore';
 import { ReconciliationResultType } from '@/types/database';
 
-function getResultColor(resultType: ReconciliationResultType): string {
+function getResultStyle(resultType: ReconciliationResultType): { backgroundColor: string; color: string } {
   switch (resultType) {
     case ReconciliationResultType.UNCHANGED:
-      return '#4caf50';
+      return { backgroundColor: 'rgba(110,110,110,0.1)', color: 'var(--color-ink-secondary)' };
     case ReconciliationResultType.QUANTITY_CHANGED:
-      return '#ff9800';
+      return { backgroundColor: 'rgba(166,106,45,0.1)', color: 'var(--color-warning)' };
     case ReconciliationResultType.SKU_CHANGED:
-      return '#2196f3';
+      return { backgroundColor: 'rgba(154,123,79,0.1)', color: 'var(--color-accent)' };
     case ReconciliationResultType.REMOVED:
-      return '#f44336';
+      return { backgroundColor: 'rgba(176,65,62,0.1)', color: 'var(--color-error)' };
     case ReconciliationResultType.ADDED_BY_TRIGGER:
-      return '#9c27b0';
+      return { backgroundColor: 'rgba(154,123,79,0.1)', color: 'var(--color-accent)' };
     case ReconciliationResultType.UNEXPECTED:
-      return '#e91e63';
+      return { backgroundColor: 'rgba(176,65,62,0.1)', color: 'var(--color-error)' };
     default:
-      return '#9e9e9e';
+      return { backgroundColor: 'rgba(110,110,110,0.1)', color: 'var(--color-ink-secondary)' };
   }
 }
 
@@ -32,7 +32,7 @@ export function BomReconciliationView() {
 
   if (reconciliation.length === 0) {
     return (
-      <div data-testid="bom-reconciliation-empty" style={{ padding: '16px', color: '#666' }}>
+      <div data-testid="bom-reconciliation-empty" style={{ padding: '16px', color: 'var(--color-ink-secondary)' }}>
         No reconciliation data. Compute reconciliation to compare Master vs Actual BOM.
       </div>
     );
@@ -52,16 +52,16 @@ export function BomReconciliationView() {
       >
         <thead>
           <tr>
-            <th style={{ textAlign: 'left', padding: '4px 8px', borderBottom: '1px solid #eee', fontWeight: 600 }}>
+            <th style={{ textAlign: 'left', padding: '4px 8px', borderBottom: '1px solid var(--color-hairline)', fontWeight: 600 }}>
               SKU
             </th>
-            <th style={{ textAlign: 'left', padding: '4px 8px', borderBottom: '1px solid #eee', fontWeight: 600 }}>
+            <th style={{ textAlign: 'left', padding: '4px 8px', borderBottom: '1px solid var(--color-hairline)', fontWeight: 600 }}>
               Master Qty
             </th>
-            <th style={{ textAlign: 'left', padding: '4px 8px', borderBottom: '1px solid #eee', fontWeight: 600 }}>
+            <th style={{ textAlign: 'left', padding: '4px 8px', borderBottom: '1px solid var(--color-hairline)', fontWeight: 600 }}>
               Actual Qty
             </th>
-            <th style={{ textAlign: 'left', padding: '4px 8px', borderBottom: '1px solid #eee', fontWeight: 600 }}>
+            <th style={{ textAlign: 'left', padding: '4px 8px', borderBottom: '1px solid var(--color-hairline)', fontWeight: 600 }}>
               Result
             </th>
           </tr>
@@ -69,16 +69,16 @@ export function BomReconciliationView() {
         <tbody>
           {reconciliation.map((line, idx) => (
             <tr key={idx} data-testid={`reconciliation-row-${idx}`}>
-              <td style={{ padding: '4px 8px', borderBottom: '1px solid #f5f5f5' }}>
+              <td style={{ padding: '4px 8px', borderBottom: '1px solid var(--color-hairline)' }}>
                 {line.master_line?.sku_id ?? line.actual_line?.sku_id ?? '-'}
               </td>
-              <td style={{ padding: '4px 8px', borderBottom: '1px solid #f5f5f5' }}>
+              <td style={{ padding: '4px 8px', borderBottom: '1px solid var(--color-hairline)', fontFamily: 'var(--font-mono)' }}>
                 {line.master_line?.default_quantity ?? '-'}
               </td>
-              <td style={{ padding: '4px 8px', borderBottom: '1px solid #f5f5f5' }}>
+              <td style={{ padding: '4px 8px', borderBottom: '1px solid var(--color-hairline)', fontFamily: 'var(--font-mono)' }}>
                 {line.actual_line?.quantity ?? '-'}
               </td>
-              <td style={{ padding: '4px 8px', borderBottom: '1px solid #f5f5f5' }}>
+              <td style={{ padding: '4px 8px', borderBottom: '1px solid var(--color-hairline)' }}>
                 <span
                   data-testid={`reconciliation-badge-${idx}`}
                   style={{
@@ -87,8 +87,8 @@ export function BomReconciliationView() {
                     fontSize: '10px',
                     fontWeight: 600,
                     borderRadius: '3px',
-                    backgroundColor: getResultColor(line.result_type),
-                    color: '#ffffff',
+                    backgroundColor: getResultStyle(line.result_type).backgroundColor,
+                    color: getResultStyle(line.result_type).color,
                   }}
                 >
                   {line.result_type}

@@ -16,23 +16,24 @@ export function RetireTemplateDialog() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: 'rgba(0,0,0,0.5)',
+        backgroundColor: 'rgba(0,0,0,0.4)',
         zIndex: 1100,
       }}
     >
       <div
         style={{
-          backgroundColor: '#ffffff',
-          borderRadius: '8px',
+          backgroundColor: 'var(--color-surface)',
+          borderRadius: 'var(--radius-md)',
           padding: '24px',
-          minWidth: '400px',
+          maxWidth: '480px',
+          width: '100%',
           display: 'flex',
           flexDirection: 'column',
           gap: '16px',
         }}
       >
-        <h3 style={{ margin: 0 }}>Retire Template</h3>
-        <p style={{ margin: 0, fontSize: '14px', color: '#333' }}>
+        <h3 style={{ margin: 0, color: 'var(--color-ink-primary)' }}>Retire Template</h3>
+        <p style={{ margin: 0, fontSize: '14px', color: 'var(--color-ink-primary)' }}>
           Are you sure you want to retire <strong>{selectedTemplate.name}</strong>? Existing
           projects using this template will not be affected.
         </p>
@@ -45,10 +46,11 @@ export function RetireTemplateDialog() {
             style={{
               padding: '6px 14px',
               fontSize: '13px',
-              border: '1px solid #ccc',
-              borderRadius: '4px',
-              backgroundColor: '#f5f5f5',
+              border: '1px solid var(--color-disabled)',
+              borderRadius: 'var(--radius-sm)',
+              backgroundColor: 'transparent',
               cursor: 'pointer',
+              color: 'var(--color-ink-primary)',
             }}
           >
             Cancel
@@ -61,8 +63,8 @@ export function RetireTemplateDialog() {
               padding: '6px 14px',
               fontSize: '13px',
               border: 'none',
-              borderRadius: '4px',
-              backgroundColor: '#e65100',
+              borderRadius: 'var(--radius-sm)',
+              backgroundColor: 'var(--color-warning)',
               color: '#ffffff',
               cursor: 'pointer',
             }}

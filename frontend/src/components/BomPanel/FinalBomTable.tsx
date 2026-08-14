@@ -18,7 +18,7 @@ export function FinalBomTable() {
 
   if (!finalBom) {
     return (
-      <div data-testid="final-bom-table-empty" style={{ padding: '16px', color: '#666' }}>
+      <div data-testid="final-bom-table-empty" style={{ padding: '16px', color: 'var(--color-ink-secondary)' }}>
         No Final BOM found.
       </div>
     );
@@ -27,7 +27,7 @@ export function FinalBomTable() {
   return (
     <div data-testid="final-bom-table" style={{ padding: '12px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-        <span style={{ fontSize: '13px', fontWeight: 600 }}>Final BOM</span>
+        <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--color-ink-primary)' }}>Final BOM</span>
         <span
           data-testid="final-bom-lock-badge"
           style={{
@@ -36,8 +36,8 @@ export function FinalBomTable() {
             fontSize: '11px',
             fontWeight: 600,
             borderRadius: '4px',
-            backgroundColor: '#7b1fa2',
-            color: '#ffffff',
+            backgroundColor: 'rgba(154,123,79,0.1)',
+            color: 'var(--color-accent)',
           }}
         >
           Immutable

@@ -28,7 +28,7 @@ export function ValidationGateIndicator() {
         fontSize: '11px',
         fontWeight: 600,
         color: '#ffffff',
-        backgroundColor: allPassed ? '#4caf50' : '#f44336',
+        backgroundColor: allPassed ? 'var(--color-success)' : 'var(--color-error)',
         marginLeft: '8px',
       }}
     >

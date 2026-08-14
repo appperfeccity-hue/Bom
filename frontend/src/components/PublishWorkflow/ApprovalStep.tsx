@@ -32,8 +32,8 @@ export function ApprovalStep() {
           style={{
             marginBottom: '16px',
             padding: '12px',
-            backgroundColor: '#f5f5f5',
-            borderRadius: '4px',
+            backgroundColor: 'var(--color-canvas)',
+            borderRadius: 'var(--radius-sm)',
           }}
         >
           <div style={{ fontSize: '13px', marginBottom: '4px' }}>
@@ -58,17 +58,17 @@ export function ApprovalStep() {
             }}
           >
             <thead>
-              <tr style={{ backgroundColor: '#f5f5f5' }}>
-                <th style={{ padding: '6px 8px', textAlign: 'left', borderBottom: '1px solid #e0e0e0' }}>
+              <tr style={{ backgroundColor: 'var(--color-canvas)' }}>
+                <th style={{ padding: '6px 8px', textAlign: 'left', borderBottom: '1px solid var(--color-hairline)' }}>
                   SKU
                 </th>
-                <th style={{ padding: '6px 8px', textAlign: 'left', borderBottom: '1px solid #e0e0e0' }}>
+                <th style={{ padding: '6px 8px', textAlign: 'left', borderBottom: '1px solid var(--color-hairline)' }}>
                   Product Type
                 </th>
-                <th style={{ padding: '6px 8px', textAlign: 'right', borderBottom: '1px solid #e0e0e0' }}>
+                <th style={{ padding: '6px 8px', textAlign: 'right', borderBottom: '1px solid var(--color-hairline)', fontFamily: 'var(--font-mono)' }}>
                   Qty
                 </th>
-                <th style={{ padding: '6px 8px', textAlign: 'left', borderBottom: '1px solid #e0e0e0' }}>
+                <th style={{ padding: '6px 8px', textAlign: 'left', borderBottom: '1px solid var(--color-hairline)' }}>
                   UOM
                 </th>
               </tr>
@@ -76,16 +76,16 @@ export function ApprovalStep() {
             <tbody>
               {generatedBomLines.map((line) => (
                 <tr key={line.master_bom_line_id}>
-                  <td style={{ padding: '6px 8px', borderBottom: '1px solid #f0f0f0' }}>
+                  <td style={{ padding: '6px 8px', borderBottom: '1px solid var(--color-hairline)' }}>
                     {line.sku_id}
                   </td>
-                  <td style={{ padding: '6px 8px', borderBottom: '1px solid #f0f0f0' }}>
+                  <td style={{ padding: '6px 8px', borderBottom: '1px solid var(--color-hairline)' }}>
                     {line.product_type}
                   </td>
-                  <td style={{ padding: '6px 8px', textAlign: 'right', borderBottom: '1px solid #f0f0f0' }}>
+                  <td style={{ padding: '6px 8px', textAlign: 'right', borderBottom: '1px solid var(--color-hairline)', fontFamily: 'var(--font-mono)' }}>
                     {line.default_quantity}
                   </td>
-                  <td style={{ padding: '6px 8px', borderBottom: '1px solid #f0f0f0' }}>
+                  <td style={{ padding: '6px 8px', borderBottom: '1px solid var(--color-hairline)' }}>
                     {line.unit_of_measure}
                   </td>
                 </tr>
@@ -100,12 +100,12 @@ export function ApprovalStep() {
           data-testid="bom-engine-note"
           style={{
             fontSize: '12px',
-            color: '#666',
+            color: 'var(--color-ink-secondary)',
             marginBottom: '16px',
             padding: '10px 12px',
-            backgroundColor: '#f5f5f5',
-            borderRadius: '4px',
-            borderLeft: '3px solid #90a4ae',
+            backgroundColor: 'var(--color-canvas)',
+            borderRadius: 'var(--radius-sm)',
+            borderLeft: '3px solid var(--color-disabled)',
             lineHeight: 1.4,
           }}
         >
@@ -124,10 +124,10 @@ export function ApprovalStep() {
             padding: '8px 16px',
             fontSize: '13px',
             fontWeight: 600,
-            backgroundColor: '#388e3c',
+            backgroundColor: 'var(--color-success)',
             color: '#ffffff',
             border: 'none',
-            borderRadius: '4px',
+            borderRadius: 'var(--radius-sm)',
             cursor: isLoading ? 'not-allowed' : 'pointer',
             opacity: isLoading ? 0.6 : 1,
           }}
@@ -144,9 +144,9 @@ export function ApprovalStep() {
             fontSize: '13px',
             fontWeight: 500,
             backgroundColor: 'transparent',
-            color: '#1976d2',
-            border: '1px solid #1976d2',
-            borderRadius: '4px',
+            color: 'var(--color-accent)',
+            border: '1px solid var(--color-accent)',
+            borderRadius: 'var(--radius-sm)',
             cursor: isLoading ? 'not-allowed' : 'pointer',
             opacity: isLoading ? 0.6 : 1,
           }}

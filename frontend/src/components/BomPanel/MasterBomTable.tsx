@@ -17,7 +17,7 @@ export function MasterBomTable() {
 
   if (!masterBom) {
     return (
-      <div data-testid="master-bom-table-empty" style={{ padding: '16px', color: '#666' }}>
+      <div data-testid="master-bom-table-empty" style={{ padding: '16px', color: 'var(--color-ink-secondary)' }}>
         No approved Master BOM found.
       </div>
     );
@@ -26,7 +26,7 @@ export function MasterBomTable() {
   return (
     <div data-testid="master-bom-table" style={{ padding: '12px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-        <span style={{ fontSize: '13px', fontWeight: 600 }}>Master BOM</span>
+        <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--color-ink-primary)' }}>Master BOM</span>
         <BomStatusBadge status={masterBom.status} />
       </div>
       <BomSectionTable

@@ -36,11 +36,11 @@ export function SkuDetailPanel() {
     justifyContent: 'space-between',
     padding: '4px 0',
     fontSize: '12px',
-    borderBottom: '1px solid #f0f0f0',
+    borderBottom: '1px solid var(--color-hairline)',
   };
 
   const labelStyle: React.CSSProperties = {
-    color: '#666',
+    color: 'var(--color-ink-secondary)',
     fontWeight: 500,
   };
 
@@ -48,7 +48,7 @@ export function SkuDetailPanel() {
     <div
       data-testid="sku-detail-panel"
       style={{
-        borderTop: '1px solid #e0e0e0',
+        borderTop: '1px solid var(--color-hairline)',
         padding: '12px',
         maxHeight: '300px',
         overflowY: 'auto',
@@ -58,7 +58,7 @@ export function SkuDetailPanel() {
         <h4 style={{ margin: 0, fontSize: '13px', fontWeight: 600 }}>SKU Details</h4>
         <button
           onClick={() => selectSku(null)}
-          style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: '14px', color: '#666' }}
+          style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: '14px', color: 'var(--color-ink-secondary)' }}
           data-testid="sku-detail-close-btn"
         >
           &times;
@@ -110,7 +110,7 @@ export function SkuDetailPanel() {
           <span style={labelStyle}>Catalogue Status</span>
           <span
             style={{
-              color: selectedSku.catalogueEntry?.status === CatalogueStatus.READY ? '#2e7d32' : '#e65100',
+              color: selectedSku.catalogueEntry?.status === CatalogueStatus.READY ? 'var(--color-success)' : 'var(--color-warning)',
               fontWeight: 600,
             }}
           >
@@ -136,8 +136,8 @@ export function SkuDetailPanel() {
           fontSize: '13px',
           fontWeight: 600,
           border: 'none',
-          borderRadius: '4px',
-          backgroundColor: canAssign ? '#1976d2' : '#ccc',
+          borderRadius: 'var(--radius-sm)',
+          backgroundColor: canAssign ? 'var(--color-accent)' : 'var(--color-disabled)',
           color: '#fff',
           cursor: canAssign ? 'pointer' : 'not-allowed',
         }}

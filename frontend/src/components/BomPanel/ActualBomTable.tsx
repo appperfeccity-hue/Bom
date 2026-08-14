@@ -18,7 +18,7 @@ export function ActualBomTable() {
 
   if (!actualBom) {
     return (
-      <div data-testid="actual-bom-table-empty" style={{ padding: '16px', color: '#666' }}>
+      <div data-testid="actual-bom-table-empty" style={{ padding: '16px', color: 'var(--color-ink-secondary)' }}>
         No Actual BOM found.
       </div>
     );
@@ -27,7 +27,7 @@ export function ActualBomTable() {
   return (
     <div data-testid="actual-bom-table" style={{ padding: '12px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-        <span style={{ fontSize: '13px', fontWeight: 600 }}>Actual BOM</span>
+        <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--color-ink-primary)' }}>Actual BOM</span>
         <BomStatusBadge status={actualBom.status} />
       </div>
       <BomSectionTable

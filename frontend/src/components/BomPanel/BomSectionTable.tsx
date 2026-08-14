@@ -25,6 +25,8 @@ function getProductTypeLabel(pt: string): string {
   }
 }
 
+const numericColumns = ['default_quantity', 'quantity', 'required_quantity', 'waste_factor', 'waste_quantity'];
+
 export function BomSectionTable({ lines, columns, productTypeField = 'product_type' }: BomSectionTableProps) {
   const highlightedBomLineIds = useCanvasStore((s) => s.highlightedBomLineIds);
   const setHighlightedZoneIds = useCanvasStore((s) => s.setHighlightedZoneIds);
@@ -84,10 +86,11 @@ export function BomSectionTable({ lines, columns, productTypeField = 'product_ty
             <h4
               style={{
                 margin: '0 0 8px 0',
-                fontSize: '13px',
-                fontWeight: 600,
-                color: '#333',
-                borderBottom: '1px solid #e0e0e0',
+                fontSize: 'var(--text-sm)',
+                fontWeight: 'var(--weight-semibold)' as unknown as number,
+                color: 'var(--color-ink-secondary)',
+                textTransform: 'uppercase',
+                borderBottom: '1px solid var(--color-hairline)',
                 paddingBottom: '4px',
               }}
             >
@@ -108,9 +111,11 @@ export function BomSectionTable({ lines, columns, productTypeField = 'product_ty
                       style={{
                         textAlign: 'left',
                         padding: '4px 8px',
-                        borderBottom: '1px solid #eee',
-                        fontWeight: 600,
-                        color: '#555',
+                        borderBottom: '1px solid var(--color-hairline)',
+                        fontWeight: 'var(--weight-semibold)' as unknown as number,
+                        color: 'var(--color-ink-secondary)',
+                        fontSize: 'var(--text-sm)',
+                        textTransform: 'uppercase',
                       }}
                     >
                       {col.header}
@@ -130,7 +135,7 @@ export function BomSectionTable({ lines, columns, productTypeField = 'product_ty
                       onMouseLeave={handleRowMouseLeave}
                       onClick={() => handleRowClick(line)}
                       style={{
-                        backgroundColor: isHighlighted ? '#fff8e1' : undefined,
+                        backgroundColor: isHighlighted ? 'rgba(154,123,79,0.08)' : undefined,
                         cursor: line['source_zone_id'] ? 'pointer' : undefined,
                       }}
                       data-testid={isHighlighted ? 'bom-row-highlighted' : undefined}
@@ -140,7 +145,8 @@ export function BomSectionTable({ lines, columns, productTypeField = 'product_ty
                           key={col.key}
                           style={{
                             padding: '4px 8px',
-                            borderBottom: '1px solid #f5f5f5',
+                            borderBottom: '1px solid var(--color-hairline)',
+                            fontFamily: numericColumns.includes(col.key) ? 'var(--font-mono)' : undefined,
                           }}
                         >
                           {String(line[col.key] ?? '')}
@@ -156,10 +162,10 @@ export function BomSectionTable({ lines, columns, productTypeField = 'product_ty
                     colSpan={columns.length}
                     style={{
                       padding: '4px 8px',
-                      fontWeight: 600,
-                      fontSize: '11px',
-                      color: '#666',
-                      borderTop: '1px solid #ddd',
+                      fontWeight: 'var(--weight-semibold)' as unknown as number,
+                      fontSize: 'var(--text-xs)',
+                      color: 'var(--color-ink-secondary)',
+                      borderTop: '1px solid var(--color-hairline)',
                     }}
                   >
                     Total items: {sectionLines.length}

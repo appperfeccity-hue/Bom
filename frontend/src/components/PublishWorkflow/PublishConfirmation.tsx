@@ -34,15 +34,15 @@ export function PublishConfirmation() {
         <div
           style={{
             padding: '16px',
-            backgroundColor: '#e8f5e9',
-            borderRadius: '4px',
+            backgroundColor: 'rgba(63,107,79,0.1)',
+            borderRadius: 'var(--radius-sm)',
             marginBottom: '16px',
           }}
         >
-          <div style={{ fontSize: '16px', fontWeight: 600, color: '#2e7d32', marginBottom: '4px' }}>
+          <div style={{ fontSize: '16px', fontWeight: 600, color: 'var(--color-success)', marginBottom: '4px' }}>
             {'\u2713'} Template Published Successfully
           </div>
-          <div style={{ fontSize: '13px', color: '#388e3c' }}>
+          <div style={{ fontSize: '13px', color: 'var(--color-success)' }}>
             {currentTemplate?.name} is now active and available for projects.
           </div>
         </div>
@@ -52,15 +52,15 @@ export function PublishConfirmation() {
         <div
           style={{
             padding: '16px',
-            backgroundColor: '#fbe9e7',
-            borderRadius: '4px',
+            backgroundColor: 'rgba(176,65,62,0.08)',
+            borderRadius: 'var(--radius-sm)',
             marginBottom: '16px',
           }}
         >
-          <div style={{ fontSize: '13px', fontWeight: 600, color: '#c62828', marginBottom: '4px' }}>
+          <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--color-error)', marginBottom: '4px' }}>
             Publish Failed
           </div>
-          <div style={{ fontSize: '12px', color: '#d32f2f', marginBottom: '12px' }}>
+          <div style={{ fontSize: '12px', color: 'var(--color-error)', marginBottom: '12px' }}>
             {error}
           </div>
           <button
@@ -70,10 +70,10 @@ export function PublishConfirmation() {
               padding: '6px 12px',
               fontSize: '12px',
               fontWeight: 600,
-              backgroundColor: '#f44336',
+              backgroundColor: 'var(--color-error)',
               color: '#ffffff',
               border: 'none',
-              borderRadius: '4px',
+              borderRadius: 'var(--radius-sm)',
               cursor: 'pointer',
             }}
           >
@@ -87,8 +87,8 @@ export function PublishConfirmation() {
           <div
             style={{
               padding: '12px',
-              backgroundColor: '#f5f5f5',
-              borderRadius: '4px',
+              backgroundColor: 'var(--color-canvas)',
+              borderRadius: 'var(--radius-sm)',
               marginBottom: '16px',
               fontSize: '13px',
             }}
@@ -96,7 +96,7 @@ export function PublishConfirmation() {
             <div style={{ marginBottom: '4px' }}>
               <strong>Template:</strong> {currentTemplate?.name}
             </div>
-            <div style={{ color: '#666' }}>
+            <div style={{ color: 'var(--color-ink-secondary)' }}>
               Publishing will set this template to ACTIVE status. It will be available for use in new projects.
             </div>
           </div>
@@ -109,10 +109,10 @@ export function PublishConfirmation() {
               padding: '8px 16px',
               fontSize: '13px',
               fontWeight: 600,
-              backgroundColor: '#7b1fa2',
+              backgroundColor: 'var(--color-accent)',
               color: '#ffffff',
               border: 'none',
-              borderRadius: '4px',
+              borderRadius: 'var(--radius-sm)',
               cursor: isLoading ? 'not-allowed' : 'pointer',
               opacity: isLoading ? 0.6 : 1,
             }}
@@ -131,9 +131,9 @@ export function PublishConfirmation() {
             fontSize: '13px',
             fontWeight: 500,
             backgroundColor: 'transparent',
-            color: '#666',
-            border: '1px solid #ccc',
-            borderRadius: '4px',
+            color: 'var(--color-ink-secondary)',
+            border: '1px solid var(--color-disabled)',
+            borderRadius: 'var(--radius-sm)',
             cursor: 'pointer',
           }}
         >

@@ -48,7 +48,7 @@ describe('ValidationGateIndicator', () => {
     render(<ValidationGateIndicator />);
     const badge = screen.getByTestId('publish-gate-indicator');
     expect(badge).toBeInTheDocument();
-    expect(badge).toHaveStyle({ backgroundColor: '#4caf50' });
+    expect(badge).toHaveStyle({ backgroundColor: 'var(--color-success)' });
     expect(badge).toHaveTextContent('\u2713');
   });
 
@@ -64,7 +64,7 @@ describe('ValidationGateIndicator', () => {
     render(<ValidationGateIndicator />);
     const badge = screen.getByTestId('publish-gate-indicator');
     expect(badge).toBeInTheDocument();
-    expect(badge).toHaveStyle({ backgroundColor: '#f44336' });
+    expect(badge).toHaveStyle({ backgroundColor: 'var(--color-error)' });
     expect(badge).toHaveTextContent('2');
   });
 
@@ -78,7 +78,7 @@ describe('ValidationGateIndicator', () => {
 
     render(<ValidationGateIndicator />);
     const badge = screen.getByTestId('publish-gate-indicator');
-    expect(badge).toHaveStyle({ backgroundColor: '#f44336' });
+    expect(badge).toHaveStyle({ backgroundColor: 'var(--color-error)' });
     expect(badge).toHaveTextContent('1');
   });
 });

@@ -36,14 +36,14 @@ export function ValidationResultsPanel() {
               alignItems: 'flex-start',
               gap: '8px',
               padding: '8px 0',
-              borderBottom: '1px solid #f0f0f0',
+              borderBottom: '1px solid var(--color-hairline)',
             }}
           >
             <span
               style={{
                 fontSize: '16px',
                 lineHeight: 1,
-                color: result.passed ? '#4caf50' : '#f44336',
+                color: result.passed ? 'var(--color-success)' : 'var(--color-error)',
                 flexShrink: 0,
               }}
             >
@@ -54,7 +54,7 @@ export function ValidationResultsPanel() {
               <div
                 style={{
                   fontSize: '12px',
-                  color: result.passed ? '#666' : '#f44336',
+                  color: result.passed ? 'var(--color-ink-secondary)' : 'var(--color-error)',
                   marginTop: '2px',
                 }}
               >
@@ -71,10 +71,10 @@ export function ValidationResultsPanel() {
         style={{
           marginTop: '12px',
           padding: '10px 12px',
-          backgroundColor: '#e3f2fd',
-          borderRadius: '4px',
+          backgroundColor: 'rgba(154,123,79,0.08)',
+          borderRadius: 'var(--radius-sm)',
           fontSize: '11px',
-          color: '#1565c0',
+          color: 'var(--color-accent)',
           lineHeight: 1.4,
         }}
       >
@@ -93,10 +93,10 @@ export function ValidationResultsPanel() {
               padding: '8px 16px',
               fontSize: '13px',
               fontWeight: 600,
-              backgroundColor: '#1976d2',
+              backgroundColor: 'var(--color-accent)',
               color: '#ffffff',
               border: 'none',
-              borderRadius: '4px',
+              borderRadius: 'var(--radius-sm)',
               cursor: isLoading ? 'not-allowed' : 'pointer',
               opacity: isLoading ? 0.6 : 1,
             }}
@@ -114,9 +114,9 @@ export function ValidationResultsPanel() {
             fontSize: '13px',
             fontWeight: 500,
             backgroundColor: 'transparent',
-            color: '#1976d2',
-            border: '1px solid #1976d2',
-            borderRadius: '4px',
+            color: 'var(--color-accent)',
+            border: '1px solid var(--color-accent)',
+            borderRadius: 'var(--radius-sm)',
             cursor: isLoading ? 'not-allowed' : 'pointer',
             opacity: isLoading ? 0.6 : 1,
           }}
@@ -130,10 +130,10 @@ export function ValidationResultsPanel() {
           style={{
             marginTop: '12px',
             padding: '12px',
-            backgroundColor: '#fff3e0',
-            borderRadius: '4px',
+            backgroundColor: 'rgba(166,106,45,0.1)',
+            borderRadius: 'var(--radius-sm)',
             fontSize: '12px',
-            color: '#e65100',
+            color: 'var(--color-warning)',
           }}
         >
           Please resolve the failed validation gates before proceeding.

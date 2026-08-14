@@ -29,7 +29,7 @@ export function ProjectCreationWizard() {
 
       case CreationStep.CREATING:
         return (
-          <div style={{ padding: '24px', textAlign: 'center', color: '#666' }}>
+          <div style={{ padding: '24px', textAlign: 'center', color: 'var(--color-ink-secondary)' }}>
             Creating project...
           </div>
         );
@@ -37,7 +37,7 @@ export function ProjectCreationWizard() {
       case CreationStep.CREATED:
         return (
           <div style={{ padding: '24px', textAlign: 'center' }}>
-            <div style={{ fontSize: '14px', fontWeight: 600, color: '#2e7d32', marginBottom: '8px' }}>
+            <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--color-success)', marginBottom: '8px' }}>
               Project created successfully!
             </div>
             <button
@@ -46,10 +46,10 @@ export function ProjectCreationWizard() {
                 padding: '8px 16px',
                 fontSize: '13px',
                 fontWeight: 500,
-                backgroundColor: '#1976d2',
+                backgroundColor: 'var(--color-accent)',
                 color: '#ffffff',
                 border: 'none',
-                borderRadius: '4px',
+                borderRadius: 'var(--radius-sm)',
                 cursor: 'pointer',
               }}
             >
@@ -64,15 +64,15 @@ export function ProjectCreationWizard() {
             <div
               style={{
                 padding: '12px',
-                backgroundColor: '#fbe9e7',
-                borderRadius: '4px',
+                backgroundColor: 'rgba(176,65,62,0.08)',
+                borderRadius: 'var(--radius-sm)',
                 marginBottom: '12px',
               }}
             >
-              <div style={{ fontSize: '13px', fontWeight: 600, color: '#c62828', marginBottom: '4px' }}>
+              <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--color-error)', marginBottom: '4px' }}>
                 Error
               </div>
-              <div style={{ fontSize: '12px', color: '#d32f2f' }}>
+              <div style={{ fontSize: '12px', color: 'var(--color-error)' }}>
                 {error}
               </div>
             </div>
@@ -84,10 +84,10 @@ export function ProjectCreationWizard() {
                     padding: '6px 12px',
                     fontSize: '12px',
                     fontWeight: 500,
-                    backgroundColor: '#1976d2',
+                    backgroundColor: 'var(--color-accent)',
                     color: '#ffffff',
                     border: 'none',
-                    borderRadius: '4px',
+                    borderRadius: 'var(--radius-sm)',
                     cursor: 'pointer',
                   }}
                 >
@@ -101,9 +101,9 @@ export function ProjectCreationWizard() {
                   fontSize: '12px',
                   fontWeight: 500,
                   backgroundColor: 'transparent',
-                  color: '#666',
-                  border: '1px solid #ccc',
-                  borderRadius: '4px',
+                  color: 'var(--color-ink-secondary)',
+                  border: '1px solid var(--color-disabled)',
+                  borderRadius: 'var(--radius-sm)',
                   cursor: 'pointer',
                 }}
               >
@@ -127,9 +127,9 @@ export function ProjectCreationWizard() {
         right: 0,
         width: '600px',
         height: '100vh',
-        backgroundColor: '#ffffff',
-        borderLeft: '1px solid #e0e0e0',
-        boxShadow: '-4px 0 12px rgba(0, 0, 0, 0.08)',
+        backgroundColor: 'var(--color-surface)',
+        borderLeft: '1px solid var(--color-hairline)',
+        boxShadow: 'var(--shadow-panel)',
         display: 'flex',
         flexDirection: 'column',
         zIndex: 1001,
@@ -142,10 +142,10 @@ export function ProjectCreationWizard() {
           justifyContent: 'space-between',
           alignItems: 'center',
           padding: '12px 16px',
-          borderBottom: '1px solid #e0e0e0',
+          borderBottom: '1px solid var(--color-hairline)',
         }}
       >
-        <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 600 }}>
+        <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 600, color: 'var(--color-ink-primary)' }}>
           New Project
         </h3>
         <button
@@ -156,7 +156,7 @@ export function ProjectCreationWizard() {
             background: 'none',
             fontSize: '20px',
             cursor: isLoading ? 'not-allowed' : 'pointer',
-            color: '#666',
+            color: 'var(--color-ink-secondary)',
             lineHeight: 1,
             padding: '4px',
           }}

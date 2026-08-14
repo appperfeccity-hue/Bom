@@ -19,7 +19,7 @@ export function DesignLibrary() {
 
   if (isLoading) {
     return (
-      <div data-testid="design-library" style={{ padding: '24px', textAlign: 'center', color: '#666' }}>
+      <div data-testid="design-library" style={{ padding: '24px', textAlign: 'center', color: 'var(--color-ink-secondary)' }}>
         Loading templates...
       </div>
     );
@@ -31,10 +31,10 @@ export function DesignLibrary() {
         <div
           style={{
             padding: '12px',
-            backgroundColor: '#fbe9e7',
-            borderRadius: '4px',
+            backgroundColor: 'rgba(176,65,62,0.08)',
+            borderRadius: 'var(--radius-sm)',
             fontSize: '13px',
-            color: '#c62828',
+            color: 'var(--color-error)',
           }}
         >
           {error}
@@ -45,7 +45,7 @@ export function DesignLibrary() {
 
   if (availableTemplates.length === 0) {
     return (
-      <div data-testid="design-library" style={{ padding: '24px', textAlign: 'center', color: '#666' }}>
+      <div data-testid="design-library" style={{ padding: '24px', textAlign: 'center', color: 'var(--color-ink-secondary)' }}>
         No templates available
       </div>
     );

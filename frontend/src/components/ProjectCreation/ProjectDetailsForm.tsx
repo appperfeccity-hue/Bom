@@ -31,13 +31,13 @@ export function ProjectDetailsForm() {
       style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '16px' }}
     >
       {selectedTemplate && (
-        <div style={{ fontSize: '13px', color: '#666', marginBottom: '4px' }}>
+        <div style={{ fontSize: '13px', color: 'var(--color-ink-secondary)', marginBottom: '4px' }}>
           Template: <strong>{selectedTemplate.name}</strong>
         </div>
       )}
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-        <label style={{ fontSize: '12px', fontWeight: 500, color: '#333' }}>
+        <label style={{ fontSize: '12px', fontWeight: 500, color: 'var(--color-ink-secondary)' }}>
           Customer Reference *
         </label>
         <input
@@ -49,16 +49,18 @@ export function ProjectDetailsForm() {
           required
           style={{
             padding: '8px 12px',
-            fontSize: '13px',
-            border: '1px solid #ccc',
-            borderRadius: '4px',
+            fontSize: 'var(--text-base)',
+            border: '1px solid var(--color-disabled)',
+            borderRadius: 'var(--radius-sm)',
             outline: 'none',
+            height: '32px',
+            boxSizing: 'border-box',
           }}
         />
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-        <label style={{ fontSize: '12px', fontWeight: 500, color: '#333' }}>
+        <label style={{ fontSize: '12px', fontWeight: 500, color: 'var(--color-ink-secondary)' }}>
           Site Reference *
         </label>
         <input
@@ -70,10 +72,12 @@ export function ProjectDetailsForm() {
           required
           style={{
             padding: '8px 12px',
-            fontSize: '13px',
-            border: '1px solid #ccc',
-            borderRadius: '4px',
+            fontSize: 'var(--text-base)',
+            border: '1px solid var(--color-disabled)',
+            borderRadius: 'var(--radius-sm)',
             outline: 'none',
+            height: '32px',
+            boxSizing: 'border-box',
           }}
         />
       </div>
@@ -88,9 +92,9 @@ export function ProjectDetailsForm() {
             fontSize: '13px',
             fontWeight: 500,
             backgroundColor: 'transparent',
-            color: '#666',
-            border: '1px solid #ccc',
-            borderRadius: '4px',
+            color: 'var(--color-ink-primary)',
+            border: '1px solid var(--color-disabled)',
+            borderRadius: 'var(--radius-sm)',
             cursor: isLoading ? 'not-allowed' : 'pointer',
           }}
         >
@@ -104,10 +108,10 @@ export function ProjectDetailsForm() {
             padding: '8px 16px',
             fontSize: '13px',
             fontWeight: 500,
-            backgroundColor: isValid && !isLoading ? '#1976d2' : '#bdbdbd',
+            backgroundColor: isValid && !isLoading ? 'var(--color-accent)' : 'var(--color-disabled)',
             color: '#ffffff',
             border: 'none',
-            borderRadius: '4px',
+            borderRadius: 'var(--radius-sm)',
             cursor: isValid && !isLoading ? 'pointer' : 'not-allowed',
           }}
         >

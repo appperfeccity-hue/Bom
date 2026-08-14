@@ -27,9 +27,9 @@ export function SkuBrowser() {
         right: 0,
         width: '440px',
         height: '100vh',
-        backgroundColor: '#ffffff',
-        borderLeft: '1px solid #e0e0e0',
-        boxShadow: '-4px 0 12px rgba(0, 0, 0, 0.08)',
+        backgroundColor: 'var(--color-surface)',
+        borderLeft: '1px solid var(--color-hairline)',
+        boxShadow: 'var(--shadow-panel)',
         display: 'flex',
         flexDirection: 'column',
         zIndex: 1000,
@@ -42,10 +42,10 @@ export function SkuBrowser() {
           justifyContent: 'space-between',
           alignItems: 'center',
           padding: '12px 16px',
-          borderBottom: '1px solid #e0e0e0',
+          borderBottom: '1px solid var(--color-hairline)',
         }}
       >
-        <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 600 }}>SKU Browser</h3>
+        <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 600, color: 'var(--color-ink-primary)' }}>SKU Browser</h3>
         <button
           onClick={closeBrowser}
           style={{
@@ -53,7 +53,7 @@ export function SkuBrowser() {
             background: 'none',
             fontSize: '20px',
             cursor: 'pointer',
-            color: '#666',
+            color: 'var(--color-ink-secondary)',
             lineHeight: 1,
             padding: '4px',
           }}

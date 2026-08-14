@@ -29,7 +29,7 @@ export function TemplateFilters() {
         gap: '12px',
         alignItems: 'center',
         padding: '12px 16px',
-        borderBottom: '1px solid #e0e0e0',
+        borderBottom: '1px solid var(--color-hairline)',
         flexWrap: 'wrap',
       }}
     >
@@ -41,10 +41,12 @@ export function TemplateFilters() {
         onChange={(e) => setSearchFilter(e.target.value)}
         style={{
           padding: '6px 10px',
-          fontSize: '13px',
-          border: '1px solid #ccc',
-          borderRadius: '4px',
+          fontSize: 'var(--text-base)',
+          border: '1px solid var(--color-disabled)',
+          borderRadius: 'var(--radius-sm)',
           minWidth: '200px',
+          height: '32px',
+          boxSizing: 'border-box',
         }}
       />
 
@@ -57,9 +59,11 @@ export function TemplateFilters() {
         }}
         style={{
           padding: '6px 10px',
-          fontSize: '13px',
-          border: '1px solid #ccc',
-          borderRadius: '4px',
+          fontSize: 'var(--text-base)',
+          border: '1px solid var(--color-disabled)',
+          borderRadius: 'var(--radius-sm)',
+          height: '32px',
+          boxSizing: 'border-box',
         }}
       >
         {statusOptions.map((opt) => (
@@ -78,9 +82,11 @@ export function TemplateFilters() {
         }}
         style={{
           padding: '6px 10px',
-          fontSize: '13px',
-          border: '1px solid #ccc',
-          borderRadius: '4px',
+          fontSize: 'var(--text-base)',
+          border: '1px solid var(--color-disabled)',
+          borderRadius: 'var(--radius-sm)',
+          height: '32px',
+          boxSizing: 'border-box',
         }}
       >
         {geometryOptions.map((opt) => (

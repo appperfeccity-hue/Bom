@@ -146,24 +146,24 @@ describe('TemplateStatusBadge', () => {
     render(<TemplateStatusBadge status={TemplateStatus.DRAFT} />);
     const badge = screen.getByTestId('template-status-badge');
     expect(badge.textContent).toBe('DRAFT');
-    expect(badge.style.backgroundColor).toBe('rgb(158, 158, 158)');
-    expect(badge.style.color).toBe('rgb(255, 255, 255)');
+    expect(badge.style.backgroundColor).toBe('rgba(110, 110, 110, 0.1)');
+    expect(badge.style.color).toBe('var(--color-ink-secondary)');
   });
 
   it('renders ACTIVE with green background', () => {
     render(<TemplateStatusBadge status={TemplateStatus.ACTIVE} />);
     const badge = screen.getByTestId('template-status-badge');
     expect(badge.textContent).toBe('ACTIVE');
-    expect(badge.style.backgroundColor).toBe('rgb(232, 245, 233)');
-    expect(badge.style.color).toBe('rgb(46, 125, 50)');
+    expect(badge.style.backgroundColor).toBe('rgba(63, 107, 79, 0.1)');
+    expect(badge.style.color).toBe('var(--color-success)');
   });
 
   it('renders RETIRED with orange background', () => {
     render(<TemplateStatusBadge status={TemplateStatus.RETIRED} />);
     const badge = screen.getByTestId('template-status-badge');
     expect(badge.textContent).toBe('RETIRED');
-    expect(badge.style.backgroundColor).toBe('rgb(255, 243, 224)');
-    expect(badge.style.color).toBe('rgb(230, 81, 0)');
+    expect(badge.style.backgroundColor).toBe('rgba(166, 106, 45, 0.1)');
+    expect(badge.style.color).toBe('var(--color-warning)');
   });
 });
 

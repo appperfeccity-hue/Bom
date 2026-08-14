@@ -31,7 +31,7 @@ export function SkuGrid() {
 
   if (isLoading) {
     return (
-      <div style={{ padding: '24px', textAlign: 'center', color: '#999' }} data-testid="sku-grid-loading">
+      <div style={{ padding: '24px', textAlign: 'center', color: 'var(--color-ink-secondary)' }} data-testid="sku-grid-loading">
         Loading SKUs...
       </div>
     );
@@ -39,7 +39,7 @@ export function SkuGrid() {
 
   if (skus.length === 0) {
     return (
-      <div style={{ padding: '24px', textAlign: 'center', color: '#999' }} data-testid="sku-grid-empty">
+      <div style={{ padding: '24px', textAlign: 'center', color: 'var(--color-ink-secondary)' }} data-testid="sku-grid-empty">
         No SKUs found
       </div>
     );
@@ -70,12 +70,12 @@ export function SkuGrid() {
               data-testid={`sku-card-${skuItem.sku.sku_id}`}
               onClick={() => selectSku(skuItem.sku.sku_id)}
               style={{
-                border: isSelected ? '2px solid #1976d2' : '1px solid #e0e0e0',
-                borderRadius: '8px',
+                border: isSelected ? '2px solid var(--color-accent)' : '1px solid var(--color-hairline)',
+                borderRadius: 'var(--radius-md)',
                 padding: '8px',
                 cursor: 'pointer',
                 opacity: selectable ? 1 : 0.4,
-                backgroundColor: isSelected ? '#e3f2fd' : '#fff',
+                backgroundColor: isSelected ? 'rgba(154,123,79,0.08)' : 'var(--color-surface)',
                 transition: 'border-color 0.15s, background-color 0.15s',
               }}
             >
@@ -84,8 +84,8 @@ export function SkuGrid() {
                 style={{
                   width: '100%',
                   height: '80px',
-                  backgroundColor: '#f0f0f0',
-                  borderRadius: '4px',
+                  backgroundColor: 'var(--color-canvas)',
+                  borderRadius: 'var(--radius-sm)',
                   marginBottom: '8px',
                   display: 'flex',
                   alignItems: 'center',
@@ -100,7 +100,7 @@ export function SkuGrid() {
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                   />
                 ) : (
-                  <span style={{ fontSize: '11px', color: '#999' }}>No image</span>
+                  <span style={{ fontSize: '11px', color: 'var(--color-ink-secondary)' }}>No image</span>
                 )}
               </div>
 
@@ -110,12 +110,12 @@ export function SkuGrid() {
               </div>
 
               {/* Material / Colour */}
-              <div style={{ fontSize: '11px', color: '#666', marginBottom: '4px' }}>
+              <div style={{ fontSize: '11px', color: 'var(--color-ink-secondary)', marginBottom: '4px' }}>
                 {skuItem.sku.material} {skuItem.sku.colour}
               </div>
 
               {/* Dimensions */}
-              <div style={{ fontSize: '11px', color: '#666', marginBottom: '6px' }}>
+              <div style={{ fontSize: '11px', color: 'var(--color-ink-secondary)', marginBottom: '6px' }}>
                 {skuItem.sku.width_mm ?? '-'} x {skuItem.sku.height_mm ?? '-'} x {skuItem.sku.thickness_mm ?? '-'} mm
               </div>
 
@@ -128,8 +128,8 @@ export function SkuGrid() {
                   borderRadius: '4px',
                   fontSize: '10px',
                   fontWeight: 600,
-                  backgroundColor: skuItem.catalogueEntry?.status === CatalogueStatus.READY ? '#e8f5e9' : '#fff3e0',
-                  color: skuItem.catalogueEntry?.status === CatalogueStatus.READY ? '#2e7d32' : '#e65100',
+                  backgroundColor: skuItem.catalogueEntry?.status === CatalogueStatus.READY ? 'rgba(63,107,79,0.1)' : 'rgba(166,106,45,0.1)',
+                  color: skuItem.catalogueEntry?.status === CatalogueStatus.READY ? 'var(--color-success)' : 'var(--color-warning)',
                 }}
               >
                 {skuItem.catalogueEntry?.status ?? 'NO CATALOGUE'}
@@ -147,7 +147,7 @@ export function SkuGrid() {
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '8px 12px',
-          borderTop: '1px solid #e0e0e0',
+          borderTop: '1px solid var(--color-hairline)',
           fontSize: '12px',
         }}
       >
@@ -157,10 +157,11 @@ export function SkuGrid() {
           style={{
             padding: '4px 12px',
             fontSize: '12px',
-            border: '1px solid #ccc',
-            borderRadius: '4px',
+            border: '1px solid var(--color-disabled)',
+            borderRadius: 'var(--radius-sm)',
             cursor: page === 0 ? 'not-allowed' : 'pointer',
             opacity: page === 0 ? 0.5 : 1,
+            backgroundColor: 'transparent',
           }}
           data-testid="sku-grid-prev-btn"
         >
@@ -175,10 +176,11 @@ export function SkuGrid() {
           style={{
             padding: '4px 12px',
             fontSize: '12px',
-            border: '1px solid #ccc',
-            borderRadius: '4px',
+            border: '1px solid var(--color-disabled)',
+            borderRadius: 'var(--radius-sm)',
             cursor: !hasNextPage ? 'not-allowed' : 'pointer',
             opacity: !hasNextPage ? 0.5 : 1,
+            backgroundColor: 'transparent',
           }}
           data-testid="sku-grid-next-btn"
         >

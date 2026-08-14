@@ -77,20 +77,22 @@ export function SkuFilterBar() {
     marginTop: '4px',
     padding: '6px',
     fontSize: '12px',
-    border: '1px solid #ddd',
-    borderRadius: '4px',
+    border: '1px solid var(--color-hairline)',
+    borderRadius: 'var(--radius-sm)',
+    height: '32px',
+    boxSizing: 'border-box',
   };
 
   const labelStyle: React.CSSProperties = {
     fontSize: '11px',
     fontWeight: 500,
-    color: '#555',
+    color: 'var(--color-ink-secondary)',
   };
 
   return (
     <div
       data-testid="sku-filter-bar"
-      style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '12px', borderBottom: '1px solid #e0e0e0' }}
+      style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '12px', borderBottom: '1px solid var(--color-hairline)' }}
     >
       {/* Search */}
       <input
@@ -212,10 +214,11 @@ export function SkuFilterBar() {
         style={{
           padding: '6px 12px',
           fontSize: '12px',
-          border: '1px solid #ccc',
-          borderRadius: '4px',
-          backgroundColor: '#f5f5f5',
+          border: '1px solid var(--color-disabled)',
+          borderRadius: 'var(--radius-sm)',
+          backgroundColor: 'transparent',
           cursor: 'pointer',
+          color: 'var(--color-ink-primary)',
         }}
         data-testid="sku-filter-clear-btn"
       >

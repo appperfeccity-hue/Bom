@@ -30,7 +30,7 @@ export function FinalizeButton() {
         padding: '4px 12px',
         fontSize: '13px',
         fontWeight: 600,
-        backgroundColor: '#2e7d32',
+        backgroundColor: 'var(--color-success)',
         color: '#ffffff',
         border: 'none',
         borderRadius: '4px',

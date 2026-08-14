@@ -22,7 +22,7 @@ export function PublishWorkflow() {
     switch (currentStep) {
       case PublishStep.VALIDATING:
         return (
-          <div style={{ padding: '16px', color: '#666' }}>
+          <div style={{ padding: '16px', color: 'var(--color-ink-secondary)' }}>
             Running validation checks...
           </div>
         );
@@ -32,7 +32,7 @@ export function PublishWorkflow() {
 
       case PublishStep.GENERATING_BOM:
         return (
-          <div style={{ padding: '16px', color: '#666' }}>
+          <div style={{ padding: '16px', color: 'var(--color-ink-secondary)' }}>
             Generating Master BOM...
           </div>
         );
@@ -52,15 +52,15 @@ export function PublishWorkflow() {
             <div
               style={{
                 padding: '12px',
-                backgroundColor: '#fbe9e7',
-                borderRadius: '4px',
+                backgroundColor: 'rgba(176,65,62,0.08)',
+                borderRadius: 'var(--radius-sm)',
                 marginBottom: '12px',
               }}
             >
-              <div style={{ fontSize: '13px', fontWeight: 600, color: '#c62828', marginBottom: '4px' }}>
+              <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--color-error)', marginBottom: '4px' }}>
                 Error
               </div>
-              <div style={{ fontSize: '12px', color: '#d32f2f' }}>
+              <div style={{ fontSize: '12px', color: 'var(--color-error)' }}>
                 {error}
               </div>
             </div>
@@ -71,9 +71,9 @@ export function PublishWorkflow() {
                 fontSize: '12px',
                 fontWeight: 500,
                 backgroundColor: 'transparent',
-                color: '#666',
-                border: '1px solid #ccc',
-                borderRadius: '4px',
+                color: 'var(--color-ink-secondary)',
+                border: '1px solid var(--color-disabled)',
+                borderRadius: 'var(--radius-sm)',
                 cursor: 'pointer',
               }}
             >
@@ -96,9 +96,9 @@ export function PublishWorkflow() {
         right: 0,
         width: '520px',
         height: '100vh',
-        backgroundColor: '#ffffff',
-        borderLeft: '1px solid #e0e0e0',
-        boxShadow: '-4px 0 12px rgba(0, 0, 0, 0.08)',
+        backgroundColor: 'var(--color-surface)',
+        borderLeft: '1px solid var(--color-hairline)',
+        boxShadow: 'var(--shadow-panel)',
         display: 'flex',
         flexDirection: 'column',
         zIndex: 1001,
@@ -111,10 +111,10 @@ export function PublishWorkflow() {
           justifyContent: 'space-between',
           alignItems: 'center',
           padding: '12px 16px',
-          borderBottom: '1px solid #e0e0e0',
+          borderBottom: '1px solid var(--color-hairline)',
         }}
       >
-        <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 600 }}>
+        <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 600, color: 'var(--color-ink-primary)' }}>
           Publish Template
         </h3>
         <button
@@ -125,7 +125,7 @@ export function PublishWorkflow() {
             background: 'none',
             fontSize: '20px',
             cursor: isLoading ? 'not-allowed' : 'pointer',
-            color: '#666',
+            color: 'var(--color-ink-secondary)',
             lineHeight: 1,
             padding: '4px',
           }}

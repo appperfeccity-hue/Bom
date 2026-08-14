@@ -304,35 +304,35 @@ describe('BomStatusBadge', () => {
     render(<BomStatusBadge status={MasterBomStatus.APPROVED} />);
     const badge = screen.getByTestId('bom-status-badge-approved');
     expect(badge).toHaveTextContent('APPROVED');
-    expect(badge).toHaveStyle({ backgroundColor: '#4caf50' });
+    expect(badge).toHaveStyle({ backgroundColor: 'rgba(63,107,79,0.1)' });
   });
 
   it('renders GENERATED with blue color', () => {
     render(<BomStatusBadge status={MasterBomStatus.GENERATED} />);
     const badge = screen.getByTestId('bom-status-badge-generated');
     expect(badge).toHaveTextContent('GENERATED');
-    expect(badge).toHaveStyle({ backgroundColor: '#2196f3' });
+    expect(badge).toHaveStyle({ backgroundColor: 'rgba(110,110,110,0.1)' });
   });
 
   it('renders VALIDATED with orange color', () => {
     render(<BomStatusBadge status={MasterBomStatus.VALIDATED} />);
     const badge = screen.getByTestId('bom-status-badge-validated');
     expect(badge).toHaveTextContent('VALIDATED');
-    expect(badge).toHaveStyle({ backgroundColor: '#ff9800' });
+    expect(badge).toHaveStyle({ backgroundColor: 'rgba(154,123,79,0.1)' });
   });
 
   it('renders INVALIDATED with red color', () => {
     render(<BomStatusBadge status={MasterBomStatus.INVALIDATED} />);
     const badge = screen.getByTestId('bom-status-badge-invalidated');
     expect(badge).toHaveTextContent('INVALIDATED');
-    expect(badge).toHaveStyle({ backgroundColor: '#f44336' });
+    expect(badge).toHaveStyle({ backgroundColor: 'rgba(176,65,62,0.1)' });
   });
 
   it('renders SUPERSEDED with red color', () => {
     render(<BomStatusBadge status={ActualBomStatus.SUPERSEDED} />);
     const badge = screen.getByTestId('bom-status-badge-superseded');
     expect(badge).toHaveTextContent('SUPERSEDED');
-    expect(badge).toHaveStyle({ backgroundColor: '#f44336' });
+    expect(badge).toHaveStyle({ backgroundColor: 'rgba(166,106,45,0.1)' });
   });
 });
 
@@ -396,6 +396,6 @@ describe('BomReconciliationView', () => {
 
     render(<BomReconciliationView />);
     const badge = screen.getByTestId('reconciliation-badge-0');
-    expect(badge).toHaveStyle({ backgroundColor: '#9c27b0' });
+    expect(badge).toHaveStyle({ backgroundColor: 'rgba(154,123,79,0.1)' });
   });
 });

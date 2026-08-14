@@ -60,11 +60,11 @@ export function StepIndicator({ currentStep }: StepIndicatorProps) {
                 fontSize: '12px',
                 fontWeight: 600,
                 backgroundColor: isCompleted
-                  ? '#4caf50'
+                  ? 'var(--color-success)'
                   : isActive
-                    ? '#1976d2'
-                    : '#e0e0e0',
-                color: isCompleted || isActive ? '#ffffff' : '#666666',
+                    ? 'var(--color-accent)'
+                    : 'var(--color-disabled)',
+                color: isCompleted || isActive ? '#ffffff' : 'var(--color-ink-secondary)',
                 flexShrink: 0,
               }}
             >
@@ -75,10 +75,10 @@ export function StepIndicator({ currentStep }: StepIndicatorProps) {
                 fontSize: '12px',
                 fontWeight: isActive ? 600 : 400,
                 color: isCompleted
-                  ? '#4caf50'
+                  ? 'var(--color-success)'
                   : isActive
-                    ? '#1976d2'
-                    : '#999999',
+                    ? 'var(--color-accent)'
+                    : 'var(--color-ink-secondary)',
                 whiteSpace: 'nowrap',
               }}
             >
@@ -89,7 +89,7 @@ export function StepIndicator({ currentStep }: StepIndicatorProps) {
                 style={{
                   flex: 1,
                   height: '2px',
-                  backgroundColor: isCompleted ? '#4caf50' : '#e0e0e0',
+                  backgroundColor: isCompleted ? 'var(--color-success)' : 'var(--color-disabled)',
                   marginLeft: '4px',
                 }}
               />

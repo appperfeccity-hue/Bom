@@ -14,10 +14,10 @@ export function TemplateCard({ template, onSelect }: TemplateCardProps) {
     <div
       data-testid="template-card"
       style={{
-        border: '1px solid #e0e0e0',
-        borderRadius: '8px',
+        border: '1px solid var(--color-hairline)',
+        borderRadius: 'var(--radius-md)',
         padding: '16px',
-        backgroundColor: '#ffffff',
+        backgroundColor: 'var(--color-surface)',
         display: 'flex',
         flexDirection: 'column',
         gap: '8px',
@@ -31,8 +31,8 @@ export function TemplateCard({ template, onSelect }: TemplateCardProps) {
             fontWeight: 600,
             padding: '2px 6px',
             borderRadius: '4px',
-            backgroundColor: '#e8f5e9',
-            color: '#2e7d32',
+            backgroundColor: 'rgba(63,107,79,0.1)',
+            color: 'var(--color-success)',
           }}
         >
           {template.status}
@@ -40,7 +40,7 @@ export function TemplateCard({ template, onSelect }: TemplateCardProps) {
       </div>
 
       {template.description && (
-        <p style={{ margin: 0, fontSize: '12px', color: '#666', lineHeight: 1.4 }}>
+        <p style={{ margin: 0, fontSize: '12px', color: 'var(--color-ink-secondary)', lineHeight: 1.4 }}>
           {template.description}
         </p>
       )}
@@ -52,13 +52,13 @@ export function TemplateCard({ template, onSelect }: TemplateCardProps) {
             fontWeight: 500,
             padding: '2px 6px',
             borderRadius: '4px',
-            backgroundColor: '#e3f2fd',
-            color: '#1565c0',
+            backgroundColor: 'rgba(154,123,79,0.1)',
+            color: 'var(--color-accent)',
           }}
         >
           {template.wall_geometry.type}
         </span>
-        <span style={{ fontSize: '11px', color: '#888' }}>
+        <span style={{ fontSize: '11px', color: 'var(--color-ink-secondary)' }}>
           {template.wall_geometry.base_width_mm} x {template.wall_geometry.base_height_mm} mm
         </span>
       </div>
@@ -71,10 +71,10 @@ export function TemplateCard({ template, onSelect }: TemplateCardProps) {
           padding: '6px 12px',
           fontSize: '12px',
           fontWeight: 500,
-          backgroundColor: '#1976d2',
+          backgroundColor: 'var(--color-accent)',
           color: '#ffffff',
           border: 'none',
-          borderRadius: '4px',
+          borderRadius: 'var(--radius-sm)',
           cursor: 'pointer',
         }}
       >

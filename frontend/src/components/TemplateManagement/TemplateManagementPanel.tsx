@@ -34,8 +34,8 @@ export function TemplateManagementPanel() {
     >
       <div
         style={{
-          backgroundColor: '#ffffff',
-          borderRadius: '8px',
+          backgroundColor: 'var(--color-surface)',
+          borderRadius: 'var(--radius-md)',
           width: '90%',
           maxWidth: '900px',
           maxHeight: '80vh',
@@ -51,7 +51,7 @@ export function TemplateManagementPanel() {
             justifyContent: 'space-between',
             alignItems: 'center',
             padding: '16px 20px',
-            borderBottom: '1px solid #e0e0e0',
+            borderBottom: '1px solid var(--color-hairline)',
           }}
         >
           <h2 style={{ margin: 0, fontSize: '18px' }}>My Templates</h2>
@@ -63,10 +63,10 @@ export function TemplateManagementPanel() {
                 padding: '6px 14px',
                 fontSize: '13px',
                 fontWeight: 500,
-                backgroundColor: '#1976d2',
+                backgroundColor: 'var(--color-accent)',
                 color: '#ffffff',
                 border: 'none',
-                borderRadius: '4px',
+                borderRadius: 'var(--radius-sm)',
                 cursor: 'pointer',
               }}
             >
@@ -78,10 +78,11 @@ export function TemplateManagementPanel() {
               style={{
                 padding: '4px 10px',
                 fontSize: '16px',
-                border: '1px solid #ccc',
-                borderRadius: '4px',
-                backgroundColor: '#f5f5f5',
+                border: 'none',
+                borderRadius: 'var(--radius-sm)',
+                backgroundColor: 'transparent',
                 cursor: 'pointer',
+                color: 'var(--color-ink-secondary)',
               }}
             >
               &times;
@@ -95,17 +96,17 @@ export function TemplateManagementPanel() {
         {/* Content */}
         <div style={{ flex: 1, overflow: 'auto' }}>
           {isLoading && (
-            <div style={{ padding: '24px', textAlign: 'center', color: '#666' }}>
+            <div style={{ padding: '24px', textAlign: 'center', color: 'var(--color-ink-secondary)' }}>
               Loading templates...
             </div>
           )}
 
           {error && !isLoading && (
-            <div style={{ padding: '24px', textAlign: 'center', color: '#d32f2f' }}>{error}</div>
+            <div style={{ padding: '24px', textAlign: 'center', color: 'var(--color-error)' }}>{error}</div>
           )}
 
           {!isLoading && !error && filteredTemplates.length === 0 && (
-            <div style={{ padding: '24px', textAlign: 'center', color: '#666' }}>
+            <div style={{ padding: '24px', textAlign: 'center', color: 'var(--color-ink-secondary)' }}>
               No templates found
             </div>
           )}

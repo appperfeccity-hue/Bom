@@ -50,9 +50,9 @@ export function BomPanel() {
         right: 0,
         width: '600px',
         height: '100vh',
-        backgroundColor: '#ffffff',
-        borderLeft: '1px solid #e0e0e0',
-        boxShadow: '-4px 0 12px rgba(0, 0, 0, 0.08)',
+        backgroundColor: 'var(--color-surface)',
+        borderLeft: '1px solid var(--color-hairline)',
+        boxShadow: 'var(--shadow-panel)',
         display: 'flex',
         flexDirection: 'column',
         zIndex: 1000,
@@ -65,10 +65,10 @@ export function BomPanel() {
           justifyContent: 'space-between',
           alignItems: 'center',
           padding: '12px 16px',
-          borderBottom: '1px solid #e0e0e0',
+          borderBottom: '1px solid var(--color-hairline)',
         }}
       >
-        <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 600 }}>
+        <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 'var(--weight-semibold)' as unknown as number, color: 'var(--color-ink-primary)' }}>
           Bill of Materials
         </h3>
         <button
@@ -78,7 +78,7 @@ export function BomPanel() {
             background: 'none',
             fontSize: '20px',
             cursor: 'pointer',
-            color: '#666',
+            color: 'var(--color-ink-secondary)',
             lineHeight: 1,
             padding: '4px',
           }}
@@ -91,13 +91,13 @@ export function BomPanel() {
       {/* Content */}
       <div style={{ flex: 1, overflow: 'auto', padding: '8px 0' }}>
         {isLoading && (
-          <div data-testid="bom-panel-loading" style={{ padding: '16px', color: '#666' }}>
+          <div data-testid="bom-panel-loading" style={{ padding: '16px', color: 'var(--color-ink-secondary)' }}>
             Loading BOM data...
           </div>
         )}
 
         {error && (
-          <div data-testid="bom-panel-error" style={{ padding: '16px', color: '#f44336' }}>
+          <div data-testid="bom-panel-error" style={{ padding: '16px', color: 'var(--color-error)' }}>
             Error: {error}
           </div>
         )}

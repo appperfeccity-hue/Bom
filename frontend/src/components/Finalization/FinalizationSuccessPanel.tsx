@@ -24,7 +24,7 @@ export function FinalizationSuccessPanel() {
         left: 0,
         right: 0,
         bottom: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        backgroundColor: 'rgba(0, 0, 0, 0.4)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -33,8 +33,8 @@ export function FinalizationSuccessPanel() {
     >
       <div
         style={{
-          backgroundColor: '#ffffff',
-          borderRadius: '8px',
+          backgroundColor: 'var(--color-surface)',
+          borderRadius: 'var(--radius-md)',
           padding: '24px',
           maxWidth: '480px',
           width: '100%',
@@ -49,7 +49,7 @@ export function FinalizationSuccessPanel() {
             width: '48px',
             height: '48px',
             borderRadius: '50%',
-            backgroundColor: '#e8f5e9',
+            backgroundColor: 'rgba(63,107,79,0.1)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -65,7 +65,7 @@ export function FinalizationSuccessPanel() {
             margin: '0 0 8px 0',
             fontSize: '18px',
             fontWeight: 600,
-            color: '#2e7d32',
+            color: 'var(--color-success)',
           }}
         >
           Project Finalized
@@ -75,7 +75,7 @@ export function FinalizationSuccessPanel() {
           style={{
             margin: '0 0 16px 0',
             fontSize: '14px',
-            color: '#616161',
+            color: 'var(--color-ink-secondary)',
           }}
         >
           The project has been successfully finalized. The BOM is now immutable.
@@ -83,42 +83,42 @@ export function FinalizationSuccessPanel() {
 
         <div
           style={{
-            backgroundColor: '#f5f5f5',
-            borderRadius: '4px',
+            backgroundColor: 'var(--color-canvas)',
+            borderRadius: 'var(--radius-sm)',
             padding: '12px',
             marginBottom: '16px',
             textAlign: 'left',
           }}
         >
           <div style={{ marginBottom: '8px' }}>
-            <span style={{ fontSize: '12px', color: '#757575', display: 'block' }}>
+            <span style={{ fontSize: '12px', color: 'var(--color-ink-secondary)', display: 'block' }}>
               Final BOM ID
             </span>
             <span
               data-testid="finalization-bom-id"
-              style={{ fontSize: '13px', fontFamily: 'monospace', color: '#212121' }}
+              style={{ fontSize: '13px', fontFamily: 'var(--font-mono)', color: 'var(--color-ink-primary)' }}
             >
               {finalBomId}
             </span>
           </div>
           <div style={{ marginBottom: '8px' }}>
-            <span style={{ fontSize: '12px', color: '#757575', display: 'block' }}>
+            <span style={{ fontSize: '12px', color: 'var(--color-ink-secondary)', display: 'block' }}>
               Final BOM Hash
             </span>
             <span
               data-testid="finalization-bom-hash"
-              style={{ fontSize: '13px', fontFamily: 'monospace', color: '#212121' }}
+              style={{ fontSize: '13px', fontFamily: 'var(--font-mono)', color: 'var(--color-ink-primary)' }}
             >
               {finalBomHash}
             </span>
           </div>
           <div>
-            <span style={{ fontSize: '12px', color: '#757575', display: 'block' }}>
+            <span style={{ fontSize: '12px', color: 'var(--color-ink-secondary)', display: 'block' }}>
               Finalized At
             </span>
             <span
               data-testid="finalization-timestamp"
-              style={{ fontSize: '13px', color: '#212121' }}
+              style={{ fontSize: '13px', color: 'var(--color-ink-primary)' }}
             >
               {finalizedAt}
             </span>
@@ -132,10 +132,10 @@ export function FinalizationSuccessPanel() {
             padding: '8px 24px',
             fontSize: '14px',
             fontWeight: 600,
-            backgroundColor: '#2e7d32',
+            backgroundColor: 'var(--color-success)',
             color: '#ffffff',
             border: 'none',
-            borderRadius: '4px',
+            borderRadius: 'var(--radius-sm)',
             cursor: 'pointer',
           }}
         >

@@ -22,7 +22,7 @@ export function TemplateListItem({ template, hasInactiveSkus }: TemplateListItem
         display: 'flex',
         alignItems: 'center',
         padding: '12px 16px',
-        borderBottom: '1px solid #e0e0e0',
+        borderBottom: '1px solid var(--color-hairline)',
         gap: '16px',
       }}
     >
@@ -38,16 +38,16 @@ export function TemplateListItem({ template, hasInactiveSkus }: TemplateListItem
                 borderRadius: '4px',
                 fontSize: '11px',
                 fontWeight: 600,
-                backgroundColor: '#fff3e0',
-                color: '#e65100',
-                border: '1px solid #ffcc80',
+                backgroundColor: 'rgba(176,65,62,0.08)',
+                color: 'var(--color-error)',
+                border: '1px solid var(--color-error)',
               }}
             >
               BLOCKED
             </span>
           )}
         </div>
-        <div style={{ display: 'flex', gap: '12px', fontSize: '12px', color: '#666' }}>
+        <div style={{ display: 'flex', gap: '12px', fontSize: '12px', color: 'var(--color-ink-secondary)' }}>
           <span>{template.wall_geometry.type}</span>
           <span>{template.wall_geometry.base_width_mm} x {template.wall_geometry.base_height_mm} mm</span>
           <span>Updated: {formattedDate}</span>
@@ -63,10 +63,11 @@ export function TemplateListItem({ template, hasInactiveSkus }: TemplateListItem
               style={{
                 padding: '4px 10px',
                 fontSize: '12px',
-                backgroundColor: '#e3f2fd',
-                border: '1px solid #90caf9',
-                borderRadius: '4px',
+                backgroundColor: 'transparent',
+                border: '1px solid var(--color-disabled)',
+                borderRadius: 'var(--radius-sm)',
                 cursor: 'pointer',
+                color: 'var(--color-ink-primary)',
               }}
             >
               Edit
@@ -77,10 +78,11 @@ export function TemplateListItem({ template, hasInactiveSkus }: TemplateListItem
               style={{
                 padding: '4px 10px',
                 fontSize: '12px',
-                backgroundColor: '#fff3e0',
-                border: '1px solid #ffcc80',
-                borderRadius: '4px',
+                backgroundColor: 'rgba(166,106,45,0.1)',
+                border: '1px solid var(--color-warning)',
+                borderRadius: 'var(--radius-sm)',
                 cursor: 'pointer',
+                color: 'var(--color-warning)',
               }}
             >
               Archive
@@ -96,10 +98,11 @@ export function TemplateListItem({ template, hasInactiveSkus }: TemplateListItem
               style={{
                 padding: '4px 10px',
                 fontSize: '12px',
-                backgroundColor: '#e8f5e9',
-                border: '1px solid #a5d6a7',
-                borderRadius: '4px',
+                backgroundColor: 'var(--color-accent)',
+                border: 'none',
+                borderRadius: 'var(--radius-sm)',
                 cursor: 'pointer',
+                color: '#ffffff',
               }}
             >
               Create Draft Copy
@@ -110,10 +113,11 @@ export function TemplateListItem({ template, hasInactiveSkus }: TemplateListItem
               style={{
                 padding: '4px 10px',
                 fontSize: '12px',
-                backgroundColor: '#fff3e0',
-                border: '1px solid #ffcc80',
-                borderRadius: '4px',
+                backgroundColor: 'rgba(166,106,45,0.1)',
+                border: '1px solid var(--color-warning)',
+                borderRadius: 'var(--radius-sm)',
                 cursor: 'pointer',
+                color: 'var(--color-warning)',
               }}
             >
               Retire
@@ -124,10 +128,11 @@ export function TemplateListItem({ template, hasInactiveSkus }: TemplateListItem
               style={{
                 padding: '4px 10px',
                 fontSize: '12px',
-                backgroundColor: '#f5f5f5',
-                border: '1px solid #e0e0e0',
-                borderRadius: '4px',
+                backgroundColor: 'transparent',
+                border: '1px solid var(--color-disabled)',
+                borderRadius: 'var(--radius-sm)',
                 cursor: 'pointer',
+                color: 'var(--color-ink-primary)',
               }}
             >
               View
@@ -143,10 +148,11 @@ export function TemplateListItem({ template, hasInactiveSkus }: TemplateListItem
               style={{
                 padding: '4px 10px',
                 fontSize: '12px',
-                backgroundColor: '#e8f5e9',
-                border: '1px solid #a5d6a7',
-                borderRadius: '4px',
+                backgroundColor: 'var(--color-accent)',
+                border: 'none',
+                borderRadius: 'var(--radius-sm)',
                 cursor: 'pointer',
+                color: '#ffffff',
               }}
             >
               Create Draft Copy
@@ -157,10 +163,11 @@ export function TemplateListItem({ template, hasInactiveSkus }: TemplateListItem
               style={{
                 padding: '4px 10px',
                 fontSize: '12px',
-                backgroundColor: '#f5f5f5',
-                border: '1px solid #e0e0e0',
-                borderRadius: '4px',
+                backgroundColor: 'transparent',
+                border: '1px solid var(--color-disabled)',
+                borderRadius: 'var(--radius-sm)',
                 cursor: 'pointer',
+                color: 'var(--color-ink-primary)',
               }}
             >
               View

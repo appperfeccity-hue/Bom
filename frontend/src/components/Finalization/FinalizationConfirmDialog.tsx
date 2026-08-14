@@ -32,7 +32,7 @@ export function FinalizationConfirmDialog() {
         left: 0,
         right: 0,
         bottom: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        backgroundColor: 'rgba(0, 0, 0, 0.4)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -41,8 +41,8 @@ export function FinalizationConfirmDialog() {
     >
       <div
         style={{
-          backgroundColor: '#ffffff',
-          borderRadius: '8px',
+          backgroundColor: 'var(--color-surface)',
+          borderRadius: 'var(--radius-md)',
           padding: '24px',
           maxWidth: '480px',
           width: '100%',
@@ -54,7 +54,7 @@ export function FinalizationConfirmDialog() {
             margin: '0 0 16px 0',
             fontSize: '18px',
             fontWeight: 600,
-            color: '#d32f2f',
+            color: 'var(--color-error)',
           }}
         >
           Finalize Project
@@ -65,7 +65,7 @@ export function FinalizationConfirmDialog() {
           style={{
             margin: '0 0 16px 0',
             fontSize: '14px',
-            color: '#424242',
+            color: 'var(--color-ink-primary)',
             lineHeight: '1.5',
           }}
         >
@@ -78,10 +78,10 @@ export function FinalizationConfirmDialog() {
             style={{
               margin: '0 0 16px 0',
               fontSize: '13px',
-              color: '#d32f2f',
-              backgroundColor: '#ffebee',
+              color: 'var(--color-error)',
+              backgroundColor: 'rgba(176,65,62,0.08)',
               padding: '8px 12px',
-              borderRadius: '4px',
+              borderRadius: 'var(--radius-sm)',
             }}
           >
             {error}
@@ -96,10 +96,10 @@ export function FinalizationConfirmDialog() {
             style={{
               padding: '8px 16px',
               fontSize: '14px',
-              backgroundColor: '#f5f5f5',
-              color: '#424242',
-              border: '1px solid #e0e0e0',
-              borderRadius: '4px',
+              backgroundColor: 'transparent',
+              color: 'var(--color-ink-primary)',
+              border: '1px solid var(--color-disabled)',
+              borderRadius: 'var(--radius-sm)',
               cursor: isLoading ? 'not-allowed' : 'pointer',
             }}
           >
@@ -113,10 +113,10 @@ export function FinalizationConfirmDialog() {
               padding: '8px 16px',
               fontSize: '14px',
               fontWeight: 600,
-              backgroundColor: isLoading ? '#a5d6a7' : '#2e7d32',
+              backgroundColor: isLoading ? 'rgba(63,107,79,0.6)' : 'var(--color-success)',
               color: '#ffffff',
               border: 'none',
-              borderRadius: '4px',
+              borderRadius: 'var(--radius-sm)',
               cursor: isLoading ? 'not-allowed' : 'pointer',
             }}
           >

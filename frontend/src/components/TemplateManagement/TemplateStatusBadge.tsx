@@ -5,9 +5,9 @@ interface TemplateStatusBadgeProps {
 }
 
 const statusStyles: Record<TemplateStatus, { backgroundColor: string; color: string }> = {
-  [TemplateStatus.DRAFT]: { backgroundColor: '#9e9e9e', color: '#ffffff' },
-  [TemplateStatus.ACTIVE]: { backgroundColor: '#e8f5e9', color: '#2e7d32' },
-  [TemplateStatus.RETIRED]: { backgroundColor: '#fff3e0', color: '#e65100' },
+  [TemplateStatus.DRAFT]: { backgroundColor: 'rgba(110,110,110,0.1)', color: 'var(--color-ink-secondary)' },
+  [TemplateStatus.ACTIVE]: { backgroundColor: 'rgba(63,107,79,0.1)', color: 'var(--color-success)' },
+  [TemplateStatus.RETIRED]: { backgroundColor: 'rgba(166,106,45,0.1)', color: 'var(--color-warning)' },
 };
 
 export function TemplateStatusBadge({ status }: TemplateStatusBadgeProps) {
