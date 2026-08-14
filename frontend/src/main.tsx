@@ -7,6 +7,7 @@ import '@/styles/layout.css';
 import App from './App';
 import { AuthLayout } from '@/components/AuthLayout';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
+import { AuthenticatedLayout } from '@/components/Layout';
 import { AdminRoute, AdminLayout } from '@/components/Admin';
 import { LoginPage, SignupPage, ForgotPasswordPage, DashboardPage } from '@/pages';
 import {
@@ -49,19 +50,21 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 
           {/* Protected routes - redirect to /login if not authenticated */}
           <Route element={<ProtectedRoute />}>
-            <Route path="/" element={<DashboardPage />} />
-            <Route path="/canvas" element={<App />} />
+            <Route element={<AuthenticatedLayout />}>
+              <Route path="/" element={<DashboardPage />} />
+              <Route path="/canvas" element={<App />} />
 
-            {/* Admin routes - redirect to / if not ADMIN */}
-            <Route element={<AdminRoute />}>
-              <Route element={<AdminLayout />}>
-                <Route path="/admin" element={<Navigate to="/admin/families" replace />} />
-                <Route path="/admin/families" element={<FamilyCategoryPage />} />
-                <Route path="/admin/design-families" element={<DesignFamilyPage />} />
-                <Route path="/admin/skus" element={<SkuMasterPage />} />
-                <Route path="/admin/compatibility" element={<SkuCompatibilityPage />} />
-                <Route path="/admin/catalogue" element={<CataloguePage />} />
-                <Route path="/admin/rule-sets" element={<RuleSetPage />} />
+              {/* Admin routes - redirect to / if not ADMIN */}
+              <Route element={<AdminRoute />}>
+                <Route element={<AdminLayout />}>
+                  <Route path="/admin" element={<Navigate to="/admin/families" replace />} />
+                  <Route path="/admin/families" element={<FamilyCategoryPage />} />
+                  <Route path="/admin/design-families" element={<DesignFamilyPage />} />
+                  <Route path="/admin/skus" element={<SkuMasterPage />} />
+                  <Route path="/admin/compatibility" element={<SkuCompatibilityPage />} />
+                  <Route path="/admin/catalogue" element={<CataloguePage />} />
+                  <Route path="/admin/rule-sets" element={<RuleSetPage />} />
+                </Route>
               </Route>
             </Route>
           </Route>

@@ -1,0 +1,28 @@
+{
+  "id": "FEAT-001",
+  "type": "fix",
+  "description": "Fix Phase 1 issues: AppShell on all authenticated routes, IconRail active states, tooltip timer cleanup, TopBar type casts",
+  "status": "in_progress",
+  "steps": [
+    "1. In frontend/src/main.tsx: Move AppShell to wrap ALL authenticated routes. Currently AppShell only wraps the /canvas route via App.tsx. Instead, wrap the ProtectedRoute's Outlet with AppShell so Dashboard, Admin, and Canvas routes all get the shell. This means extracting AppShell from App.tsx and placing it in main.tsx around the protected <Outlet />. The DashboardPage and Admin routes also need to render inside the shell. Option: Create a new layout route component (e.g., AuthenticatedLayout) that renders <AppShell><Outlet /></AppShell> and use it as a layout route wrapping all protected routes.",
+    "2. In frontend/src/App.tsx: Remove the <AppShell> wrapper since it now lives at the routing level. App.tsx should just render its content (Navigation, Toolbar, canvas, panels) without the shell wrapper.",
+    "3. In frontend/src/components/Layout/IconRail.tsx: Fix NAV_ITEMS - 'templates' and 'projects' both point to '/canvas' causing ambiguity. Give them unique paths: templates -> '/templates' (or '/canvas?view=templates'), projects -> '/projects' (or '/canvas?view=projects'). Since there are no separate route pages for these yet, use '/canvas/templates' and '/canvas/projects' as paths (or keep '/canvas' for one and use a query param). Simplest fix: make 'templates' point to '/canvas' and 'projects' point to '/projects'. Update the isActive() logic to handle exact matches better (use === for specific paths, startsWith only for /admin prefix).",
+    "4. In frontend/src/components/Layout/IconRail.tsx: Add cleanup for the tooltip timer on unmount. The handleMouseLeave clears it, but if the component unmounts while a timer is pending, it will fire on an unmounted component. Add a useEffect cleanup that clears timerRef.current on unmount.",
+    "5. In frontend/src/components/Layout/TopBar.tsx: Remove the 'as unknown as number' type casts on CSS variable values. Instead of using inline style with fontWeight: 'var(--weight-semibold)' as unknown as number, use className-based styling. Add a .top-bar__brand class and .top-bar__mode-badge class in layout.css that apply the correct styles, then use className instead of inline style in TopBar.tsx."
+  ],
+  "acceptance_criteria": [
+    "AppShell (icon rail, top bar, status bar) renders on Dashboard, Canvas, and Admin routes",
+    "IconRail has unique paths for templates and projects (no two items share the same path)",
+    "Only one nav item is visually active at a time for any given URL",
+    "TopBar has zero 'as unknown as' type casts",
+    "Tooltip timer is cleaned up on component unmount (useEffect return cleanup)",
+    "All existing tests (1094+) still pass",
+    "TypeScript typecheck passes with no new errors"
+  ],
+  "verification": [
+    "cd /projects/sandbox/Bom/frontend && unset NODE_OPTIONS && npx tsc --noEmit",
+    "cd /projects/sandbox/Bom/frontend && unset NODE_OPTIONS && npx vitest run"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

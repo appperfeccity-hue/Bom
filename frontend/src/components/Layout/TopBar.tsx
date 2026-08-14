@@ -17,36 +17,16 @@ export function TopBar() {
 
   return (
     <div className="top-bar" data-testid="top-bar">
-      <span
-        style={{
-          fontWeight: 'var(--weight-semibold)' as unknown as number,
-          fontSize: 'var(--text-md)',
-          color: 'var(--color-ink-primary)',
-        }}
-      >
+      <span className="top-bar__brand">
         Perfeccity
       </span>
 
-      <span
-        style={{
-          padding: '2px 8px',
-          borderRadius: 'var(--radius-sm)',
-          backgroundColor: 'var(--color-nav-active-bg)',
-          fontSize: 'var(--text-xs)',
-          fontWeight: 'var(--weight-medium)' as unknown as number,
-          color: 'var(--color-accent)',
-        }}
-        data-testid="mode-indicator"
-      >
+      <span className="top-bar__mode-badge" data-testid="mode-indicator">
         {modeLabel}
       </span>
 
       <span
-        style={{
-          marginLeft: 'auto',
-          fontSize: 'var(--text-xs)',
-          color: saveStatus === 'error' ? 'var(--color-error)' : 'var(--color-ink-secondary)',
-        }}
+        className={`top-bar__save-status${saveStatus === 'error' ? ' top-bar__save-status--error' : ''}`}
         data-testid="save-status"
       >
         {statusLabel}

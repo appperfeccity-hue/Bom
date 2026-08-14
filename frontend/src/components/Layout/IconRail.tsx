@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 interface NavItem {
@@ -14,7 +14,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: 'catalogue', label: 'Catalogue', path: '/admin/catalogue', icon: '☰' },
   { id: 'templates', label: 'Templates', path: '/canvas', icon: '◧' },
   { id: 'design-library', label: 'Design Library', path: '/admin/design-families', icon: '◈' },
-  { id: 'projects', label: 'Projects', path: '/canvas', icon: '▦' },
+  { id: 'projects', label: 'Projects', path: '/projects', icon: '▦' },
   { id: 'settings', label: 'Settings', path: '/admin', icon: '⚙' },
 ];
 
@@ -26,6 +26,15 @@ export function IconRail() {
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const [tooltipVisible, setTooltipVisible] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Cleanup tooltip timer on unmount
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
+    };
+  }, []);
 
   const handleMouseEnter = useCallback((id: string) => {
     setHoveredItem(id);
@@ -44,8 +53,14 @@ export function IconRail() {
   }, []);
 
   const isActive = (item: NavItem): boolean => {
-    if (item.path === '/') return location.pathname === '/';
-    return location.pathname.startsWith(item.path);
+    const { pathname } = location;
+    // Exact match for root path
+    if (item.path === '/') return pathname === '/';
+    // Exact match for specific paths to avoid ambiguity
+    if (item.path === '/canvas') return pathname === '/canvas';
+    if (item.path === '/projects') return pathname === '/projects';
+    // Prefix match for admin sub-routes
+    return pathname.startsWith(item.path);
   };
 
   return (
