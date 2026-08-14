@@ -17,7 +17,7 @@ export function DashboardPage() {
     borderRadius: 'var(--radius-md)',
     cursor: 'pointer',
     border: '1px solid var(--color-hairline)',
-    boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+    boxShadow: 'var(--shadow-sm)',
     transition: 'box-shadow 0.15s ease',
   };
 

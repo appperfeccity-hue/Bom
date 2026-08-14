@@ -68,7 +68,7 @@ export function BomPanel() {
           borderBottom: '1px solid var(--color-hairline)',
         }}
       >
-        <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 'var(--weight-semibold)' as unknown as number, color: 'var(--color-ink-primary)' }}>
+        <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 'var(--weight-semibold)', color: 'var(--color-ink-primary)' }}>
           Bill of Materials
         </h3>
         <button

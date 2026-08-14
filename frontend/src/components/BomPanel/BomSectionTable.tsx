@@ -87,7 +87,7 @@ export function BomSectionTable({ lines, columns, productTypeField = 'product_ty
               style={{
                 margin: '0 0 8px 0',
                 fontSize: 'var(--text-sm)',
-                fontWeight: 'var(--weight-semibold)' as unknown as number,
+                fontWeight: 'var(--weight-semibold)',
                 color: 'var(--color-ink-secondary)',
                 textTransform: 'uppercase',
                 borderBottom: '1px solid var(--color-hairline)',
@@ -112,7 +112,7 @@ export function BomSectionTable({ lines, columns, productTypeField = 'product_ty
                         textAlign: 'left',
                         padding: '4px 8px',
                         borderBottom: '1px solid var(--color-hairline)',
-                        fontWeight: 'var(--weight-semibold)' as unknown as number,
+                        fontWeight: 'var(--weight-semibold)',
                         color: 'var(--color-ink-secondary)',
                         fontSize: 'var(--text-sm)',
                         textTransform: 'uppercase',
@@ -162,7 +162,7 @@ export function BomSectionTable({ lines, columns, productTypeField = 'product_ty
                     colSpan={columns.length}
                     style={{
                       padding: '4px 8px',
-                      fontWeight: 'var(--weight-semibold)' as unknown as number,
+                      fontWeight: 'var(--weight-semibold)',
                       fontSize: 'var(--text-xs)',
                       color: 'var(--color-ink-secondary)',
                       borderTop: '1px solid var(--color-hairline)',

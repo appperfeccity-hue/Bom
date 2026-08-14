@@ -79,20 +79,25 @@ export function BomReconciliationView() {
                 {line.actual_line?.quantity ?? '-'}
               </td>
               <td style={{ padding: '4px 8px', borderBottom: '1px solid var(--color-hairline)' }}>
-                <span
-                  data-testid={`reconciliation-badge-${idx}`}
-                  style={{
-                    display: 'inline-block',
-                    padding: '2px 6px',
-                    fontSize: '10px',
-                    fontWeight: 600,
-                    borderRadius: '3px',
-                    backgroundColor: getResultStyle(line.result_type).backgroundColor,
-                    color: getResultStyle(line.result_type).color,
-                  }}
-                >
-                  {line.result_type}
-                </span>
+                {(() => {
+                  const { backgroundColor, color } = getResultStyle(line.result_type);
+                  return (
+                    <span
+                      data-testid={`reconciliation-badge-${idx}`}
+                      style={{
+                        display: 'inline-block',
+                        padding: '2px 6px',
+                        fontSize: '10px',
+                        fontWeight: 600,
+                        borderRadius: '3px',
+                        backgroundColor,
+                        color,
+                      }}
+                    >
+                      {line.result_type}
+                    </span>
+                  );
+                })()}
               </td>
             </tr>
           ))}
