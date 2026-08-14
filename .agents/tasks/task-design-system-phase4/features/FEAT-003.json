@@ -1,0 +1,27 @@
+{
+  "id": "FEAT-003",
+  "type": "fix",
+  "description": "Address review findings: remove aria-modal from dialogs, fix responsive breakpoint cascade, narrow aria-live scope on status bar, use native <main> element in AppShell, add color:transparent to skeleton-shimmer.",
+  "status": "completed",
+  "steps": [
+    "Remove aria-modal='true' from BomPanel, ProjectCreationWizard, FinalizationConfirmDialog, and TemplateManagementPanel",
+    "Fix responsive.css 1280px rule to use @media (min-width: 1025px) and (max-width: 1280px)",
+    "In StatusBar.tsx move aria-live='polite' from the parent div to only the error count span",
+    "In AppShell.tsx change div with role='main' to native <main> element",
+    "In animations.css add color: transparent to .skeleton-shimmer"
+  ],
+  "acceptance_criteria": [
+    "No aria-modal attribute on any dialog component",
+    "Responsive breakpoint 1280px rule does not apply below 1024px",
+    "aria-live='polite' is only on the error count span in StatusBar",
+    "AppShell uses <main> element instead of div with role='main'",
+    ".skeleton-shimmer includes color: transparent",
+    "Build passes and all tests pass"
+  ],
+  "verification": [
+    "unset NODE_OPTIONS && cd /projects/sandbox/Bom/frontend && npx vite build",
+    "unset NODE_OPTIONS && cd /projects/sandbox/Bom/frontend && npx vitest run"
+  ],
+  "blocked_reason": null,
+  "findings": "All 5 review issues addressed. Build passes and all 1094 tests pass. Removed aria-modal from 4 dialogs, fixed responsive breakpoint scope to (min-width: 1025px) and (max-width: 1280px), moved aria-live to error count span only, changed div[role=main] to native <main>, added color:transparent to .skeleton-shimmer."
+}

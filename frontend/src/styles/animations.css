@@ -96,6 +96,7 @@
   );
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
+  color: transparent;
 }
 
 /* ─── Focus-Visible Ring ─── */

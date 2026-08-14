@@ -45,7 +45,6 @@ export function BomPanel() {
     <div
       data-testid="bom-panel"
       role="dialog"
-      aria-modal="true"
       aria-labelledby="bom-panel-title"
       className="panel-slide-in"
       style={{

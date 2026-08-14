@@ -20,9 +20,9 @@ export function AppShell({ children }: AppShellProps) {
       <a href="#main-content" className="skip-nav">Skip to main content</a>
       <IconRail />
       <TopBar />
-      <div className="main-area" id="main-content" role="main">
+      <main className="main-area" id="main-content">
         {children}
-      </div>
+      </main>
       <StatusBar />
     </div>
   );

@@ -23,7 +23,6 @@ export function TemplateManagementPanel() {
     <div
       data-testid="template-management-panel"
       role="dialog"
-      aria-modal="true"
       aria-labelledby="template-panel-title"
       style={{
         position: 'fixed',

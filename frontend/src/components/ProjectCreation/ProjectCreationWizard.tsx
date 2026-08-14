@@ -122,7 +122,6 @@ export function ProjectCreationWizard() {
     <div
       data-testid="project-creation-wizard"
       role="dialog"
-      aria-modal="true"
       aria-labelledby="project-creation-title"
       className="panel-slide-in"
       style={{

@@ -27,7 +27,6 @@ export function FinalizationConfirmDialog() {
     <div
       data-testid="finalization-confirm-dialog"
       role="dialog"
-      aria-modal="true"
       aria-labelledby="finalization-dialog-title"
       style={{
         position: 'fixed',
