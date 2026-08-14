@@ -4,16 +4,20 @@ import { CompatibilityRelationship, Directionality, SkuStatus } from '@/types/da
 
 function StatusBadge({ status }: { status: string }) {
   const colors: Record<string, { bg: string; color: string }> = {
-    ACTIVE: { bg: '#dcfce7', color: '#16a34a' },
-    INACTIVE: { bg: '#f3f4f6', color: '#6b7280' },
+    ACTIVE: { bg: 'rgba(63,107,79,0.1)', color: 'var(--color-success)' },
+    INACTIVE: { bg: 'rgba(110,110,110,0.1)', color: 'var(--color-ink-secondary)' },
   };
-  const style = colors[status] ?? { bg: '#f3f4f6', color: '#6b7280' };
+  const style = colors[status] ?? { bg: 'rgba(110,110,110,0.1)', color: 'var(--color-ink-secondary)' };
   return (
-    <span data-testid={`status-badge-${status}`} style={{ padding: '2px 8px', borderRadius: '12px', fontSize: '12px', fontWeight: 600, backgroundColor: style.bg, color: style.color }}>
+    <span data-testid={`status-badge-${status}`} style={{ padding: '2px 8px', borderRadius: 'var(--radius-full)', fontSize: 'var(--text-xs)', fontWeight: 'var(--weight-medium)', backgroundColor: style.bg, color: style.color }}>
       {status}
     </span>
   );
 }
+
+const inputStyle = { display: 'block', width: '100%', height: '32px', padding: '0 8px', border: '1px solid var(--color-disabled)', borderRadius: 'var(--radius-sm)', backgroundColor: 'var(--color-surface)', fontSize: 'var(--text-base)', color: 'var(--color-ink-primary)', boxSizing: 'border-box' as const };
+const selectStyle = { display: 'block', width: '100%', height: '32px', padding: '0 8px', border: '1px solid var(--color-disabled)', borderRadius: 'var(--radius-sm)', backgroundColor: 'var(--color-surface)', fontSize: 'var(--text-base)', color: 'var(--color-ink-primary)' };
+const labelStyle = { display: 'block', fontSize: '13px', fontWeight: 'var(--weight-semibold)' as const, marginBottom: '4px', color: 'var(--color-ink-primary)' };
 
 export function SkuCompatibilityPage() {
   const {
@@ -73,18 +77,18 @@ export function SkuCompatibilityPage() {
   return (
     <div data-testid="sku-compatibility-page">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-        <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 700, color: '#1e293b' }}>SKU Compatibility</h1>
+        <h1 style={{ fontSize: 'var(--text-sm)', textTransform: 'uppercase', fontWeight: 'var(--weight-semibold)', color: 'var(--color-ink-secondary)', letterSpacing: '0.05em', margin: 0 }}>SKU Compatibility</h1>
         <button
           data-testid="add-compatibility-btn"
           onClick={() => setShowForm(true)}
-          style={{ padding: '8px 16px', backgroundColor: '#2563eb', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+          style={{ backgroundColor: 'var(--color-accent)', color: '#ffffff', border: 'none', borderRadius: 'var(--radius-sm)', padding: '6px 12px', fontSize: 'var(--text-base)', fontWeight: 'var(--weight-medium)', cursor: 'pointer' }}
         >
           Add Rule
         </button>
       </div>
 
       {error && (
-        <div data-testid="admin-error" style={{ padding: '12px', backgroundColor: '#fef2f2', color: '#dc2626', borderRadius: '6px', marginBottom: '16px' }}>
+        <div data-testid="admin-error" style={{ padding: '12px', backgroundColor: 'rgba(176,65,62,0.08)', color: 'var(--color-error)', borderRadius: 'var(--radius-sm)', marginBottom: '16px' }}>
           {error}
           <button onClick={clearError} style={{ marginLeft: '8px', cursor: 'pointer' }}>Dismiss</button>
         </div>
@@ -94,45 +98,45 @@ export function SkuCompatibilityPage() {
 
       {/* Add form */}
       {showForm && (
-        <div data-testid="compatibility-form" style={{ padding: '20px', backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '8px', marginBottom: '24px' }}>
-          <h2 style={{ margin: '0 0 16px', fontSize: '18px' }}>New Compatibility Rule</h2>
+        <div data-testid="compatibility-form" style={{ padding: '20px', backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-hairline)', borderRadius: 'var(--radius-sm)', marginBottom: '24px' }}>
+          <h2 style={{ fontSize: 'var(--text-sm)', textTransform: 'uppercase', fontWeight: 'var(--weight-semibold)', color: 'var(--color-ink-secondary)', letterSpacing: '0.05em', margin: '0 0 16px' }}>New Compatibility Rule</h2>
 
           <div style={{ marginBottom: '12px' }}>
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '4px' }}>Search SKUs</label>
+            <label style={labelStyle}>Search SKUs</label>
             <input
               data-testid="sku-search-input"
               type="text"
               value={skuSearch}
               onChange={(e) => setSkuSearch(e.target.value)}
               placeholder="Filter SKUs by code..."
-              style={{ width: '100%', padding: '6px 10px', border: '1px solid #d1d5db', borderRadius: '4px', boxSizing: 'border-box', marginBottom: '8px' }}
+              style={{ ...inputStyle, marginBottom: '8px' }}
             />
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
             <div>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '4px' }}>Source SKU *</label>
-              <select data-testid="source-sku-select" value={sourceSkuId} onChange={(e) => setSourceSkuId(e.target.value)} style={{ width: '100%', padding: '6px 10px', border: '1px solid #d1d5db', borderRadius: '4px' }}>
+              <label style={labelStyle}>Source SKU *</label>
+              <select data-testid="source-sku-select" value={sourceSkuId} onChange={(e) => setSourceSkuId(e.target.value)} style={selectStyle}>
                 <option value="">Select source SKU</option>
                 {filteredSkuOptions.map((sku) => <option key={sku.sku_id} value={sku.sku_id}>{sku.sku_code}</option>)}
               </select>
             </div>
             <div>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '4px' }}>Target SKU *</label>
-              <select data-testid="target-sku-select" value={targetSkuId} onChange={(e) => setTargetSkuId(e.target.value)} style={{ width: '100%', padding: '6px 10px', border: '1px solid #d1d5db', borderRadius: '4px' }}>
+              <label style={labelStyle}>Target SKU *</label>
+              <select data-testid="target-sku-select" value={targetSkuId} onChange={(e) => setTargetSkuId(e.target.value)} style={selectStyle}>
                 <option value="">Select target SKU</option>
                 {filteredSkuOptions.map((sku) => <option key={sku.sku_id} value={sku.sku_id}>{sku.sku_code}</option>)}
               </select>
             </div>
             <div>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '4px' }}>Relationship Type</label>
-              <select data-testid="relationship-type-select" value={relationshipType} onChange={(e) => setRelationshipType(e.target.value as CompatibilityRelationship)} style={{ width: '100%', padding: '6px 10px', border: '1px solid #d1d5db', borderRadius: '4px' }}>
+              <label style={labelStyle}>Relationship Type</label>
+              <select data-testid="relationship-type-select" value={relationshipType} onChange={(e) => setRelationshipType(e.target.value as CompatibilityRelationship)} style={selectStyle}>
                 {Object.values(CompatibilityRelationship).map((rt) => <option key={rt} value={rt}>{rt}</option>)}
               </select>
             </div>
             <div>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '4px' }}>Directionality</label>
-              <select data-testid="directionality-select" value={directionality} onChange={(e) => setDirectionality(e.target.value as Directionality)} style={{ width: '100%', padding: '6px 10px', border: '1px solid #d1d5db', borderRadius: '4px' }}>
+              <label style={labelStyle}>Directionality</label>
+              <select data-testid="directionality-select" value={directionality} onChange={(e) => setDirectionality(e.target.value as Directionality)} style={selectStyle}>
                 {Object.values(Directionality).map((d) => <option key={d} value={d}>{d}</option>)}
               </select>
             </div>
@@ -146,10 +150,10 @@ export function SkuCompatibilityPage() {
           </div>
 
           <div style={{ marginTop: '16px', display: 'flex', gap: '8px' }}>
-            <button data-testid="compatibility-form-submit" onClick={handleCreate} style={{ padding: '8px 16px', backgroundColor: '#2563eb', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
+            <button data-testid="compatibility-form-submit" onClick={handleCreate} style={{ backgroundColor: 'var(--color-accent)', color: '#ffffff', border: 'none', borderRadius: 'var(--radius-sm)', padding: '6px 12px', fontSize: 'var(--text-base)', fontWeight: 'var(--weight-medium)', cursor: 'pointer' }}>
               Create
             </button>
-            <button onClick={() => setShowForm(false)} style={{ padding: '8px 16px', border: '1px solid #d1d5db', borderRadius: '4px', cursor: 'pointer' }}>
+            <button onClick={() => setShowForm(false)} style={{ background: 'transparent', border: '1px solid var(--color-disabled)', color: 'var(--color-ink-primary)', borderRadius: 'var(--radius-sm)', padding: '6px 12px', fontSize: 'var(--text-base)', cursor: 'pointer' }}>
               Cancel
             </button>
           </div>
@@ -157,39 +161,39 @@ export function SkuCompatibilityPage() {
       )}
 
       {/* Rules table */}
-      <table data-testid="compatibility-table" style={{ width: '100%', borderCollapse: 'collapse', backgroundColor: '#fff' }}>
+      <table data-testid="compatibility-table" className="table-minimal">
         <thead>
-          <tr style={{ borderBottom: '2px solid #e2e8f0' }}>
-            <th style={{ padding: '8px', textAlign: 'left' }}>Source SKU</th>
-            <th style={{ padding: '8px', textAlign: 'left' }}>Target SKU</th>
-            <th style={{ padding: '8px', textAlign: 'left' }}>Relationship</th>
-            <th style={{ padding: '8px', textAlign: 'left' }}>Direction</th>
-            <th style={{ padding: '8px', textAlign: 'left' }}>Mandatory</th>
-            <th style={{ padding: '8px', textAlign: 'left' }}>Status</th>
-            <th style={{ padding: '8px', textAlign: 'right' }}>Actions</th>
+          <tr>
+            <th>Source SKU</th>
+            <th>Target SKU</th>
+            <th>Relationship</th>
+            <th>Direction</th>
+            <th>Mandatory</th>
+            <th>Status</th>
+            <th style={{ textAlign: 'right' }}>Actions</th>
           </tr>
         </thead>
         <tbody>
           {compatibilityRules.map((rule) => (
-            <tr key={rule.compatibility_id} data-testid={`rule-row-${rule.compatibility_id}`} style={{ borderBottom: '1px solid #e2e8f0' }}>
-              <td style={{ padding: '8px' }}>{getSkuCode(rule.source_sku_id)}</td>
-              <td style={{ padding: '8px' }}>{getSkuCode(rule.target_sku_id)}</td>
-              <td style={{ padding: '8px' }}>{rule.relationship_type}</td>
-              <td style={{ padding: '8px' }}>{rule.directionality}</td>
-              <td style={{ padding: '8px' }}>{rule.is_mandatory ? 'Yes' : 'No'}</td>
-              <td style={{ padding: '8px' }}><StatusBadge status={rule.status} /></td>
-              <td style={{ padding: '8px', textAlign: 'right' }}>
+            <tr key={rule.compatibility_id} data-testid={`rule-row-${rule.compatibility_id}`}>
+              <td>{getSkuCode(rule.source_sku_id)}</td>
+              <td>{getSkuCode(rule.target_sku_id)}</td>
+              <td>{rule.relationship_type}</td>
+              <td>{rule.directionality}</td>
+              <td>{rule.is_mandatory ? 'Yes' : 'No'}</td>
+              <td><StatusBadge status={rule.status} /></td>
+              <td style={{ textAlign: 'right' }}>
                 <button
                   data-testid={`toggle-rule-${rule.compatibility_id}`}
                   onClick={() => handleToggleStatus(rule.compatibility_id, rule.status)}
-                  style={{ marginRight: '4px', cursor: 'pointer', padding: '4px 8px', backgroundColor: rule.status === 'ACTIVE' ? '#f97316' : '#16a34a', color: '#fff', border: 'none', borderRadius: '4px' }}
+                  style={{ marginRight: '4px', cursor: 'pointer', padding: '6px 12px', backgroundColor: rule.status === 'ACTIVE' ? 'var(--color-warning)' : 'var(--color-success)', color: '#ffffff', border: 'none', borderRadius: 'var(--radius-sm)', fontSize: 'var(--text-base)' }}
                 >
                   {rule.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}
                 </button>
                 <button
                   data-testid={`delete-rule-${rule.compatibility_id}`}
                   onClick={() => { if (window.confirm('Delete this compatibility rule? This cannot be undone.')) { deleteCompatibilityRule(rule.compatibility_id); } }}
-                  style={{ cursor: 'pointer', padding: '4px 8px', backgroundColor: '#dc2626', color: '#fff', border: 'none', borderRadius: '4px' }}
+                  style={{ cursor: 'pointer', padding: '6px 12px', backgroundColor: 'var(--color-error)', color: '#ffffff', border: 'none', borderRadius: 'var(--radius-sm)', fontSize: 'var(--text-base)' }}
                 >
                   Delete
                 </button>

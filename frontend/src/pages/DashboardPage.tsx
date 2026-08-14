@@ -11,6 +11,16 @@ export function DashboardPage() {
   const role = useAuthStore((s) => s.role);
   const signOut = useAuthStore((s) => s.signOut);
 
+  const cardStyle = {
+    padding: 'var(--space-5)',
+    backgroundColor: 'var(--color-surface)',
+    borderRadius: 'var(--radius-md)',
+    cursor: 'pointer',
+    border: '1px solid var(--color-hairline)',
+    boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+    transition: 'box-shadow 0.15s ease',
+  };
+
   return (
     <div style={{ padding: 'var(--space-8)', minHeight: '100vh', backgroundColor: 'var(--color-canvas)' }}>
       <div style={{ maxWidth: '800px', margin: '0 auto' }}>
@@ -18,12 +28,12 @@ export function DashboardPage() {
           <div>
             <h1 style={{ fontSize: 'var(--text-2xl)', margin: 0, color: 'var(--color-ink-primary)' }}>Perfeccity</h1>
             <p style={{ color: 'var(--color-ink-secondary)', margin: '4px 0 0', fontSize: 'var(--text-base)' }}>
-              {user?.email ?? 'unknown'} | Role: {role ?? 'not detected'}
+              {user?.email ?? 'unknown'} | Role: <span style={{ color: 'var(--color-accent)', fontWeight: 'var(--weight-medium)' }}>{role ?? 'not detected'}</span>
             </p>
           </div>
           <button
             onClick={() => { void signOut(); }}
-            style={{ padding: 'var(--space-2) var(--space-4)', fontSize: 'var(--text-base)', backgroundColor: 'var(--color-canvas)', border: '1px solid var(--color-hairline)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', color: 'var(--color-ink-primary)' }}
+            style={{ padding: 'var(--space-2) var(--space-4)', fontSize: 'var(--text-base)', background: 'transparent', border: '1px solid var(--color-disabled)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', color: 'var(--color-ink-primary)' }}
           >
             Logout
           </button>
@@ -44,27 +54,27 @@ export function DashboardPage() {
         )}
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 'var(--space-4)' }}>
-          <div onClick={() => navigate('/canvas')} style={{ padding: 'var(--space-5)', backgroundColor: 'var(--color-surface)', borderRadius: 'var(--radius-md)', cursor: 'pointer', border: '1px solid var(--color-hairline)', boxShadow: 'var(--shadow-sm)' }}>
+          <div onClick={() => navigate('/canvas')} style={cardStyle}>
             <h3 style={{ margin: '0 0 8px', fontSize: 'var(--text-lg)', color: 'var(--color-ink-primary)' }}>Open Canvas</h3>
             <p style={{ margin: 0, fontSize: 'var(--text-base)', color: 'var(--color-ink-secondary)' }}>Designer/Consultant workspace</p>
           </div>
 
           {(role === 'DESIGNER' || !role) && (
-            <div onClick={() => navigate('/canvas')} style={{ padding: 'var(--space-5)', backgroundColor: 'var(--color-surface)', borderRadius: 'var(--radius-md)', cursor: 'pointer', border: '1px solid var(--color-hairline)', boxShadow: 'var(--shadow-sm)' }}>
+            <div onClick={() => navigate('/canvas')} style={cardStyle}>
               <h3 style={{ margin: '0 0 8px', fontSize: 'var(--text-lg)', color: 'var(--color-ink-primary)' }}>My Templates</h3>
               <p style={{ margin: 0, fontSize: 'var(--text-base)', color: 'var(--color-ink-secondary)' }}>Create and manage templates</p>
             </div>
           )}
 
           {(role === 'CONSULTANT' || !role) && (
-            <div onClick={() => navigate('/canvas')} style={{ padding: 'var(--space-5)', backgroundColor: 'var(--color-surface)', borderRadius: 'var(--radius-md)', cursor: 'pointer', border: '1px solid var(--color-hairline)', boxShadow: 'var(--shadow-sm)' }}>
+            <div onClick={() => navigate('/canvas')} style={cardStyle}>
               <h3 style={{ margin: '0 0 8px', fontSize: 'var(--text-lg)', color: 'var(--color-ink-primary)' }}>New Project</h3>
               <p style={{ margin: 0, fontSize: 'var(--text-base)', color: 'var(--color-ink-secondary)' }}>Start from a published template</p>
             </div>
           )}
 
           {(role === 'ADMIN' || !role) && (
-            <div onClick={() => navigate('/admin/skus')} style={{ padding: 'var(--space-5)', backgroundColor: 'var(--color-surface)', borderRadius: 'var(--radius-md)', cursor: 'pointer', border: '1px solid var(--color-accent)', boxShadow: 'var(--shadow-sm)' }}>
+            <div onClick={() => navigate('/admin/skus')} style={{ ...cardStyle, border: '1px solid var(--color-accent)' }}>
               <h3 style={{ margin: '0 0 8px', fontSize: 'var(--text-lg)', color: 'var(--color-ink-primary)' }}>Admin Panel</h3>
               <p style={{ margin: 0, fontSize: 'var(--text-base)', color: 'var(--color-ink-secondary)' }}>Manage SKUs, catalogue, rules</p>
             </div>

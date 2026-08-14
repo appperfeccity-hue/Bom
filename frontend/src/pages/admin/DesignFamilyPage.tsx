@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { useAdminStore } from '@/stores/adminStore';
 import type { DesignFamilyMaster, DesignSubfamilyMaster } from '@/types/database';
 
+const inputStyle = { display: 'block', width: '100%', height: '32px', padding: '0 8px', border: '1px solid var(--color-disabled)', borderRadius: 'var(--radius-sm)', backgroundColor: 'var(--color-surface)', fontSize: 'var(--text-base)', color: 'var(--color-ink-primary)', boxSizing: 'border-box' as const };
+
 export function DesignFamilyPage() {
   const {
     designFamilies,
@@ -65,12 +67,12 @@ export function DesignFamilyPage() {
 
   return (
     <div data-testid="design-family-page">
-      <h1 style={{ margin: '0 0 24px', fontSize: '24px', fontWeight: 700, color: '#1e293b' }}>
+      <h1 style={{ fontSize: 'var(--text-sm)', textTransform: 'uppercase', fontWeight: 'var(--weight-semibold)', color: 'var(--color-ink-secondary)', letterSpacing: '0.05em', margin: '0 0 24px' }}>
         Design Families
       </h1>
 
       {error && (
-        <div data-testid="admin-error" style={{ padding: '12px', backgroundColor: '#fef2f2', color: '#dc2626', borderRadius: '6px', marginBottom: '16px' }}>
+        <div data-testid="admin-error" style={{ padding: '12px', backgroundColor: 'rgba(176,65,62,0.08)', color: 'var(--color-error)', borderRadius: 'var(--radius-sm)', marginBottom: '16px' }}>
           {error}
           <button onClick={clearError} style={{ marginLeft: '8px', cursor: 'pointer' }}>Dismiss</button>
         </div>
@@ -80,7 +82,7 @@ export function DesignFamilyPage() {
 
       {/* Design Families section */}
       <div style={{ marginBottom: '32px' }}>
-        <h2 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '12px' }}>Design Families</h2>
+        <h2 style={{ fontSize: 'var(--text-sm)', textTransform: 'uppercase', fontWeight: 'var(--weight-semibold)', color: 'var(--color-ink-secondary)', letterSpacing: '0.05em', marginBottom: '12px' }}>Design Families</h2>
 
         <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
           <input
@@ -89,23 +91,23 @@ export function DesignFamilyPage() {
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             placeholder="New design family name"
-            style={{ padding: '8px 12px', border: '1px solid #d1d5db', borderRadius: '4px', flex: 1 }}
+            style={{ ...inputStyle, flex: 1 }}
           />
           <button
             data-testid="add-design-family-btn"
             onClick={handleCreate}
-            style={{ padding: '8px 16px', backgroundColor: '#2563eb', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+            style={{ backgroundColor: 'var(--color-accent)', color: '#ffffff', border: 'none', borderRadius: 'var(--radius-sm)', padding: '6px 12px', fontSize: 'var(--text-base)', fontWeight: 'var(--weight-medium)', cursor: 'pointer' }}
           >
             Add
           </button>
         </div>
 
-        <table data-testid="design-families-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <table data-testid="design-families-table" className="table-minimal">
           <thead>
-            <tr style={{ borderBottom: '2px solid #e2e8f0' }}>
-              <th style={{ padding: '8px', textAlign: 'left' }}>Name</th>
-              <th style={{ padding: '8px', textAlign: 'left' }}>Created</th>
-              <th style={{ padding: '8px', textAlign: 'right' }}>Actions</th>
+            <tr>
+              <th>Name</th>
+              <th>Created</th>
+              <th style={{ textAlign: 'right' }}>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -115,46 +117,45 @@ export function DesignFamilyPage() {
                 data-testid={`design-family-row-${df.design_family_id}`}
                 onClick={() => setSelectedFamily(df)}
                 style={{
-                  borderBottom: '1px solid #e2e8f0',
                   cursor: 'pointer',
-                  backgroundColor: selectedFamily?.design_family_id === df.design_family_id ? '#eff6ff' : 'transparent',
+                  backgroundColor: selectedFamily?.design_family_id === df.design_family_id ? 'var(--color-nav-active-bg)' : 'transparent',
                 }}
               >
-                <td style={{ padding: '8px' }}>
+                <td>
                   {editingFamily?.design_family_id === df.design_family_id ? (
                     <input
                       data-testid="edit-design-family-input"
                       value={editName}
                       onChange={(e) => setEditName(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && handleUpdate()}
-                      style={{ padding: '4px 8px', border: '1px solid #d1d5db', borderRadius: '4px' }}
+                      style={inputStyle}
                     />
                   ) : (
                     df.name
                   )}
                 </td>
-                <td style={{ padding: '8px', color: '#64748b', fontSize: '13px' }}>
+                <td style={{ color: 'var(--color-ink-secondary)', fontSize: '13px' }}>
                   {new Date(df.created_at).toLocaleDateString()}
                 </td>
-                <td style={{ padding: '8px', textAlign: 'right' }}>
+                <td style={{ textAlign: 'right' }}>
                   {editingFamily?.design_family_id === df.design_family_id ? (
                     <>
-                      <button onClick={handleUpdate} style={{ marginRight: '4px', cursor: 'pointer', padding: '4px 8px', backgroundColor: '#16a34a', color: '#fff', border: 'none', borderRadius: '4px' }}>Save</button>
-                      <button onClick={() => setEditingFamily(null)} style={{ cursor: 'pointer', padding: '4px 8px', border: '1px solid #d1d5db', borderRadius: '4px' }}>Cancel</button>
+                      <button onClick={handleUpdate} style={{ marginRight: '4px', cursor: 'pointer', padding: '6px 12px', backgroundColor: 'var(--color-success)', color: '#ffffff', border: 'none', borderRadius: 'var(--radius-sm)', fontSize: 'var(--text-base)' }}>Save</button>
+                      <button onClick={() => setEditingFamily(null)} style={{ background: 'transparent', border: '1px solid var(--color-disabled)', color: 'var(--color-ink-primary)', borderRadius: 'var(--radius-sm)', padding: '6px 12px', fontSize: 'var(--text-base)', cursor: 'pointer' }}>Cancel</button>
                     </>
                   ) : (
                     <>
                       <button
                         data-testid={`edit-df-${df.design_family_id}`}
                         onClick={(e) => { e.stopPropagation(); setEditingFamily(df); setEditName(df.name); }}
-                        style={{ marginRight: '4px', cursor: 'pointer', padding: '4px 8px', border: '1px solid #d1d5db', borderRadius: '4px' }}
+                        style={{ marginRight: '4px', background: 'transparent', border: '1px solid var(--color-disabled)', color: 'var(--color-ink-primary)', borderRadius: 'var(--radius-sm)', padding: '6px 12px', fontSize: 'var(--text-base)', cursor: 'pointer' }}
                       >
                         Edit
                       </button>
                       <button
                         data-testid={`delete-df-${df.design_family_id}`}
                         onClick={(e) => { e.stopPropagation(); if (window.confirm(`Delete design family "${df.name}"? This cannot be undone.`)) { deleteDesignFamily(df.design_family_id); } }}
-                        style={{ cursor: 'pointer', padding: '4px 8px', backgroundColor: '#dc2626', color: '#fff', border: 'none', borderRadius: '4px' }}
+                        style={{ cursor: 'pointer', padding: '6px 12px', backgroundColor: 'var(--color-error)', color: '#ffffff', border: 'none', borderRadius: 'var(--radius-sm)', fontSize: 'var(--text-base)' }}
                       >
                         Delete
                       </button>
@@ -170,7 +171,7 @@ export function DesignFamilyPage() {
       {/* Subfamilies section */}
       {selectedFamily && (
         <div data-testid="subfamilies-section">
-          <h2 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '12px' }}>
+          <h2 style={{ fontSize: 'var(--text-sm)', textTransform: 'uppercase', fontWeight: 'var(--weight-semibold)', color: 'var(--color-ink-secondary)', letterSpacing: '0.05em', marginBottom: '12px' }}>
             Subfamilies for: {selectedFamily.name}
           </h2>
 
@@ -181,63 +182,63 @@ export function DesignFamilyPage() {
               value={newSubName}
               onChange={(e) => setNewSubName(e.target.value)}
               placeholder="New subfamily name"
-              style={{ padding: '8px 12px', border: '1px solid #d1d5db', borderRadius: '4px', flex: 1 }}
+              style={{ ...inputStyle, flex: 1 }}
             />
             <button
               data-testid="add-subfamily-btn"
               onClick={handleCreateSub}
-              style={{ padding: '8px 16px', backgroundColor: '#2563eb', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+              style={{ backgroundColor: 'var(--color-accent)', color: '#ffffff', border: 'none', borderRadius: 'var(--radius-sm)', padding: '6px 12px', fontSize: 'var(--text-base)', fontWeight: 'var(--weight-medium)', cursor: 'pointer' }}
             >
               Add
             </button>
           </div>
 
-          <table data-testid="subfamilies-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <table data-testid="subfamilies-table" className="table-minimal">
             <thead>
-              <tr style={{ borderBottom: '2px solid #e2e8f0' }}>
-                <th style={{ padding: '8px', textAlign: 'left' }}>Name</th>
-                <th style={{ padding: '8px', textAlign: 'left' }}>Created</th>
-                <th style={{ padding: '8px', textAlign: 'right' }}>Actions</th>
+              <tr>
+                <th>Name</th>
+                <th>Created</th>
+                <th style={{ textAlign: 'right' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {designSubfamilies.map((sub) => (
-                <tr key={sub.design_subfamily_id} data-testid={`subfamily-row-${sub.design_subfamily_id}`} style={{ borderBottom: '1px solid #e2e8f0' }}>
-                  <td style={{ padding: '8px' }}>
+                <tr key={sub.design_subfamily_id} data-testid={`subfamily-row-${sub.design_subfamily_id}`}>
+                  <td>
                     {editingSub?.design_subfamily_id === sub.design_subfamily_id ? (
                       <input
                         data-testid="edit-subfamily-input"
                         value={editSubName}
                         onChange={(e) => setEditSubName(e.target.value)}
                         onKeyDown={(e) => e.key === 'Enter' && handleUpdateSub()}
-                        style={{ padding: '4px 8px', border: '1px solid #d1d5db', borderRadius: '4px' }}
+                        style={inputStyle}
                       />
                     ) : (
                       sub.name
                     )}
                   </td>
-                  <td style={{ padding: '8px', color: '#64748b', fontSize: '13px' }}>
+                  <td style={{ color: 'var(--color-ink-secondary)', fontSize: '13px' }}>
                     {new Date(sub.created_at).toLocaleDateString()}
                   </td>
-                  <td style={{ padding: '8px', textAlign: 'right' }}>
+                  <td style={{ textAlign: 'right' }}>
                     {editingSub?.design_subfamily_id === sub.design_subfamily_id ? (
                       <>
-                        <button onClick={handleUpdateSub} style={{ marginRight: '4px', cursor: 'pointer', padding: '4px 8px', backgroundColor: '#16a34a', color: '#fff', border: 'none', borderRadius: '4px' }}>Save</button>
-                        <button onClick={() => setEditingSub(null)} style={{ cursor: 'pointer', padding: '4px 8px', border: '1px solid #d1d5db', borderRadius: '4px' }}>Cancel</button>
+                        <button onClick={handleUpdateSub} style={{ marginRight: '4px', cursor: 'pointer', padding: '6px 12px', backgroundColor: 'var(--color-success)', color: '#ffffff', border: 'none', borderRadius: 'var(--radius-sm)', fontSize: 'var(--text-base)' }}>Save</button>
+                        <button onClick={() => setEditingSub(null)} style={{ background: 'transparent', border: '1px solid var(--color-disabled)', color: 'var(--color-ink-primary)', borderRadius: 'var(--radius-sm)', padding: '6px 12px', fontSize: 'var(--text-base)', cursor: 'pointer' }}>Cancel</button>
                       </>
                     ) : (
                       <>
                         <button
                           data-testid={`edit-sub-${sub.design_subfamily_id}`}
                           onClick={() => { setEditingSub(sub); setEditSubName(sub.name); }}
-                          style={{ marginRight: '4px', cursor: 'pointer', padding: '4px 8px', border: '1px solid #d1d5db', borderRadius: '4px' }}
+                          style={{ marginRight: '4px', background: 'transparent', border: '1px solid var(--color-disabled)', color: 'var(--color-ink-primary)', borderRadius: 'var(--radius-sm)', padding: '6px 12px', fontSize: 'var(--text-base)', cursor: 'pointer' }}
                         >
                           Edit
                         </button>
                         <button
                           data-testid={`delete-sub-${sub.design_subfamily_id}`}
                           onClick={() => { if (window.confirm(`Delete subfamily "${sub.name}"? This cannot be undone.`)) { deleteDesignSubfamily(sub.design_subfamily_id); } }}
-                          style={{ cursor: 'pointer', padding: '4px 8px', backgroundColor: '#dc2626', color: '#fff', border: 'none', borderRadius: '4px' }}
+                          style={{ cursor: 'pointer', padding: '6px 12px', backgroundColor: 'var(--color-error)', color: '#ffffff', border: 'none', borderRadius: 'var(--radius-sm)', fontSize: 'var(--text-base)' }}
                         >
                           Delete
                         </button>

@@ -1,0 +1,35 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "Restyle Admin pages (AdminLayout sidebar + all 6 admin pages) and Dashboard to use the PERFECCITY design system warm palette and CSS utility classes",
+  "status": "in_progress",
+  "steps": [
+    "STEP 1 - AdminLayout.tsx sidebar restyle: Replace dark #1e293b sidebar with warm palette (bg: var(--color-surface), border-right: 1px solid var(--color-hairline)). Active nav item should have border-left: 3px solid var(--color-accent) and bg: var(--color-nav-active-bg). Inactive items: color var(--color-ink-secondary). Header text: var(--color-ink-primary). User email text: var(--color-ink-secondary). Content area bg: var(--color-canvas) (#F6F5F3).",
+    "STEP 2 - Create shared admin StatusBadge pattern: In each admin page (CataloguePage, SkuMasterPage, RuleSetPage, SkuCompatibilityPage), replace the inline StatusBadge components with .status-chip class variants. Map: ACTIVE -> status-chip--active (success green), INACTIVE -> status-chip--inactive (gray), READY -> status-chip--active, INCOMPLETE -> status-chip--blocked, DRAFT -> status-chip--inactive, SUPERSEDED -> status-chip--inactive.",
+    "STEP 3 - CataloguePage.tsx: Replace page h1 style with section header pattern (fontSize: 12px, textTransform: uppercase, fontWeight: 600 semibold, color: var(--color-ink-secondary)). Table use className='table-minimal'. Buttons: 'Approve Ready' button uses .btn-primary, Upload button uses .btn-primary. Form inputs use .input class. Cards use bg: var(--color-surface), border: 1px solid var(--color-hairline). Replace #2563eb with var(--color-accent). Replace #16a34a with var(--color-success). Replace #dc2626/#fef2f2 error colors with var(--color-error).",
+    "STEP 4 - SkuMasterPage.tsx: Same pattern. h1 -> 12px uppercase section header. Table -> .table-minimal. Add SKU button -> .btn-primary (accent color). Cancel button -> .btn-secondary. Form inputs -> .input. Filters selects -> .input. Replace #2563eb with var(--color-accent). Replace #f97316/#16a34a toggle buttons with appropriate design system colors. Form container -> bg: var(--color-surface), border: 1px solid var(--color-hairline). Numeric dimensions td -> font-family: var(--font-mono).",
+    "STEP 5 - DesignFamilyPage.tsx: Same admin pattern. h1/h2 -> 12px uppercase section headers. Tables -> .table-minimal. Add/Save buttons -> .btn-primary. Delete buttons -> use var(--color-error) bg. Edit buttons -> .btn-secondary. Inputs -> .input class. Replace all hardcoded colors with design system vars.",
+    "STEP 6 - FamilyCategoryPage.tsx: Same admin pattern as DesignFamilyPage. Tables -> .table-minimal. Buttons -> .btn-primary/.btn-secondary. Delete -> error color. Inputs -> .input.",
+    "STEP 7 - RuleSetPage.tsx: Same admin pattern. Tables -> .table-minimal. Buttons -> .btn-primary. Transition button (purple #7c3aed) -> .btn-primary (accent). Cancel -> .btn-secondary. Textarea -> style with .input pattern (border, radius). JSON error uses var(--color-error).",
+    "STEP 8 - SkuCompatibilityPage.tsx: Same admin pattern. Tables -> .table-minimal. Add Rule -> .btn-primary. Toggle/Delete -> appropriate colors. Selects and inputs -> .input. Replace all hardcoded colors.",
+    "STEP 9 - DashboardPage.tsx: Cards already use design system tokens partially - ensure consistent card hover with subtle shadow (0 1px 2px rgba(0,0,0,0.04)). Role label should be accent colored. Ensure all cards use bg: var(--color-surface), border: 1px solid var(--color-hairline). Grid should use responsive gaps. Logout button -> .btn-secondary pattern."
+  ],
+  "acceptance_criteria": [
+    "No inline color hex values (#1e293b, #2563eb, #16a34a, #dc2626, #f97316, #7c3aed, #e2e8f0, #eff6ff, #f8fafc, #64748b, #cbd5e1, #334155, #3b82f6, #94a3b8) remain in admin pages or AdminLayout",
+    "All tables in admin pages use className='table-minimal'",
+    "All primary action buttons use className='btn-primary' or equivalent inline style with var(--color-accent)",
+    "All inputs use className='input' or equivalent inline style matching the .input pattern",
+    "All data-testid attributes remain intact and unchanged",
+    "No business logic is modified - only style/className attributes change",
+    "Admin sidebar uses warm palette with accent border on active item",
+    "Dashboard cards have hover shadow and accent-colored role label",
+    "vite build succeeds",
+    "vitest run passes"
+  ],
+  "verification": [
+    "cd /projects/sandbox/Bom/frontend && npx vite build",
+    "cd /projects/sandbox/Bom/frontend && npx vitest run"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

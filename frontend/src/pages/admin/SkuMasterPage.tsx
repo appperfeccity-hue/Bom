@@ -5,12 +5,12 @@ import type { SkuMaster } from '@/types/database';
 
 function StatusBadge({ status }: { status: string }) {
   const colors: Record<string, { bg: string; color: string }> = {
-    ACTIVE: { bg: '#dcfce7', color: '#16a34a' },
-    INACTIVE: { bg: '#f3f4f6', color: '#6b7280' },
+    ACTIVE: { bg: 'rgba(63,107,79,0.1)', color: 'var(--color-success)' },
+    INACTIVE: { bg: 'rgba(110,110,110,0.1)', color: 'var(--color-ink-secondary)' },
   };
-  const style = colors[status] ?? { bg: '#f3f4f6', color: '#6b7280' };
+  const style = colors[status] ?? { bg: 'rgba(110,110,110,0.1)', color: 'var(--color-ink-secondary)' };
   return (
-    <span data-testid={`status-badge-${status}`} style={{ padding: '2px 8px', borderRadius: '12px', fontSize: '12px', fontWeight: 600, backgroundColor: style.bg, color: style.color }}>
+    <span data-testid={`status-badge-${status}`} style={{ padding: '2px 8px', borderRadius: 'var(--radius-full)', fontSize: 'var(--text-xs)', fontWeight: 'var(--weight-medium)', backgroundColor: style.bg, color: style.color }}>
       {status}
     </span>
   );
@@ -95,6 +95,10 @@ function validateForm(form: SkuFormData): string[] {
 
   return errors;
 }
+
+const inputStyle = { display: 'block', width: '100%', height: '32px', padding: '0 8px', border: '1px solid var(--color-disabled)', borderRadius: 'var(--radius-sm)', backgroundColor: 'var(--color-surface)', fontSize: 'var(--text-base)', color: 'var(--color-ink-primary)', boxSizing: 'border-box' as const };
+const selectStyle = { display: 'block', width: '100%', height: '32px', padding: '0 8px', border: '1px solid var(--color-disabled)', borderRadius: 'var(--radius-sm)', backgroundColor: 'var(--color-surface)', fontSize: 'var(--text-base)', color: 'var(--color-ink-primary)' };
+const labelStyle = { display: 'block', fontSize: '13px', fontWeight: 'var(--weight-semibold)' as const, marginBottom: '4px', color: 'var(--color-ink-primary)' };
 
 export function SkuMasterPage() {
   const { skus, families, categories, isLoading, error, fetchSkus, fetchFamilies, fetchCategories, createSku, updateSku, clearError } = useAdminStore();
@@ -192,18 +196,18 @@ export function SkuMasterPage() {
   return (
     <div data-testid="sku-master-page">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-        <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 700, color: '#1e293b' }}>SKU Master</h1>
+        <h1 style={{ fontSize: 'var(--text-sm)', textTransform: 'uppercase', fontWeight: 'var(--weight-semibold)', color: 'var(--color-ink-secondary)', letterSpacing: '0.05em', margin: 0 }}>SKU Master</h1>
         <button
           data-testid="add-sku-btn"
           onClick={() => { setShowForm(true); setEditingSku(null); setForm(emptyForm); setValidationErrors([]); }}
-          style={{ padding: '8px 16px', backgroundColor: '#2563eb', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+          style={{ backgroundColor: 'var(--color-accent)', color: '#ffffff', border: 'none', borderRadius: 'var(--radius-sm)', padding: '6px 12px', fontSize: 'var(--text-base)', fontWeight: 'var(--weight-medium)', cursor: 'pointer' }}
         >
           Add SKU
         </button>
       </div>
 
       {error && (
-        <div data-testid="admin-error" style={{ padding: '12px', backgroundColor: '#fef2f2', color: '#dc2626', borderRadius: '6px', marginBottom: '16px' }}>
+        <div data-testid="admin-error" style={{ padding: '12px', backgroundColor: 'rgba(176,65,62,0.08)', color: 'var(--color-error)', borderRadius: 'var(--radius-sm)', marginBottom: '16px' }}>
           {error}
           <button onClick={clearError} style={{ marginLeft: '8px', cursor: 'pointer' }}>Dismiss</button>
         </div>
@@ -215,7 +219,7 @@ export function SkuMasterPage() {
           data-testid="filter-product-type"
           value={filterProductType}
           onChange={(e) => setFilterProductType(e.target.value)}
-          style={{ padding: '6px 12px', border: '1px solid #d1d5db', borderRadius: '4px' }}
+          style={selectStyle}
         >
           <option value="">All Product Types</option>
           {Object.values(ProductType).map((pt) => (
@@ -226,7 +230,7 @@ export function SkuMasterPage() {
           data-testid="filter-status"
           value={filterStatus}
           onChange={(e) => setFilterStatus(e.target.value)}
-          style={{ padding: '6px 12px', border: '1px solid #d1d5db', borderRadius: '4px' }}
+          style={selectStyle}
         >
           <option value="">All Statuses</option>
           <option value="ACTIVE">ACTIVE</option>
@@ -238,11 +242,11 @@ export function SkuMasterPage() {
 
       {/* SKU Form */}
       {showForm && (
-        <div data-testid="sku-form" style={{ padding: '20px', backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '8px', marginBottom: '24px' }}>
-          <h2 style={{ margin: '0 0 16px', fontSize: '18px' }}>{editingSku ? 'Edit SKU' : 'Create SKU'}</h2>
+        <div data-testid="sku-form" style={{ padding: '20px', backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-hairline)', borderRadius: 'var(--radius-sm)', marginBottom: '24px' }}>
+          <h2 style={{ fontSize: 'var(--text-sm)', textTransform: 'uppercase', fontWeight: 'var(--weight-semibold)', color: 'var(--color-ink-secondary)', letterSpacing: '0.05em', margin: '0 0 16px' }}>{editingSku ? 'Edit SKU' : 'Create SKU'}</h2>
 
           {validationErrors.length > 0 && (
-            <div data-testid="validation-errors" style={{ padding: '12px', backgroundColor: '#fef2f2', color: '#dc2626', borderRadius: '6px', marginBottom: '12px' }}>
+            <div data-testid="validation-errors" style={{ padding: '12px', backgroundColor: 'rgba(176,65,62,0.08)', color: 'var(--color-error)', borderRadius: 'var(--radius-sm)', marginBottom: '12px' }}>
               <ul style={{ margin: 0, paddingLeft: '20px' }}>
                 {validationErrors.map((err, i) => <li key={i}>{err}</li>)}
               </ul>
@@ -251,76 +255,76 @@ export function SkuMasterPage() {
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
             <div>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '4px' }}>SKU Code *</label>
-              <input data-testid="sku-form-code" value={form.sku_code} onChange={(e) => updateFormField('sku_code', e.target.value)} style={{ width: '100%', padding: '6px 10px', border: '1px solid #d1d5db', borderRadius: '4px', boxSizing: 'border-box' }} />
+              <label style={labelStyle}>SKU Code *</label>
+              <input data-testid="sku-form-code" value={form.sku_code} onChange={(e) => updateFormField('sku_code', e.target.value)} style={inputStyle} />
             </div>
             <div>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '4px' }}>Product Type *</label>
-              <select data-testid="sku-form-product-type" value={form.product_type} onChange={(e) => updateFormField('product_type', e.target.value)} style={{ width: '100%', padding: '6px 10px', border: '1px solid #d1d5db', borderRadius: '4px' }}>
+              <label style={labelStyle}>Product Type *</label>
+              <select data-testid="sku-form-product-type" value={form.product_type} onChange={(e) => updateFormField('product_type', e.target.value)} style={selectStyle}>
                 {Object.values(ProductType).map((pt) => <option key={pt} value={pt}>{pt}</option>)}
               </select>
             </div>
             <div>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '4px' }}>Family *</label>
-              <select data-testid="sku-form-family" value={form.family_id} onChange={(e) => updateFormField('family_id', e.target.value)} style={{ width: '100%', padding: '6px 10px', border: '1px solid #d1d5db', borderRadius: '4px' }}>
+              <label style={labelStyle}>Family *</label>
+              <select data-testid="sku-form-family" value={form.family_id} onChange={(e) => updateFormField('family_id', e.target.value)} style={selectStyle}>
                 <option value="">Select family</option>
                 {families.map((f) => <option key={f.family_id} value={f.family_id}>{f.name}</option>)}
               </select>
             </div>
             <div>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '4px' }}>Category *</label>
-              <select data-testid="sku-form-category" value={form.category_id} onChange={(e) => updateFormField('category_id', e.target.value)} style={{ width: '100%', padding: '6px 10px', border: '1px solid #d1d5db', borderRadius: '4px' }}>
+              <label style={labelStyle}>Category *</label>
+              <select data-testid="sku-form-category" value={form.category_id} onChange={(e) => updateFormField('category_id', e.target.value)} style={selectStyle}>
                 <option value="">Select category</option>
                 {categories.map((c) => <option key={c.category_id} value={c.category_id}>{c.name}</option>)}
               </select>
             </div>
             <div>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '4px' }}>Width (mm){form.product_type === ProductType.WALL_PANEL || form.product_type === ProductType.LIGHT || form.product_type === ProductType.FURNITURE ? ' *' : ''}</label>
-              <input data-testid="sku-form-width" type="number" value={form.width_mm} onChange={(e) => updateFormField('width_mm', e.target.value)} style={{ width: '100%', padding: '6px 10px', border: '1px solid #d1d5db', borderRadius: '4px', boxSizing: 'border-box' }} />
+              <label style={labelStyle}>Width (mm){form.product_type === ProductType.WALL_PANEL || form.product_type === ProductType.LIGHT || form.product_type === ProductType.FURNITURE ? ' *' : ''}</label>
+              <input data-testid="sku-form-width" type="number" value={form.width_mm} onChange={(e) => updateFormField('width_mm', e.target.value)} style={inputStyle} />
             </div>
             <div>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '4px' }}>Height (mm){form.product_type === ProductType.WALL_PANEL || form.product_type === ProductType.LIGHT || form.product_type === ProductType.FURNITURE ? ' *' : ''}</label>
-              <input data-testid="sku-form-height" type="number" value={form.height_mm} onChange={(e) => updateFormField('height_mm', e.target.value)} style={{ width: '100%', padding: '6px 10px', border: '1px solid #d1d5db', borderRadius: '4px', boxSizing: 'border-box' }} />
+              <label style={labelStyle}>Height (mm){form.product_type === ProductType.WALL_PANEL || form.product_type === ProductType.LIGHT || form.product_type === ProductType.FURNITURE ? ' *' : ''}</label>
+              <input data-testid="sku-form-height" type="number" value={form.height_mm} onChange={(e) => updateFormField('height_mm', e.target.value)} style={inputStyle} />
             </div>
             <div>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '4px' }}>Thickness (mm){form.product_type === ProductType.WALL_PANEL ? ' *' : ''}</label>
-              <input data-testid="sku-form-thickness" type="number" value={form.thickness_mm} onChange={(e) => updateFormField('thickness_mm', e.target.value)} style={{ width: '100%', padding: '6px 10px', border: '1px solid #d1d5db', borderRadius: '4px', boxSizing: 'border-box' }} />
+              <label style={labelStyle}>Thickness (mm){form.product_type === ProductType.WALL_PANEL ? ' *' : ''}</label>
+              <input data-testid="sku-form-thickness" type="number" value={form.thickness_mm} onChange={(e) => updateFormField('thickness_mm', e.target.value)} style={inputStyle} />
             </div>
             <div>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '4px' }}>Depth (mm){form.product_type === ProductType.FURNITURE ? ' *' : ''}</label>
-              <input data-testid="sku-form-depth" type="number" value={form.depth_mm} onChange={(e) => updateFormField('depth_mm', e.target.value)} style={{ width: '100%', padding: '6px 10px', border: '1px solid #d1d5db', borderRadius: '4px', boxSizing: 'border-box' }} />
+              <label style={labelStyle}>Depth (mm){form.product_type === ProductType.FURNITURE ? ' *' : ''}</label>
+              <input data-testid="sku-form-depth" type="number" value={form.depth_mm} onChange={(e) => updateFormField('depth_mm', e.target.value)} style={inputStyle} />
             </div>
             <div>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '4px' }}>Unit Length (mm)</label>
-              <input data-testid="sku-form-unit-length" type="number" value={form.unit_length_mm} onChange={(e) => updateFormField('unit_length_mm', e.target.value)} style={{ width: '100%', padding: '6px 10px', border: '1px solid #d1d5db', borderRadius: '4px', boxSizing: 'border-box' }} />
+              <label style={labelStyle}>Unit Length (mm)</label>
+              <input data-testid="sku-form-unit-length" type="number" value={form.unit_length_mm} onChange={(e) => updateFormField('unit_length_mm', e.target.value)} style={inputStyle} />
             </div>
             <div>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '4px' }}>Material *</label>
-              <input data-testid="sku-form-material" value={form.material} onChange={(e) => updateFormField('material', e.target.value)} style={{ width: '100%', padding: '6px 10px', border: '1px solid #d1d5db', borderRadius: '4px', boxSizing: 'border-box' }} />
+              <label style={labelStyle}>Material *</label>
+              <input data-testid="sku-form-material" value={form.material} onChange={(e) => updateFormField('material', e.target.value)} style={inputStyle} />
             </div>
             <div>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '4px' }}>Colour *</label>
-              <input data-testid="sku-form-colour" value={form.colour} onChange={(e) => updateFormField('colour', e.target.value)} style={{ width: '100%', padding: '6px 10px', border: '1px solid #d1d5db', borderRadius: '4px', boxSizing: 'border-box' }} />
+              <label style={labelStyle}>Colour *</label>
+              <input data-testid="sku-form-colour" value={form.colour} onChange={(e) => updateFormField('colour', e.target.value)} style={inputStyle} />
             </div>
             <div>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '4px' }}>Finish *</label>
-              <input data-testid="sku-form-finish" value={form.finish} onChange={(e) => updateFormField('finish', e.target.value)} style={{ width: '100%', padding: '6px 10px', border: '1px solid #d1d5db', borderRadius: '4px', boxSizing: 'border-box' }} />
+              <label style={labelStyle}>Finish *</label>
+              <input data-testid="sku-form-finish" value={form.finish} onChange={(e) => updateFormField('finish', e.target.value)} style={inputStyle} />
             </div>
             <div>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '4px' }}>Pattern Identity</label>
-              <input data-testid="sku-form-pattern" value={form.pattern_identity} onChange={(e) => updateFormField('pattern_identity', e.target.value)} style={{ width: '100%', padding: '6px 10px', border: '1px solid #d1d5db', borderRadius: '4px', boxSizing: 'border-box' }} />
+              <label style={labelStyle}>Pattern Identity</label>
+              <input data-testid="sku-form-pattern" value={form.pattern_identity} onChange={(e) => updateFormField('pattern_identity', e.target.value)} style={inputStyle} />
             </div>
             <div>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '4px' }}>GH (mm) [0-10]</label>
-              <input data-testid="sku-form-gh" type="number" min="0" max="10" value={form.gh_mm} onChange={(e) => updateFormField('gh_mm', e.target.value)} style={{ width: '100%', padding: '6px 10px', border: '1px solid #d1d5db', borderRadius: '4px', boxSizing: 'border-box' }} />
+              <label style={labelStyle}>GH (mm) [0-10]</label>
+              <input data-testid="sku-form-gh" type="number" min="0" max="10" value={form.gh_mm} onChange={(e) => updateFormField('gh_mm', e.target.value)} style={inputStyle} />
             </div>
             <div>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '4px' }}>GV (mm) [0-10]</label>
-              <input data-testid="sku-form-gv" type="number" min="0" max="10" value={form.gv_mm} onChange={(e) => updateFormField('gv_mm', e.target.value)} style={{ width: '100%', padding: '6px 10px', border: '1px solid #d1d5db', borderRadius: '4px', boxSizing: 'border-box' }} />
+              <label style={labelStyle}>GV (mm) [0-10]</label>
+              <input data-testid="sku-form-gv" type="number" min="0" max="10" value={form.gv_mm} onChange={(e) => updateFormField('gv_mm', e.target.value)} style={inputStyle} />
             </div>
             <div>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '4px' }}>Quantity Mode</label>
-              <select data-testid="sku-form-quantity-mode" value={form.quantity_mode} onChange={(e) => updateFormField('quantity_mode', e.target.value)} style={{ width: '100%', padding: '6px 10px', border: '1px solid #d1d5db', borderRadius: '4px' }}>
+              <label style={labelStyle}>Quantity Mode</label>
+              <select data-testid="sku-form-quantity-mode" value={form.quantity_mode} onChange={(e) => updateFormField('quantity_mode', e.target.value)} style={selectStyle}>
                 <option value="">None</option>
                 <option value="DISCRETE">DISCRETE</option>
                 <option value="LINEAR">LINEAR</option>
@@ -329,10 +333,10 @@ export function SkuMasterPage() {
           </div>
 
           <div style={{ marginTop: '16px', display: 'flex', gap: '8px' }}>
-            <button data-testid="sku-form-submit" onClick={handleSubmit} style={{ padding: '8px 16px', backgroundColor: '#2563eb', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
+            <button data-testid="sku-form-submit" onClick={handleSubmit} style={{ backgroundColor: 'var(--color-accent)', color: '#ffffff', border: 'none', borderRadius: 'var(--radius-sm)', padding: '6px 12px', fontSize: 'var(--text-base)', fontWeight: 'var(--weight-medium)', cursor: 'pointer' }}>
               {editingSku ? 'Update' : 'Create'}
             </button>
-            <button data-testid="sku-form-cancel" onClick={() => { setShowForm(false); setEditingSku(null); setValidationErrors([]); }} style={{ padding: '8px 16px', border: '1px solid #d1d5db', borderRadius: '4px', cursor: 'pointer' }}>
+            <button data-testid="sku-form-cancel" onClick={() => { setShowForm(false); setEditingSku(null); setValidationErrors([]); }} style={{ background: 'transparent', border: '1px solid var(--color-disabled)', color: 'var(--color-ink-primary)', borderRadius: 'var(--radius-sm)', padding: '6px 12px', fontSize: 'var(--text-base)', cursor: 'pointer' }}>
               Cancel
             </button>
           </div>
@@ -340,42 +344,42 @@ export function SkuMasterPage() {
       )}
 
       {/* SKU Table */}
-      <table data-testid="sku-table" style={{ width: '100%', borderCollapse: 'collapse', backgroundColor: '#fff' }}>
+      <table data-testid="sku-table" className="table-minimal">
         <thead>
-          <tr style={{ borderBottom: '2px solid #e2e8f0' }}>
-            <th style={{ padding: '8px', textAlign: 'left' }}>SKU Code</th>
-            <th style={{ padding: '8px', textAlign: 'left' }}>Product Type</th>
-            <th style={{ padding: '8px', textAlign: 'left' }}>Material</th>
-            <th style={{ padding: '8px', textAlign: 'left' }}>Dimensions</th>
-            <th style={{ padding: '8px', textAlign: 'left' }}>Status</th>
-            <th style={{ padding: '8px', textAlign: 'right' }}>Actions</th>
+          <tr>
+            <th>SKU Code</th>
+            <th>Product Type</th>
+            <th>Material</th>
+            <th>Dimensions</th>
+            <th>Status</th>
+            <th style={{ textAlign: 'right' }}>Actions</th>
           </tr>
         </thead>
         <tbody>
           {filteredSkus.map((sku) => (
-            <tr key={sku.sku_id} data-testid={`sku-row-${sku.sku_id}`} style={{ borderBottom: '1px solid #e2e8f0' }}>
-              <td style={{ padding: '8px', fontWeight: 600 }}>{sku.sku_code}</td>
-              <td style={{ padding: '8px' }}>{sku.product_type}</td>
-              <td style={{ padding: '8px' }}>{sku.material}</td>
-              <td style={{ padding: '8px', fontSize: '13px', color: '#64748b' }}>
+            <tr key={sku.sku_id} data-testid={`sku-row-${sku.sku_id}`}>
+              <td style={{ fontWeight: 'var(--weight-semibold)' }}>{sku.sku_code}</td>
+              <td>{sku.product_type}</td>
+              <td>{sku.material}</td>
+              <td style={{ fontSize: '13px', color: 'var(--color-ink-secondary)', fontFamily: 'var(--font-mono)' }}>
                 {sku.width_mm && `W:${sku.width_mm}`}
                 {sku.height_mm && ` H:${sku.height_mm}`}
                 {sku.thickness_mm && ` T:${sku.thickness_mm}`}
                 {sku.depth_mm && ` D:${sku.depth_mm}`}
               </td>
-              <td style={{ padding: '8px' }}><StatusBadge status={sku.status} /></td>
-              <td style={{ padding: '8px', textAlign: 'right' }}>
+              <td><StatusBadge status={sku.status} /></td>
+              <td style={{ textAlign: 'right' }}>
                 <button
                   data-testid={`edit-sku-${sku.sku_id}`}
                   onClick={() => handleEdit(sku)}
-                  style={{ marginRight: '4px', cursor: 'pointer', padding: '4px 8px', border: '1px solid #d1d5db', borderRadius: '4px' }}
+                  style={{ marginRight: '4px', background: 'transparent', border: '1px solid var(--color-disabled)', color: 'var(--color-ink-primary)', borderRadius: 'var(--radius-sm)', padding: '6px 12px', fontSize: 'var(--text-base)', cursor: 'pointer' }}
                 >
                   Edit
                 </button>
                 <button
                   data-testid={`toggle-sku-${sku.sku_id}`}
                   onClick={() => handleToggleStatus(sku)}
-                  style={{ cursor: 'pointer', padding: '4px 8px', backgroundColor: sku.status === SkuStatus.ACTIVE ? '#f97316' : '#16a34a', color: '#fff', border: 'none', borderRadius: '4px' }}
+                  style={{ cursor: 'pointer', padding: '6px 12px', backgroundColor: sku.status === SkuStatus.ACTIVE ? 'var(--color-warning)' : 'var(--color-success)', color: '#ffffff', border: 'none', borderRadius: 'var(--radius-sm)', fontSize: 'var(--text-base)' }}
                 >
                   {sku.status === SkuStatus.ACTIVE ? 'Deactivate' : 'Activate'}
                 </button>

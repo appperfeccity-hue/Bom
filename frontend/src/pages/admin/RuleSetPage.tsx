@@ -5,13 +5,13 @@ import type { RuleSet } from '@/types/database';
 
 function StatusBadge({ status }: { status: string }) {
   const colors: Record<string, { bg: string; color: string }> = {
-    DRAFT: { bg: '#dbeafe', color: '#2563eb' },
-    ACTIVE: { bg: '#dcfce7', color: '#16a34a' },
-    SUPERSEDED: { bg: '#f3f4f6', color: '#6b7280' },
+    DRAFT: { bg: 'rgba(154,123,79,0.1)', color: 'var(--color-accent)' },
+    ACTIVE: { bg: 'rgba(63,107,79,0.1)', color: 'var(--color-success)' },
+    SUPERSEDED: { bg: 'rgba(110,110,110,0.1)', color: 'var(--color-ink-secondary)' },
   };
-  const style = colors[status] ?? { bg: '#f3f4f6', color: '#6b7280' };
+  const style = colors[status] ?? { bg: 'rgba(110,110,110,0.1)', color: 'var(--color-ink-secondary)' };
   return (
-    <span data-testid={`status-badge-${status}`} style={{ padding: '2px 8px', borderRadius: '12px', fontSize: '12px', fontWeight: 600, backgroundColor: style.bg, color: style.color }}>
+    <span data-testid={`status-badge-${status}`} style={{ padding: '2px 8px', borderRadius: 'var(--radius-full)', fontSize: 'var(--text-xs)', fontWeight: 'var(--weight-medium)', backgroundColor: style.bg, color: style.color }}>
       {status}
     </span>
   );
@@ -22,6 +22,9 @@ function getNextStatus(current: string): string | null {
   if (current === RuleSetStatus.ACTIVE) return RuleSetStatus.SUPERSEDED;
   return null;
 }
+
+const inputStyle = { display: 'block', width: '100%', height: '32px', padding: '0 8px', border: '1px solid var(--color-disabled)', borderRadius: 'var(--radius-sm)', backgroundColor: 'var(--color-surface)', fontSize: 'var(--text-base)', color: 'var(--color-ink-primary)', boxSizing: 'border-box' as const };
+const labelStyle = { display: 'block', fontSize: '13px', fontWeight: 'var(--weight-semibold)' as const, marginBottom: '4px', color: 'var(--color-ink-primary)' };
 
 export function RuleSetPage() {
   const {
@@ -108,18 +111,18 @@ export function RuleSetPage() {
   return (
     <div data-testid="rule-set-page">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-        <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 700, color: '#1e293b' }}>Rule Sets</h1>
+        <h1 style={{ fontSize: 'var(--text-sm)', textTransform: 'uppercase', fontWeight: 'var(--weight-semibold)', color: 'var(--color-ink-secondary)', letterSpacing: '0.05em', margin: 0 }}>Rule Sets</h1>
         <button
           data-testid="add-rule-set-btn"
           onClick={() => { setShowForm(true); setEditingRuleSet(null); resetForm(); }}
-          style={{ padding: '8px 16px', backgroundColor: '#2563eb', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+          style={{ backgroundColor: 'var(--color-accent)', color: '#ffffff', border: 'none', borderRadius: 'var(--radius-sm)', padding: '6px 12px', fontSize: 'var(--text-base)', fontWeight: 'var(--weight-medium)', cursor: 'pointer' }}
         >
           Add Rule Set
         </button>
       </div>
 
       {error && (
-        <div data-testid="admin-error" style={{ padding: '12px', backgroundColor: '#fef2f2', color: '#dc2626', borderRadius: '6px', marginBottom: '16px' }}>
+        <div data-testid="admin-error" style={{ padding: '12px', backgroundColor: 'rgba(176,65,62,0.08)', color: 'var(--color-error)', borderRadius: 'var(--radius-sm)', marginBottom: '16px' }}>
           {error}
           <button onClick={clearError} style={{ marginLeft: '8px', cursor: 'pointer' }}>Dismiss</button>
         </div>
@@ -129,47 +132,47 @@ export function RuleSetPage() {
 
       {/* Form */}
       {showForm && (
-        <div data-testid="rule-set-form" style={{ padding: '20px', backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '8px', marginBottom: '24px' }}>
-          <h2 style={{ margin: '0 0 16px', fontSize: '18px' }}>{editingRuleSet ? 'Edit Rule Set' : 'Create Rule Set'}</h2>
+        <div data-testid="rule-set-form" style={{ padding: '20px', backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-hairline)', borderRadius: 'var(--radius-sm)', marginBottom: '24px' }}>
+          <h2 style={{ fontSize: 'var(--text-sm)', textTransform: 'uppercase', fontWeight: 'var(--weight-semibold)', color: 'var(--color-ink-secondary)', letterSpacing: '0.05em', margin: '0 0 16px' }}>{editingRuleSet ? 'Edit Rule Set' : 'Create Rule Set'}</h2>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px', marginBottom: '12px' }}>
             <div>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '4px' }}>Code *</label>
-              <input data-testid="rule-set-form-code" value={formCode} onChange={(e) => setFormCode(e.target.value)} style={{ width: '100%', padding: '6px 10px', border: '1px solid #d1d5db', borderRadius: '4px', boxSizing: 'border-box' }} />
+              <label style={labelStyle}>Code *</label>
+              <input data-testid="rule-set-form-code" value={formCode} onChange={(e) => setFormCode(e.target.value)} style={inputStyle} />
             </div>
             <div>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '4px' }}>Version</label>
-              <input data-testid="rule-set-form-version" type="number" value={formVersion} onChange={(e) => setFormVersion(e.target.value)} style={{ width: '100%', padding: '6px 10px', border: '1px solid #d1d5db', borderRadius: '4px', boxSizing: 'border-box' }} />
+              <label style={labelStyle}>Version</label>
+              <input data-testid="rule-set-form-version" type="number" value={formVersion} onChange={(e) => setFormVersion(e.target.value)} style={inputStyle} />
             </div>
             <div>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '4px' }}>Effective From</label>
-              <input data-testid="rule-set-form-from" type="date" value={formEffectiveFrom} onChange={(e) => setFormEffectiveFrom(e.target.value)} style={{ width: '100%', padding: '6px 10px', border: '1px solid #d1d5db', borderRadius: '4px', boxSizing: 'border-box' }} />
+              <label style={labelStyle}>Effective From</label>
+              <input data-testid="rule-set-form-from" type="date" value={formEffectiveFrom} onChange={(e) => setFormEffectiveFrom(e.target.value)} style={inputStyle} />
             </div>
             <div>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '4px' }}>Effective To</label>
-              <input data-testid="rule-set-form-to" type="date" value={formEffectiveTo} onChange={(e) => setFormEffectiveTo(e.target.value)} style={{ width: '100%', padding: '6px 10px', border: '1px solid #d1d5db', borderRadius: '4px', boxSizing: 'border-box' }} />
+              <label style={labelStyle}>Effective To</label>
+              <input data-testid="rule-set-form-to" type="date" value={formEffectiveTo} onChange={(e) => setFormEffectiveTo(e.target.value)} style={inputStyle} />
             </div>
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '4px' }}>Constants (JSON) *</label>
+            <label style={labelStyle}>Constants (JSON) *</label>
             <textarea
               data-testid="rule-set-form-constants"
               value={formConstants}
               onChange={(e) => setFormConstants(e.target.value)}
               rows={8}
-              style={{ width: '100%', padding: '8px', border: '1px solid #d1d5db', borderRadius: '4px', fontFamily: 'monospace', fontSize: '13px', boxSizing: 'border-box' }}
+              style={{ width: '100%', padding: '8px', border: '1px solid var(--color-disabled)', borderRadius: 'var(--radius-sm)', fontFamily: 'var(--font-mono)', fontSize: '13px', boxSizing: 'border-box', backgroundColor: 'var(--color-surface)', color: 'var(--color-ink-primary)' }}
             />
             {jsonError && (
-              <p data-testid="json-error" style={{ color: '#dc2626', fontSize: '13px', margin: '4px 0 0' }}>{jsonError}</p>
+              <p data-testid="json-error" style={{ color: 'var(--color-error)', fontSize: '13px', margin: '4px 0 0' }}>{jsonError}</p>
             )}
           </div>
 
           <div style={{ marginTop: '16px', display: 'flex', gap: '8px' }}>
-            <button data-testid="rule-set-form-submit" onClick={handleSubmit} style={{ padding: '8px 16px', backgroundColor: '#2563eb', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
+            <button data-testid="rule-set-form-submit" onClick={handleSubmit} style={{ backgroundColor: 'var(--color-accent)', color: '#ffffff', border: 'none', borderRadius: 'var(--radius-sm)', padding: '6px 12px', fontSize: 'var(--text-base)', fontWeight: 'var(--weight-medium)', cursor: 'pointer' }}>
               {editingRuleSet ? 'Update' : 'Create'}
             </button>
-            <button onClick={() => { setShowForm(false); setEditingRuleSet(null); }} style={{ padding: '8px 16px', border: '1px solid #d1d5db', borderRadius: '4px', cursor: 'pointer' }}>
+            <button onClick={() => { setShowForm(false); setEditingRuleSet(null); }} style={{ background: 'transparent', border: '1px solid var(--color-disabled)', color: 'var(--color-ink-primary)', borderRadius: 'var(--radius-sm)', padding: '6px 12px', fontSize: 'var(--text-base)', cursor: 'pointer' }}>
               Cancel
             </button>
           </div>
@@ -177,30 +180,30 @@ export function RuleSetPage() {
       )}
 
       {/* Table */}
-      <table data-testid="rule-sets-table" style={{ width: '100%', borderCollapse: 'collapse', backgroundColor: '#fff' }}>
+      <table data-testid="rule-sets-table" className="table-minimal">
         <thead>
-          <tr style={{ borderBottom: '2px solid #e2e8f0' }}>
-            <th style={{ padding: '8px', textAlign: 'left' }}>Code</th>
-            <th style={{ padding: '8px', textAlign: 'left' }}>Version</th>
-            <th style={{ padding: '8px', textAlign: 'left' }}>Status</th>
-            <th style={{ padding: '8px', textAlign: 'left' }}>Effective From</th>
-            <th style={{ padding: '8px', textAlign: 'left' }}>Effective To</th>
-            <th style={{ padding: '8px', textAlign: 'right' }}>Actions</th>
+          <tr>
+            <th>Code</th>
+            <th>Version</th>
+            <th>Status</th>
+            <th>Effective From</th>
+            <th>Effective To</th>
+            <th style={{ textAlign: 'right' }}>Actions</th>
           </tr>
         </thead>
         <tbody>
           {ruleSets.map((rs) => (
-            <tr key={rs.rule_set_id} data-testid={`rule-set-row-${rs.rule_set_id}`} style={{ borderBottom: '1px solid #e2e8f0' }}>
-              <td style={{ padding: '8px', fontWeight: 600 }}>{rs.rule_set_code}</td>
-              <td style={{ padding: '8px' }}>{rs.version}</td>
-              <td style={{ padding: '8px' }}><StatusBadge status={rs.status} /></td>
-              <td style={{ padding: '8px', fontSize: '13px', color: '#64748b' }}>{rs.effective_from ?? '-'}</td>
-              <td style={{ padding: '8px', fontSize: '13px', color: '#64748b' }}>{rs.effective_to ?? '-'}</td>
-              <td style={{ padding: '8px', textAlign: 'right' }}>
+            <tr key={rs.rule_set_id} data-testid={`rule-set-row-${rs.rule_set_id}`}>
+              <td style={{ fontWeight: 'var(--weight-semibold)' }}>{rs.rule_set_code}</td>
+              <td>{rs.version}</td>
+              <td><StatusBadge status={rs.status} /></td>
+              <td style={{ fontSize: '13px', color: 'var(--color-ink-secondary)' }}>{rs.effective_from ?? '-'}</td>
+              <td style={{ fontSize: '13px', color: 'var(--color-ink-secondary)' }}>{rs.effective_to ?? '-'}</td>
+              <td style={{ textAlign: 'right' }}>
                 <button
                   data-testid={`edit-rs-${rs.rule_set_id}`}
                   onClick={() => handleEdit(rs)}
-                  style={{ marginRight: '4px', cursor: 'pointer', padding: '4px 8px', border: '1px solid #d1d5db', borderRadius: '4px' }}
+                  style={{ marginRight: '4px', background: 'transparent', border: '1px solid var(--color-disabled)', color: 'var(--color-ink-primary)', borderRadius: 'var(--radius-sm)', padding: '6px 12px', fontSize: 'var(--text-base)', cursor: 'pointer' }}
                 >
                   Edit
                 </button>
@@ -208,7 +211,7 @@ export function RuleSetPage() {
                   <button
                     data-testid={`transition-rs-${rs.rule_set_id}`}
                     onClick={() => handleTransition(rs)}
-                    style={{ cursor: 'pointer', padding: '4px 8px', backgroundColor: '#7c3aed', color: '#fff', border: 'none', borderRadius: '4px' }}
+                    style={{ backgroundColor: 'var(--color-accent)', color: '#ffffff', border: 'none', borderRadius: 'var(--radius-sm)', padding: '6px 12px', fontSize: 'var(--text-base)', fontWeight: 'var(--weight-medium)', cursor: 'pointer' }}
                   >
                     {rs.status === RuleSetStatus.DRAFT ? 'Activate' : 'Supersede'}
                   </button>

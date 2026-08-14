@@ -20,17 +20,17 @@ export function AdminLayout() {
         data-testid="admin-sidebar"
         style={{
           width: '240px',
-          backgroundColor: '#1e293b',
-          color: '#ffffff',
+          backgroundColor: 'var(--color-surface)',
+          borderRight: '1px solid var(--color-hairline)',
           padding: '16px 0',
           display: 'flex',
           flexDirection: 'column',
         }}
       >
-        <div style={{ padding: '0 16px 16px', borderBottom: '1px solid #334155' }}>
-          <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 700 }}>Admin Panel</h2>
+        <div style={{ padding: '0 16px 16px', borderBottom: '1px solid var(--color-hairline)' }}>
+          <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: 'var(--color-ink-primary)' }}>Admin Panel</h2>
           {user && (
-            <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#94a3b8' }}>
+            <p style={{ margin: '4px 0 0', fontSize: '12px', color: 'var(--color-ink-secondary)' }}>
               {user.email}
             </p>
           )}
@@ -45,10 +45,10 @@ export function AdminLayout() {
                 display: 'block',
                 padding: '10px 16px',
                 fontSize: '14px',
-                color: isActive ? '#ffffff' : '#cbd5e1',
-                backgroundColor: isActive ? '#334155' : 'transparent',
+                color: isActive ? 'var(--color-ink-primary)' : 'var(--color-ink-secondary)',
+                backgroundColor: isActive ? 'var(--color-nav-active-bg)' : 'transparent',
                 textDecoration: 'none',
-                borderLeft: isActive ? '3px solid #3b82f6' : '3px solid transparent',
+                borderLeft: isActive ? '3px solid var(--color-accent)' : '3px solid transparent',
               })}
             >
               {item.label}
@@ -62,7 +62,7 @@ export function AdminLayout() {
         data-testid="admin-content"
         style={{
           flex: 1,
-          backgroundColor: '#f8fafc',
+          backgroundColor: 'var(--color-canvas)',
           padding: '24px',
           overflow: 'auto',
         }}
