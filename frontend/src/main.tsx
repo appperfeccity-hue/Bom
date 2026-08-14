@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import '@/styles/design-system.css';
 import '@/styles/typography.css';
 import '@/styles/layout.css';
+import '@/styles/components.css';
 import App from './App';
 import { AuthLayout } from '@/components/AuthLayout';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
