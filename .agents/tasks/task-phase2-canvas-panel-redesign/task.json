@@ -9,6 +9,6 @@
     "tests": "pass",
     "test_quality": "pass",
     "docker_build": "skipped",
-    "summary": "All 1094 tests pass. TypeScript typecheck has only pre-existing TS6133 warning (not introduced by this task). Vite production build succeeds. Review fixes applied: /projects route added, TopBar save-status per-state colors added."
+    "summary": "All 1094 tests pass. TypeScript typecheck has only pre-existing TS6133 warning. Vite production build succeeds. Semantic review v2 APPROVED."
   }
 }
