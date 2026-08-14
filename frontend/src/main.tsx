@@ -53,6 +53,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           <Route element={<ProtectedRoute />}>
             <Route element={<AuthenticatedLayout />}>
               <Route path="/" element={<DashboardPage />} />
+              <Route path="/projects" element={<DashboardPage />} />
               <Route path="/canvas" element={<App />} />
 
               {/* Admin routes - redirect to / if not ADMIN */}

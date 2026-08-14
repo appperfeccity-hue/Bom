@@ -116,6 +116,18 @@
   color: var(--color-ink-secondary);
 }
 
+.top-bar__save-status--saving {
+  color: var(--color-warning);
+}
+
+.top-bar__save-status--saved {
+  color: var(--color-success);
+}
+
+.top-bar__save-status--unsaved {
+  color: var(--color-error);
+}
+
 .top-bar__save-status--error {
   color: var(--color-error);
 }

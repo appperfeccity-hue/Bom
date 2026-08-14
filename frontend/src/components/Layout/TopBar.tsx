@@ -26,7 +26,7 @@ export function TopBar() {
       </span>
 
       <span
-        className={`top-bar__save-status${saveStatus === 'error' ? ' top-bar__save-status--error' : ''}`}
+        className={`top-bar__save-status top-bar__save-status--${saveStatus}`}
         data-testid="save-status"
       >
         {statusLabel}
