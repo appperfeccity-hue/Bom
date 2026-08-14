@@ -1,6 +1,6 @@
 export function StatusBar() {
   return (
-    <div className="status-bar" data-testid="status-bar">
+    <div className="status-bar" data-testid="status-bar" role="status" aria-live="polite">
       <span className="status-bar__item" data-testid="status-bar-hash">
         snapshot: —
       </span>

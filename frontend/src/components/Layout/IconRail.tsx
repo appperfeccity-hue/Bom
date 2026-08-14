@@ -64,7 +64,7 @@ export function IconRail() {
   };
 
   return (
-    <nav className="icon-rail" data-testid="icon-rail">
+    <nav className="icon-rail" data-testid="icon-rail" aria-label="Main navigation">
       {NAV_ITEMS.map((item) => (
         <button
           key={item.id}

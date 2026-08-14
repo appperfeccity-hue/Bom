@@ -1,0 +1,180 @@
+/* ==========================================================================
+   Animations, Transitions & Focus Styles
+   Phase 4 - PERFECCITY Design System
+   ========================================================================== */
+
+/* ─── Keyframes ─── */
+
+@keyframes panel-slide-in {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes panel-slide-out {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes chip-appear {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes shimmer {
+  from {
+    background-position: -200% 0;
+  }
+  to {
+    background-position: 200% 0;
+  }
+}
+
+/* ─── Panel Slide Animation Class ─── */
+
+.panel-slide-in {
+  animation: panel-slide-in 150ms ease-out;
+}
+
+/* ─── Button Hover Transitions ─── */
+
+.btn-primary,
+.btn-secondary,
+.btn-tertiary {
+  transition: background-color 100ms ease;
+}
+
+/* ─── Input Focus Transition ─── */
+
+.input {
+  transition: border-color 100ms ease, box-shadow 100ms ease, outline 100ms ease;
+}
+
+/* ─── Status Chip Appear Animation ─── */
+
+.status-chip {
+  animation: chip-appear 150ms ease-out;
+}
+
+/* ─── Tooltip Fade-In ─── */
+
+.icon-rail__tooltip--visible {
+  transition: opacity 150ms ease;
+}
+
+/* ─── Card Hover Lift ─── */
+
+.card {
+  transition: box-shadow 150ms ease;
+}
+
+.card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+/* ─── Skeleton Shimmer Loading State ─── */
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--color-canvas) 25%,
+    var(--color-hairline) 50%,
+    var(--color-canvas) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* ─── Focus-Visible Ring ─── */
+
+*:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+*:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* ─── Skip Navigation Link ─── */
+
+.skip-nav {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+  padding: 0;
+  margin: -1px;
+}
+
+.skip-nav:focus {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  z-index: 9999;
+  width: auto;
+  height: auto;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+  margin: 0;
+  padding: 8px 16px;
+  background-color: var(--color-surface);
+  color: var(--color-ink-primary);
+  border: 2px solid var(--color-accent);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-base);
+  font-weight: var(--weight-medium);
+  box-shadow: var(--shadow-md);
+  text-decoration: none;
+}
+
+/* ─── Reduced Motion ─── */
+
+@media (prefers-reduced-motion: reduce) {
+  .panel-slide-in {
+    animation: none;
+  }
+
+  .status-chip {
+    animation: none;
+  }
+
+  .skeleton-shimmer {
+    animation: none;
+  }
+
+  .btn-primary,
+  .btn-secondary,
+  .btn-tertiary {
+    transition: none;
+  }
+
+  .input {
+    transition: none;
+  }
+
+  .icon-rail__tooltip--visible {
+    transition: none;
+  }
+
+  .card {
+    transition: none;
+  }
+}

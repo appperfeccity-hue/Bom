@@ -22,6 +22,9 @@ export function TemplateManagementPanel() {
   return (
     <div
       data-testid="template-management-panel"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="template-panel-title"
       style={{
         position: 'fixed',
         inset: 0,
@@ -54,7 +57,7 @@ export function TemplateManagementPanel() {
             borderBottom: '1px solid var(--color-hairline)',
           }}
         >
-          <h2 style={{ margin: 0, fontSize: '18px' }}>My Templates</h2>
+          <h2 style={{ margin: 0, fontSize: '18px' }} id="template-panel-title">My Templates</h2>
           <div style={{ display: 'flex', gap: '8px' }}>
             <button
               data-testid="create-new-template-btn"
@@ -96,7 +99,7 @@ export function TemplateManagementPanel() {
         {/* Content */}
         <div style={{ flex: 1, overflow: 'auto' }}>
           {isLoading && (
-            <div style={{ padding: '24px', textAlign: 'center', color: 'var(--color-ink-secondary)' }}>
+            <div className="skeleton-shimmer" aria-busy="true" style={{ padding: '24px', textAlign: 'center', color: 'var(--color-ink-secondary)' }}>
               Loading templates...
             </div>
           )}

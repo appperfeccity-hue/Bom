@@ -121,6 +121,10 @@ export function ProjectCreationWizard() {
   return (
     <div
       data-testid="project-creation-wizard"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="project-creation-title"
+      className="panel-slide-in"
       style={{
         position: 'fixed',
         top: 0,
@@ -145,7 +149,7 @@ export function ProjectCreationWizard() {
           borderBottom: '1px solid var(--color-hairline)',
         }}
       >
-        <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 600, color: 'var(--color-ink-primary)' }}>
+        <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 600, color: 'var(--color-ink-primary)' }} id="project-creation-title">
           New Project
         </h3>
         <button

@@ -1,0 +1,31 @@
+{
+  "project_type": "React 18 SPA with Vite bundler and TypeScript",
+  "language": "TypeScript/CSS",
+  "build_system": "Vite with npm scripts; NODE_OPTIONS must be unset before running commands due to sandbox preload issue",
+  "test_framework": "Vitest with @testing-library/react, jsdom environment",
+  "build_command": "unset NODE_OPTIONS && cd /projects/sandbox/Bom/frontend && npx vite build",
+  "test_command": "unset NODE_OPTIONS && cd /projects/sandbox/Bom/frontend && npx vitest run",
+  "verification_instructions": "1. Run build command to confirm no TypeScript/CSS errors. 2. Run test command to confirm all 1094+ tests pass. 3. Verify new CSS files are properly structured.",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "unset NODE_OPTIONS && cd /projects/sandbox/Bom/frontend && npm install",
+  "environment_constraints": "NODE_OPTIONS env var includes a broken preload path; must unset NODE_OPTIONS before running node/npm/npx. No docker daemon available for container builds.",
+  "contribution_requirements": "CSS-only changes for animations/responsive. ARIA attribute additions to TSX components. No business logic modifications.",
+  "key_patterns": "Design system uses CSS custom properties in :root (design-system.css). Layout uses CSS Grid (layout.css). Components use BEM-like naming (icon-rail__item, status-bar__item). All CSS imports go into main.tsx. Components use data-testid for testing. Existing transitions use var(--transition-fast) = 120ms ease, var(--transition-normal) = 200ms ease.",
+  "relevant_files": [
+    "frontend/src/styles/design-system.css",
+    "frontend/src/styles/layout.css",
+    "frontend/src/styles/components.css",
+    "frontend/src/styles/typography.css",
+    "frontend/src/main.tsx",
+    "frontend/src/components/Layout/AppShell.tsx",
+    "frontend/src/components/Layout/IconRail.tsx",
+    "frontend/src/components/Layout/TopBar.tsx",
+    "frontend/src/components/Layout/StatusBar.tsx",
+    "frontend/src/components/Layout/AuthenticatedLayout.tsx",
+    "frontend/src/components/BomPanel/BomPanel.tsx",
+    "frontend/src/components/ProjectCreation/ProjectCreationWizard.tsx",
+    "frontend/src/components/Finalization/FinalizationConfirmDialog.tsx",
+    "frontend/src/components/TemplateManagement/TemplateManagementPanel.tsx"
+  ],
+  "directory_structure": "frontend/src/styles/ - CSS design system files (design-system.css, typography.css, layout.css, components.css). frontend/src/components/Layout/ - AppShell, IconRail, TopBar, StatusBar. frontend/src/components/ - feature components (BomPanel, SkuBrowser, ProjectCreation, etc). frontend/src/main.tsx - app entry point with CSS imports."
+}

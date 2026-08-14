@@ -5,6 +5,8 @@ import '@/styles/design-system.css';
 import '@/styles/typography.css';
 import '@/styles/layout.css';
 import '@/styles/components.css';
+import '@/styles/animations.css';
+import '@/styles/responsive.css';
 import App from './App';
 import { AuthLayout } from '@/components/AuthLayout';
 import { ProtectedRoute } from '@/components/ProtectedRoute';

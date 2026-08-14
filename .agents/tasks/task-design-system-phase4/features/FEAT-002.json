@@ -1,0 +1,33 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "Add ARIA landmarks, roles, and accessibility attributes to layout and overlay components. Add skip-nav link to AppShell. Add aria-live regions. All changes are attribute additions only - no business logic modifications.",
+  "status": "in_progress",
+  "steps": [
+    "In frontend/src/components/Layout/AppShell.tsx: (a) Add a skip-nav link as the first child inside the app-shell div: <a href='#main-content' className='skip-nav'>Skip to main content</a>. (b) Add id='main-content' to the main-area div. (c) Wrap the main-area div with a <main> element or add role='main' to it.",
+    "In frontend/src/components/Layout/IconRail.tsx: The <nav> already exists with className='icon-rail'. Add aria-label='Main navigation' to the nav element (it already has data-testid).",
+    "In frontend/src/components/Layout/StatusBar.tsx: Add role='status' and aria-live='polite' to the status-bar div.",
+    "In frontend/src/components/Layout/TopBar.tsx: Add role='banner' to the top-bar div (semantic header/toolbar area).",
+    "In frontend/src/components/BomPanel/BomPanel.tsx: (a) Add role='dialog', aria-modal='true', and aria-labelledby='bom-panel-title' to the outermost fixed div. (b) Add id='bom-panel-title' to the h3 'Bill of Materials' heading. (c) Add className='panel-slide-in' to the outermost div for the slide animation. (d) Add aria-live='assertive' to the error div (data-testid='bom-panel-error'). (e) Add className='skeleton-shimmer' and aria-busy='true' to the loading div.",
+    "In frontend/src/components/ProjectCreation/ProjectCreationWizard.tsx: (a) Add role='dialog', aria-modal='true', aria-labelledby='project-creation-title' to the outermost fixed div. (b) Add id='project-creation-title' to the h3 'New Project' heading. (c) Add className='panel-slide-in' to the outermost div.",
+    "In frontend/src/components/Finalization/FinalizationConfirmDialog.tsx: (a) Add role='dialog', aria-modal='true', aria-labelledby='finalization-dialog-title' to the outermost fixed overlay div. (b) Add id='finalization-dialog-title' to the h2 'Finalize Project' heading. (c) Add aria-live='assertive' to the error paragraph element.",
+    "In frontend/src/components/TemplateManagement/TemplateManagementPanel.tsx: (a) Add role='dialog', aria-modal='true', aria-labelledby='template-panel-title' to the outermost fixed overlay div. (b) Add id='template-panel-title' to the h2 'My Templates' heading. (c) Add className='skeleton-shimmer' and aria-busy='true' to the loading indicator div."
+  ],
+  "acceptance_criteria": [
+    "AppShell has a skip-nav link that is visually hidden and becomes visible on focus",
+    "IconRail nav has aria-label='Main navigation'",
+    "StatusBar has role='status' and aria-live='polite'",
+    "All modal/dialog overlays (BomPanel, ProjectCreationWizard, FinalizationConfirmDialog, TemplateManagementPanel) have role='dialog', aria-modal='true', and aria-labelledby pointing to their title",
+    "Error messages have aria-live='assertive'",
+    "Loading areas have skeleton-shimmer class and aria-busy='true'",
+    "BomPanel and ProjectCreationWizard have panel-slide-in class for animation",
+    "No business logic, stores, or engines are modified",
+    "All existing tests continue to pass"
+  ],
+  "verification": [
+    "unset NODE_OPTIONS && cd /projects/sandbox/Bom/frontend && npx vite build",
+    "unset NODE_OPTIONS && cd /projects/sandbox/Bom/frontend && npx vitest run"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

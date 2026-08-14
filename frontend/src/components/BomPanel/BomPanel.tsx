@@ -44,6 +44,10 @@ export function BomPanel() {
   return (
     <div
       data-testid="bom-panel"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="bom-panel-title"
+      className="panel-slide-in"
       style={{
         position: 'fixed',
         top: 0,
@@ -68,7 +72,7 @@ export function BomPanel() {
           borderBottom: '1px solid var(--color-hairline)',
         }}
       >
-        <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 'var(--weight-semibold)', color: 'var(--color-ink-primary)' }}>
+        <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 'var(--weight-semibold)', color: 'var(--color-ink-primary)' }} id="bom-panel-title">
           Bill of Materials
         </h3>
         <button
@@ -91,13 +95,13 @@ export function BomPanel() {
       {/* Content */}
       <div style={{ flex: 1, overflow: 'auto', padding: '8px 0' }}>
         {isLoading && (
-          <div data-testid="bom-panel-loading" style={{ padding: '16px', color: 'var(--color-ink-secondary)' }}>
+          <div data-testid="bom-panel-loading" className="skeleton-shimmer" aria-busy="true" style={{ padding: '16px', color: 'var(--color-ink-secondary)' }}>
             Loading BOM data...
           </div>
         )}
 
         {error && (
-          <div data-testid="bom-panel-error" style={{ padding: '16px', color: 'var(--color-error)' }}>
+          <div data-testid="bom-panel-error" aria-live="assertive" style={{ padding: '16px', color: 'var(--color-error)' }}>
             Error: {error}
           </div>
         )}

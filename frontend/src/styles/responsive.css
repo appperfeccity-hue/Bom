@@ -1,0 +1,84 @@
+/* ==========================================================================
+   Responsive Breakpoints
+   Phase 4 - PERFECCITY Design System
+   ========================================================================== */
+
+/* ─── 1280px Breakpoint: Collapse Left Panel ─── */
+
+@media (max-width: 1280px) {
+  .panel-left {
+    display: none;
+  }
+
+  .panel-right {
+    width: 280px;
+  }
+}
+
+/* ─── 1024px Breakpoint: Compact Layout ─── */
+
+@media (max-width: 1024px) {
+  /* Icon rail becomes thin strip */
+  .app-shell {
+    --icon-rail-width: 44px;
+  }
+
+  .icon-rail {
+    width: 44px;
+    padding: 0;
+  }
+
+  .icon-rail__item {
+    height: 44px;
+    min-width: 24px;
+    min-height: 24px;
+  }
+
+  /* Panels become overlays */
+  .panel-left {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 280px;
+    z-index: 1000;
+  }
+
+  .panel-right {
+    position: fixed;
+    top: 0;
+    right: 0;
+    height: 100vh;
+    width: 280px;
+    z-index: 1000;
+  }
+
+  /* Canvas takes full width */
+  .canvas-area {
+    width: 100%;
+  }
+
+  /* Top bar brand truncation */
+  .top-bar__brand {
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Status bar: show only error count */
+  .status-bar__item:not([data-testid='status-bar-errors']) {
+    display: none;
+  }
+
+  /* Touch target minimum */
+  button,
+  a,
+  [role="button"],
+  input[type="checkbox"],
+  input[type="radio"] {
+    min-width: 24px;
+    min-height: 24px;
+  }
+}

@@ -16,7 +16,7 @@ export function TopBar() {
   const statusLabel = SAVE_STATUS_LABELS[saveStatus] ?? saveStatus;
 
   return (
-    <div className="top-bar" data-testid="top-bar">
+    <div className="top-bar" data-testid="top-bar" role="banner">
       <span className="top-bar__brand">
         Perfeccity
       </span>

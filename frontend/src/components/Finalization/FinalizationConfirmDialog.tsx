@@ -26,6 +26,9 @@ export function FinalizationConfirmDialog() {
   return (
     <div
       data-testid="finalization-confirm-dialog"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="finalization-dialog-title"
       style={{
         position: 'fixed',
         top: 0,
@@ -50,6 +53,7 @@ export function FinalizationConfirmDialog() {
         }}
       >
         <h2
+          id="finalization-dialog-title"
           style={{
             margin: '0 0 16px 0',
             fontSize: '18px',
@@ -75,6 +79,7 @@ export function FinalizationConfirmDialog() {
         {error && (
           <p
             data-testid="finalization-error"
+            aria-live="assertive"
             style={{
               margin: '0 0 16px 0',
               fontSize: '13px',

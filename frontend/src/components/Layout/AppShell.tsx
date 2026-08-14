@@ -17,9 +17,10 @@ interface AppShellProps {
 export function AppShell({ children }: AppShellProps) {
   return (
     <div className="app-shell" data-testid="app-shell">
+      <a href="#main-content" className="skip-nav">Skip to main content</a>
       <IconRail />
       <TopBar />
-      <div className="main-area">
+      <div className="main-area" id="main-content" role="main">
         {children}
       </div>
       <StatusBar />
