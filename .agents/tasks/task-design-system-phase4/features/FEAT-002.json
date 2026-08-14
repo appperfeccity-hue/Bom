@@ -2,7 +2,7 @@
   "id": "FEAT-002",
   "type": "feat",
   "description": "Add ARIA landmarks, roles, and accessibility attributes to layout and overlay components. Add skip-nav link to AppShell. Add aria-live regions. All changes are attribute additions only - no business logic modifications.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "In frontend/src/components/Layout/AppShell.tsx: (a) Add a skip-nav link as the first child inside the app-shell div: <a href='#main-content' className='skip-nav'>Skip to main content</a>. (b) Add id='main-content' to the main-area div. (c) Wrap the main-area div with a <main> element or add role='main' to it.",
     "In frontend/src/components/Layout/IconRail.tsx: The <nav> already exists with className='icon-rail'. Add aria-label='Main navigation' to the nav element (it already has data-testid).",
@@ -29,5 +29,5 @@
     "unset NODE_OPTIONS && cd /projects/sandbox/Bom/frontend && npx vitest run"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All ARIA attributes added without modifying business logic. All 1094 tests continue to pass."
 }
