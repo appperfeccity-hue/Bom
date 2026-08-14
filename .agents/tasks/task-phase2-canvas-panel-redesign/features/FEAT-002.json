@@ -2,7 +2,7 @@
   "id": "FEAT-002",
   "type": "feat",
   "description": "Canvas redesign + Panel restyle + Toolbar restyle: Replace all Material-blue hardcoded colors with design system CSS variables across canvas layers, panels, and toolbar",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "1. CANVAS - GridLayer (frontend/src/canvas/layers/GridLayer.tsx): Replace '#c0c0c0' and '#e0e0e0' with a warm subtle grid color. Use rgba version of hairline color at 0.3 opacity. Since Konva stroke doesn't support CSS vars, use the literal values from the design system: stroke for minor lines = 'rgba(227, 225, 221, 0.3)' (hairline at 0.3 opacity), stroke for major lines = 'rgba(227, 225, 221, 0.6)' (hairline at 0.6 opacity for distinction). Comment the source variable name.",
     "2. CANVAS - WallOutlineLayer (frontend/src/canvas/layers/WallOutlineLayer.tsx): Replace '#000000' stroke with '#1A1A1A' (ink color). Add comment referencing --color-ink-primary.",
@@ -32,5 +32,5 @@
     "cd /projects/sandbox/Bom/frontend && unset NODE_OPTIONS && npx vitest run"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All 1094 tests pass. Build succeeds. Typecheck passes (only pre-existing TS6133 unused var in ValidationOverlayLayer.tsx). Updated ZonesLayer.validation.test.tsx assertions to match new error color #B0413E. All Material Design blue colors eliminated from canvas layers, toolbar, and panels. No business logic changed."
 }
