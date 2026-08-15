@@ -1,12 +1,7 @@
 import { FullConfig } from '@playwright/test';
 import fs from 'fs';
 import path from 'path';
-
-const SUPABASE_URL =
-  process.env.SUPABASE_URL || 'https://fbiemsbykrmrbqcsobvh.supabase.co';
-const SUPABASE_ANON_KEY =
-  process.env.SUPABASE_ANON_KEY ||
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZiaWVtc2J5a3JtcmJxY3NvYnZoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ3MjY0NDEsImV4cCI6MjEwMDMwMjQ0MX0.wVthrn8-pRfoBgIjowocD5ApAbiDMx61d5vs1RNlXQA';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from './fixtures/seed-data';
 
 const AUTH_DIR = path.join(__dirname, '.auth');
 

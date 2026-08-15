@@ -15,7 +15,7 @@ export default defineConfig({
     baseURL: process.env.PLAYWRIGHT_BASE_URL || 'https://bom-beryl.vercel.app',
     navigationTimeout: 60_000,
     screenshot: 'only-on-failure',
-    trace: 'on-first-retry',
+    trace: 'retain-on-failure',
   },
   outputDir: 'test-results/',
   globalSetup: './e2e/global-setup.ts',

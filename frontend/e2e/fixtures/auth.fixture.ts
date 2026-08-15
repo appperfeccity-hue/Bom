@@ -17,6 +17,15 @@ interface AuthState {
   };
 }
 
+/**
+ * Loads a persisted auth session from disk.
+ *
+ * Limitation: tokens are minted once in global-setup and reused for the entire
+ * test run with no expiry check or refresh. Supabase default JWT lifetime is
+ * 3600s. If the suite ever exceeds that duration, tests will fail with 401.
+ * Acceptable for now while the suite is small; revisit with a token-refresh
+ * mechanism when the run time approaches the token lifetime.
+ */
 function loadAuthState(filePath: string): AuthState {
   const content = fs.readFileSync(filePath, 'utf-8');
   return JSON.parse(content);
