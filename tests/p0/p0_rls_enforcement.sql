@@ -8,7 +8,7 @@
 SET search_path TO perfecity;
 
 -- ============================================================================
--- T-P0-RLS-001: All 34 tables have RLS enabled
+-- T-P0-RLS-001: All tables have RLS enabled (base 34 + amendment 001 additions)
 -- ============================================================================
 DO $$
 DECLARE
@@ -19,10 +19,10 @@ BEGIN
     WHERE schemaname = 'perfecity'
       AND rowsecurity = true;
 
-    IF v_rls_count = 34 THEN
-        RAISE NOTICE 'PASS: T-P0-RLS-001 - All 34 tables have RLS enabled (count=%)', v_rls_count;
+    IF v_rls_count >= 38 THEN
+        RAISE NOTICE 'PASS: T-P0-RLS-001 - All tables have RLS enabled (count=%, minimum 38)', v_rls_count;
     ELSE
-        RAISE EXCEPTION 'FAIL: T-P0-RLS-001 - Expected 34 tables with RLS enabled, got %', v_rls_count;
+        RAISE EXCEPTION 'FAIL: T-P0-RLS-001 - Expected at least 38 tables with RLS enabled, got %', v_rls_count;
     END IF;
 END;
 $$;

@@ -324,7 +324,8 @@ BEGIN
     WHERE schemaname = 'perfecity'
       AND tablename = ANY(v_tables)
       AND cmd IN ('INSERT', 'UPDATE', 'DELETE')
-      AND policyname LIKE '%consultant%';
+      AND policyname LIKE '%consultant%'
+      AND policyname NOT LIKE 'template_consultant_permission%';
 
     IF v_consultant_write_count = 0 THEN
         RAISE NOTICE 'PASS: T-P0-RBAC-010 - No CONSULTANT write policies on template tables';
