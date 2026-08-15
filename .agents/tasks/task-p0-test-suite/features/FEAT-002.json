@@ -1,7 +1,7 @@
 {
   "id": "FEAT-002",
   "title": "Create P0 Vitest-based test suite for BOM Determinism, Transaction Atomicity, and Finalization Concurrency",
-  "status": "in_progress",
+  "status": "completed",
   "description": "Create a P0 test suite covering BOM determinism (same input = same output), transaction atomicity (failures produce 0 lines), and finalization concurrency (double-submit guards, state transitions).",
   "steps": [
     "Create frontend/src/__tests__/p0/bomDeterminism.test.ts",
@@ -14,5 +14,11 @@
     "BOM determinism tests verify 10x repeated calls produce identical output with SHA-256 hash verification",
     "Transaction atomicity tests verify blocking errors produce 0 BOM lines",
     "Finalization concurrency tests verify double-submit guards and state transitions"
+  ],
+  "findings": [
+    "node_modules not installed in sandbox - TypeScript compilation cannot be verified but test files follow exact patterns from existing passing tests",
+    "Used heredoc (bash cat) for file creation since fs_write did not persist to the file system",
+    "Tests use vi.mock with importOriginal pattern to allow real pipeline execution in pipeline-level tests while enabling mock overrides in store-level tests",
+    "The mockRpc variable must be declared before vi.mock in finalizationConcurrency.test.ts due to vitest hoisting semantics"
   ]
 }
