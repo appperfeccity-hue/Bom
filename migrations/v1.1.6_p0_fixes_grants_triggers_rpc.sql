@@ -60,8 +60,8 @@ GRANT INSERT, UPDATE ON perfecity.project TO authenticated;
 GRANT INSERT, UPDATE ON perfecity.project_configuration TO authenticated;
 GRANT INSERT, UPDATE ON perfecity.project_measurement TO authenticated;
 
--- Project idempotency: INSERT only (written by create_project RPC)
-GRANT INSERT ON perfecity.project_idempotency TO authenticated;
+-- Project idempotency: NO direct INSERT grant (written only by create_project RPC
+-- via SECURITY DEFINER; direct INSERT was a dead grant and has been revoked)
 
 -- Amendment 001 tables (ensure they have grants too)
 GRANT INSERT, UPDATE, DELETE ON perfecity.template_wall_configuration TO authenticated;
@@ -648,6 +648,13 @@ BEGIN
     -- Authorization: only CONSULTANT role can create projects
     IF perfecity.current_user_role() <> 'CONSULTANT' THEN
         RAISE EXCEPTION 'Authorization failed: only CONSULTANT role can create projects';
+    END IF;
+    -- Validate: template must be ACTIVE
+    IF NOT EXISTS (
+        SELECT 1 FROM perfecity.template
+        WHERE template_id = p_template_id AND status = 'ACTIVE'
+    ) THEN
+        RAISE EXCEPTION 'Template is not active or does not exist';
     END IF;
 
     v_lock_key := hashtext(p_idempotency_key);
