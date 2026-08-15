@@ -1,0 +1,18 @@
+{
+  "id": "FEAT-002",
+  "title": "Create P0 Vitest-based test suite for BOM Determinism, Transaction Atomicity, and Finalization Concurrency",
+  "status": "in_progress",
+  "description": "Create a P0 test suite covering BOM determinism (same input = same output), transaction atomicity (failures produce 0 lines), and finalization concurrency (double-submit guards, state transitions).",
+  "steps": [
+    "Create frontend/src/__tests__/p0/bomDeterminism.test.ts",
+    "Create frontend/src/__tests__/p0/transactionAtomicity.test.ts",
+    "Create frontend/src/__tests__/p0/finalizationConcurrency.test.ts"
+  ],
+  "acceptance_criteria": [
+    "All three test files are syntactically correct TypeScript",
+    "Tests follow existing patterns from bomPipeline.test.ts and finalizationStore.test.ts",
+    "BOM determinism tests verify 10x repeated calls produce identical output with SHA-256 hash verification",
+    "Transaction atomicity tests verify blocking errors produce 0 BOM lines",
+    "Finalization concurrency tests verify double-submit guards and state transitions"
+  ]
+}
