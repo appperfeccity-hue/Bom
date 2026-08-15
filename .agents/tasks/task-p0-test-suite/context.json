@@ -1,0 +1,11 @@
+{
+  "project_type": "React 18 + TypeScript + Vite + Zustand frontend",
+  "test_runner": "Vitest 2.1.0, globals enabled, jsdom environment",
+  "test_setup": "frontend/src/test-setup.ts",
+  "path_alias": "@/ resolves to frontend/src/",
+  "vite_config": "frontend/vite.config.ts",
+  "build_command": "cd frontend && npx tsc --noEmit",
+  "test_command": "DO NOT RUN - Vitest cannot run in this sandbox",
+  "verification_instructions": "TypeScript compilation check only. Do not run vitest.",
+  "setup_instructions": "No setup needed - just write test files."
+}
