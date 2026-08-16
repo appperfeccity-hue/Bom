@@ -25,6 +25,8 @@ function getSupabaseRef(): string {
 interface AuthSession {
   access_token: string;
   refresh_token: string;
+  expires_in: number;
+  expires_at: number;
   user: {
     id: string;
     email: string;
@@ -45,10 +47,14 @@ function loadAuthSession(filePath: string): AuthSession {
  * the key `sb-<ref>-auth-token`.
  */
 function buildSupabaseStorageValue(session: AuthSession): string {
+  // expires_at is REQUIRED — without it, _isValidSession() returns false
+  // and the Supabase client immediately removes the session from storage.
+  const expiresAt = session.expires_at || Math.round(Date.now() / 1000) + 3600;
   return JSON.stringify({
     access_token: session.access_token,
     refresh_token: session.refresh_token,
-    expires_in: 3600,
+    expires_in: session.expires_in || 3600,
+    expires_at: expiresAt,
     token_type: 'bearer',
     user: session.user,
   });

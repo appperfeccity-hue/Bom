@@ -12,6 +12,8 @@ export const ADMIN_AUTH_PATH = path.join(AUTH_DIR, 'admin.json');
 interface AuthSession {
   access_token: string;
   refresh_token: string;
+  expires_in: number;
+  expires_at: number;
   user: {
     id: string;
     email: string;
