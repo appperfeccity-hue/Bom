@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../fixtures/browser-auth.fixture';
 import { test as authTest } from '../fixtures/auth.fixture';
 import {
   ACTIVE_TEMPLATE_1,
@@ -19,7 +19,7 @@ import { createProject, getProject } from '../helpers/api.helper';
  */
 
 test.describe('INT: End-to-End Lifecycle (Browser)', () => {
-  test('[INT-001] Full project lifecycle via UI', async ({ page }) => {
+  test('[INT-001] Full project lifecycle via UI', async ({ designerBrowser: page }) => {
     // Step 1: Create project
     await page.goto('/projects/new');
     await expect(
@@ -31,12 +31,11 @@ test.describe('INT: End-to-End Lifecycle (Browser)', () => {
     await page.getByLabel(/client/i).fill('Integration Test Client');
 
     const templateSelect = page.getByLabel(/template/i);
-    if (await templateSelect.isVisible()) {
-      await templateSelect.click();
-      await page
-        .getByRole('option', { name: new RegExp(ACTIVE_TEMPLATE_1.name, 'i') })
-        .click();
-    }
+    await expect(templateSelect).toBeVisible();
+    await templateSelect.click();
+    await page
+      .getByRole('option', { name: new RegExp(ACTIVE_TEMPLATE_1.name, 'i') })
+      .click();
 
     await page.getByRole('button', { name: /create|submit|save/i }).click();
 
@@ -46,36 +45,35 @@ test.describe('INT: End-to-End Lifecycle (Browser)', () => {
     // Step 3: Navigate to measurements
     const measureTab = page.getByRole('tab', { name: /measure/i })
       .or(page.getByRole('link', { name: /measure/i }));
-    if (await measureTab.isVisible()) {
-      await measureTab.click();
-    }
+    await expect(measureTab).toBeVisible();
+    await measureTab.click();
 
     // Step 4: Trigger BOM generation
     const bomTab = page.getByRole('tab', { name: /bom|materials/i })
       .or(page.getByRole('link', { name: /bom|materials/i }));
-    if (await bomTab.isVisible()) {
-      await bomTab.click();
-      const generateBtn = page.getByRole('button', { name: /generate|calculate/i });
-      if (await generateBtn.isVisible()) {
-        await generateBtn.click();
-      }
-    }
+    await expect(bomTab).toBeVisible();
+    await bomTab.click();
+
+    const generateBtn = page.getByRole('button', { name: /generate|calculate/i });
+    await expect(generateBtn).toBeVisible();
+    await generateBtn.click();
 
     // Step 5: Finalize
     const finalizeBtn = page.getByRole('button', { name: /finalize|complete/i });
-    if (await finalizeBtn.isVisible()) {
-      await finalizeBtn.click();
-      const confirmBtn = page.getByRole('button', { name: /confirm|yes/i });
-      if (await confirmBtn.isVisible()) {
-        await confirmBtn.click();
-      }
+    await expect(finalizeBtn).toBeVisible();
+    await finalizeBtn.click();
+
+    // Handle confirmation dialog
+    const confirmBtn = page.getByRole('button', { name: /confirm|yes/i });
+    if (await confirmBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await confirmBtn.click();
     }
 
-    // Verify final state
-    await expect(page.getByText(/project|detail/i)).toBeVisible();
+    // Verify final state - project should show finalized/completed status
+    await expect(page.getByText(/finalized|complete|locked/i)).toBeVisible();
   });
 
-  test('[INT-002] Bidirectional Canvas-BOM sync', async ({ page }) => {
+  test('[INT-002] Bidirectional Canvas-BOM sync', async ({ designerBrowser: page }) => {
     await page.goto(`/templates/${ACTIVE_TEMPLATE_1.id}/editor`);
 
     const canvas = page.locator('[data-testid="canvas"]')
@@ -87,33 +85,30 @@ test.describe('INT: End-to-End Lifecycle (Browser)', () => {
     const zones = page.locator('[data-testid="zone"]')
       .or(page.locator('[data-zone-id]'))
       .or(page.locator('[class*="zone"]'));
+    await expect(zones.first()).toBeVisible();
+    await zones.first().click();
 
-    if (await zones.first().isVisible()) {
-      await zones.first().click();
+    // Assign a SKU via the panel
+    const skuInput = page.getByLabel(/sku|material/i)
+      .or(page.locator('[data-testid="sku-selector"]'));
+    await expect(skuInput).toBeVisible();
+    await skuInput.click();
 
-      // Assign a SKU if panel allows
-      const skuInput = page.getByLabel(/sku|material/i)
-        .or(page.locator('[data-testid="sku-selector"]'));
+    const option = page.getByRole('option').first();
+    await expect(option).toBeVisible();
+    await option.click();
 
-      if (await skuInput.isVisible()) {
-        await skuInput.click();
-        const option = page.getByRole('option').first();
-        if (await option.isVisible()) {
-          await option.click();
-        }
-      }
+    // Navigate to BOM view and verify the assignment is reflected
+    const bomTab = page.getByRole('tab', { name: /bom/i })
+      .or(page.getByRole('link', { name: /bom/i }));
+    await expect(bomTab).toBeVisible();
+    await bomTab.click();
 
-      // Navigate to BOM view and verify the assignment is reflected
-      const bomTab = page.getByRole('tab', { name: /bom/i })
-        .or(page.getByRole('link', { name: /bom/i }));
-      if (await bomTab.isVisible()) {
-        await bomTab.click();
-        // BOM should show assigned materials
-        await expect(
-          page.getByText(/materials|components|bom/i)
-        ).toBeVisible();
-      }
-    }
+    // BOM should show assigned materials
+    await expect(
+      page.getByRole('table')
+        .or(page.getByText(/materials|components|bom/i))
+    ).toBeVisible();
   });
 });
 

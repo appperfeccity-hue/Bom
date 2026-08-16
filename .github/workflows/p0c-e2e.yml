@@ -64,8 +64,9 @@ jobs:
         working-directory: frontend
         run: |
           npx playwright test e2e/p0-c/ \
-            --reporter=html,json \
-            || echo "PLAYWRIGHT_EXIT_CODE=$?" >> "$GITHUB_ENV"
+            --reporter=html,json; EC=$?
+          echo "PLAYWRIGHT_EXIT_CODE=$EC" >> "$GITHUB_ENV"
+          exit 0
         env:
           PLAYWRIGHT_JSON_OUTPUT_NAME: test-results/p0c-results.json
 

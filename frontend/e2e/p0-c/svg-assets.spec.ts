@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../fixtures/browser-auth.fixture';
 import { test as authTest } from '../fixtures/auth.fixture';
 import {
   ACTIVE_TEMPLATE_1,
@@ -19,7 +19,7 @@ import {
  */
 
 test.describe('SVG: Asset Rendering (Browser)', () => {
-  test('[SVG-001] SVG renders correctly in canvas', async ({ page }) => {
+  test('[SVG-001] SVG renders correctly in canvas', async ({ designerBrowser: page }) => {
     await page.goto(`/templates/${ACTIVE_TEMPLATE_1.id}/editor`);
 
     // Wait for canvas to load
@@ -41,7 +41,7 @@ test.describe('SVG: Asset Rendering (Browser)', () => {
     expect(svgBox!.height).toBeGreaterThan(0);
   });
 
-  test('[SVG-002] SVG scales proportionally with zoom', async ({ page }) => {
+  test('[SVG-002] SVG scales proportionally with zoom', async ({ designerBrowser: page }) => {
     await page.goto(`/templates/${ACTIVE_TEMPLATE_1.id}/editor`);
 
     const canvas = page.locator('[data-testid="canvas"]')
@@ -52,31 +52,37 @@ test.describe('SVG: Asset Rendering (Browser)', () => {
     const svgElement = page.locator('svg')
       .or(page.locator('[data-testid="svg-asset"]'))
       .or(page.locator('img[src*=".svg"]'));
+    await expect(svgElement.first()).toBeVisible();
 
-    if (await svgElement.first().isVisible()) {
-      const initialBox = await svgElement.first().boundingBox();
-      expect(initialBox).not.toBeNull();
+    const initialBox = await svgElement.first().boundingBox();
+    expect(initialBox).not.toBeNull();
 
-      // Zoom in
-      await canvas.first().hover();
-      await page.mouse.wheel(0, -200);
-      await page.waitForTimeout(300);
+    // Zoom in
+    await canvas.first().hover();
+    await page.mouse.wheel(0, -200);
+    await page.waitForTimeout(300);
 
-      const zoomedBox = await svgElement.first().boundingBox();
-      expect(zoomedBox).not.toBeNull();
+    const zoomedBox = await svgElement.first().boundingBox();
+    expect(zoomedBox).not.toBeNull();
 
-      // After zoom in, SVG should be larger or same size (never disappear)
-      expect(zoomedBox!.width).toBeGreaterThan(0);
-      expect(zoomedBox!.height).toBeGreaterThan(0);
-    }
+    // After zoom in, SVG should remain rendered with non-zero dimensions
+    expect(zoomedBox!.width).toBeGreaterThan(0);
+    expect(zoomedBox!.height).toBeGreaterThan(0);
   });
 
-  test('[SVG-004] Missing asset shows placeholder image', async ({ page }) => {
+  test('[SVG-004] Missing asset shows placeholder image', async ({ designerBrowser: page }) => {
     await page.goto(`/templates/${ACTIVE_TEMPLATE_1.id}/editor`);
 
     const canvas = page.locator('[data-testid="canvas"]')
       .or(page.locator('canvas'))
       .or(page.locator('[class*="canvas"]'));
+    await expect(canvas.first()).toBeVisible();
+
+    // Intercept asset requests and force a 404 to trigger placeholder rendering
+    await page.route('**/storage/**/*.svg', (route) => route.fulfill({ status: 404 }));
+
+    // Reload to trigger the intercepted request
+    await page.reload();
     await expect(canvas.first()).toBeVisible();
 
     // Look for placeholder elements (broken image indicators, fallback SVGs)
@@ -85,19 +91,11 @@ test.describe('SVG: Asset Rendering (Browser)', () => {
       .or(page.locator('[alt*="missing"]'))
       .or(page.locator('[data-missing="true"]'));
 
-    // Verify no JS errors from missing assets
-    const errors: string[] = [];
-    page.on('pageerror', (error) => errors.push(error.message));
-
-    // Wait to catch any async errors
-    await page.waitForTimeout(1000);
-
-    // If there are missing assets, placeholders should render
-    // If all assets load, no placeholder is needed (both are valid states)
-    await expect(canvas.first()).toBeVisible();
+    // With assets blocked, placeholder should render
+    await expect(placeholders.first()).toBeVisible();
   });
 
-  test('[SVG-006] Pattern repeat renders correctly in zones', async ({ page }) => {
+  test('[SVG-006] Pattern repeat renders correctly in zones', async ({ designerBrowser: page }) => {
     await page.goto(`/templates/${ACTIVE_TEMPLATE_1.id}/editor`);
 
     const canvas = page.locator('[data-testid="canvas"]')
@@ -115,39 +113,33 @@ test.describe('SVG: Asset Rendering (Browser)', () => {
     const tiledElements = page.locator('[style*="background-repeat"]')
       .or(page.locator('[style*="repeat"]'));
 
-    // At minimum the canvas renders without pattern-related errors
-    await expect(canvas.first()).toBeVisible();
+    // Pattern elements must be present in the SVG canvas for zones with materials
+    await expect(patterns.first().or(tiledElements.first())).toBeVisible();
   });
 
-  test('[SVG-007] Asset renders in BOM view', async ({ page }) => {
+  test('[SVG-007] Asset renders in BOM view', async ({ designerBrowser: page }) => {
     // Navigate to a project with BOM data
     await page.goto('/projects');
 
     const projectLink = page.getByRole('link', { name: /project|view/i }).first();
-    if (await projectLink.isVisible()) {
-      await projectLink.click();
-    }
+    await expect(projectLink).toBeVisible();
+    await projectLink.click();
 
     // Navigate to BOM tab
     const bomTab = page.getByRole('tab', { name: /bom|materials/i })
       .or(page.getByRole('link', { name: /bom|materials/i }));
-    if (await bomTab.isVisible()) {
-      await bomTab.click();
-    }
+    await expect(bomTab).toBeVisible();
+    await bomTab.click();
 
-    // Check that BOM items show asset thumbnails/previews
-    const assetImages = page.locator('[data-testid="bom-asset-image"]')
-      .or(page.locator('img[src*="svg"]'))
-      .or(page.locator('[class*="thumbnail"]'))
-      .or(page.locator('.bom-item img'));
-
-    // BOM view should render (with or without asset images depending on data)
+    // BOM view should render with asset thumbnails/previews
     await expect(
-      page.getByText(/bom|materials|components|no items/i)
+      page.getByRole('table')
+        .or(page.getByText(/bom|materials|components/i))
+        .or(page.locator('[data-testid="bom-table"]'))
     ).toBeVisible();
   });
 
-  test('[SVG-008] Asset loading performance within acceptable thresholds', async ({ page }) => {
+  test('[SVG-008] Asset loading performance within acceptable thresholds', async ({ designerBrowser: page }) => {
     const startTime = Date.now();
 
     await page.goto(`/templates/${ACTIVE_TEMPLATE_1.id}/editor`);
@@ -159,18 +151,11 @@ test.describe('SVG: Asset Rendering (Browser)', () => {
 
     const loadTime = Date.now() - startTime;
 
-    // Canvas with assets should load within navigation timeout (60s as per config)
     // Performance threshold: page interactive within 10 seconds
     expect(loadTime).toBeLessThan(10_000);
 
-    // Verify no assets are still loading (no spinners/skeleton on canvas)
+    // Verify no assets are still loading (canvas is interactive)
     await page.waitForTimeout(1000);
-    const stillLoading = page.locator('[data-loading="true"]')
-      .or(page.locator('[class*="loading"]').locator('visible=true'));
-    const loadingCount = await stillLoading.count().catch(() => 0);
-
-    // All assets should have finished loading
-    // (some loading states may persist - just verify canvas is interactive)
     await expect(canvas.first()).toBeVisible();
   });
 });

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../fixtures/browser-auth.fixture';
 import { ACTIVE_TEMPLATE_1 } from '../fixtures/seed-data';
 
 /**
@@ -14,12 +14,9 @@ import { ACTIVE_TEMPLATE_1 } from '../fixtures/seed-data';
  */
 
 test.describe('CANVAS: Rendering & Basic Interactions', () => {
-  test.beforeEach(async ({ page }) => {
-    // Navigate to the canvas/editor for a known template
+  test('[CANVAS-001] Canvas renders zones from template', async ({ designerBrowser: page }) => {
     await page.goto(`/templates/${ACTIVE_TEMPLATE_1.id}/editor`);
-  });
 
-  test('[CANVAS-001] Canvas renders zones from template', async ({ page }) => {
     // Expect the canvas container to be present
     const canvas = page.locator('[data-testid="canvas"]')
       .or(page.locator('canvas'))
@@ -36,7 +33,9 @@ test.describe('CANVAS: Rendering & Basic Interactions', () => {
     await expect(zones.first()).toBeVisible();
   });
 
-  test('[CANVAS-002] Zone selection highlights the selected zone', async ({ page }) => {
+  test('[CANVAS-002] Zone selection highlights the selected zone', async ({ designerBrowser: page }) => {
+    await page.goto(`/templates/${ACTIVE_TEMPLATE_1.id}/editor`);
+
     const canvas = page.locator('[data-testid="canvas"]')
       .or(page.locator('canvas'))
       .or(page.locator('[class*="canvas"]'));
@@ -46,6 +45,7 @@ test.describe('CANVAS: Rendering & Basic Interactions', () => {
     const firstZone = page.locator('[data-testid="zone"]')
       .or(page.locator('[data-zone-id]'))
       .or(page.locator('[class*="zone"]'));
+    await expect(firstZone.first()).toBeVisible();
     await firstZone.first().click();
 
     // Expect selection highlight (class change, outline, or data attribute)
@@ -56,7 +56,9 @@ test.describe('CANVAS: Rendering & Basic Interactions', () => {
     ).toBeVisible();
   });
 
-  test('[CANVAS-003] Multi-select zones with modifier key', async ({ page }) => {
+  test('[CANVAS-003] Multi-select zones with modifier key', async ({ designerBrowser: page }) => {
+    await page.goto(`/templates/${ACTIVE_TEMPLATE_1.id}/editor`);
+
     const zones = page.locator('[data-testid="zone"]')
       .or(page.locator('[data-zone-id]'))
       .or(page.locator('[class*="zone"]'));
@@ -65,22 +67,24 @@ test.describe('CANVAS: Rendering & Basic Interactions', () => {
     await expect(zones.first()).toBeVisible();
 
     const zoneCount = await zones.count();
-    if (zoneCount >= 2) {
-      // Click first zone
-      await zones.nth(0).click();
+    test.skip(zoneCount < 2, 'Template has fewer than 2 zones; multi-select not testable');
 
-      // Ctrl+click second zone for multi-select
-      await zones.nth(1).click({ modifiers: ['Control'] });
+    // Click first zone
+    await zones.nth(0).click();
 
-      // Expect multiple selections
-      const selected = page.locator('[data-selected="true"]')
-        .or(page.locator('[class*="selected"]'))
-        .or(page.locator('[aria-selected="true"]'));
-      await expect(selected).toHaveCount(2);
-    }
+    // Ctrl+click second zone for multi-select
+    await zones.nth(1).click({ modifiers: ['Control'] });
+
+    // Expect multiple selections
+    const selected = page.locator('[data-selected="true"]')
+      .or(page.locator('[class*="selected"]'))
+      .or(page.locator('[aria-selected="true"]'));
+    await expect(selected).toHaveCount(2);
   });
 
-  test('[CANVAS-004] Copy/paste zones via keyboard shortcuts', async ({ page }) => {
+  test('[CANVAS-004] Copy/paste zones via keyboard shortcuts', async ({ designerBrowser: page }) => {
+    await page.goto(`/templates/${ACTIVE_TEMPLATE_1.id}/editor`);
+
     const zones = page.locator('[data-testid="zone"]')
       .or(page.locator('[data-zone-id]'))
       .or(page.locator('[class*="zone"]'));
@@ -97,7 +101,9 @@ test.describe('CANVAS: Rendering & Basic Interactions', () => {
     await expect(zones).toHaveCount(initialCount + 1);
   });
 
-  test('[CANVAS-005] Undo/redo reverts and restores changes', async ({ page }) => {
+  test('[CANVAS-005] Undo/redo reverts and restores changes', async ({ designerBrowser: page }) => {
+    await page.goto(`/templates/${ACTIVE_TEMPLATE_1.id}/editor`);
+
     const zones = page.locator('[data-testid="zone"]')
       .or(page.locator('[data-zone-id]'))
       .or(page.locator('[class*="zone"]'));
@@ -120,7 +126,9 @@ test.describe('CANVAS: Rendering & Basic Interactions', () => {
     await expect(zones).toHaveCount(initialCount + 1);
   });
 
-  test('[CANVAS-006] Snap-to-grid aligns zones on move', async ({ page }) => {
+  test('[CANVAS-006] Snap-to-grid aligns zones on move', async ({ designerBrowser: page }) => {
+    await page.goto(`/templates/${ACTIVE_TEMPLATE_1.id}/editor`);
+
     const zone = page.locator('[data-testid="zone"]')
       .or(page.locator('[data-zone-id]'))
       .or(page.locator('[class*="zone"]'));
@@ -140,42 +148,41 @@ test.describe('CANVAS: Rendering & Basic Interactions', () => {
     const newBox = await zone.first().boundingBox();
     expect(newBox).not.toBeNull();
 
-    // Grid snapping means position should be a multiple of grid size (typically 8, 10, or 16px)
-    // Just verify the zone moved (exact grid math depends on implementation)
-    const moved = newBox!.x !== box!.x || newBox!.y !== box!.y;
-    // Zone either snapped or stayed - both valid depending on snap threshold
-    expect(newBox).not.toBeNull();
+    // Verify the zone has a valid position (snap-to-grid means position is quantized)
+    // The exact grid size is implementation-dependent, but the zone must remain rendered
+    expect(newBox!.width).toBeGreaterThan(0);
+    expect(newBox!.height).toBeGreaterThan(0);
   });
 
-  test('[CANVAS-007] Zone validation errors display on invalid config', async ({ page }) => {
+  test('[CANVAS-007] Zone validation errors display on invalid config', async ({ designerBrowser: page }) => {
+    await page.goto(`/templates/${ACTIVE_TEMPLATE_1.id}/editor`);
+
     const zone = page.locator('[data-testid="zone"]')
       .or(page.locator('[data-zone-id]'))
       .or(page.locator('[class*="zone"]'));
     await expect(zone.first()).toBeVisible();
 
-    // Select a zone and clear required fields to trigger validation
+    // Select a zone to open properties panel
     await zone.first().click();
 
     // Look for properties panel
     const propsPanel = page.locator('[data-testid="properties-panel"]')
       .or(page.locator('[class*="properties"]'))
       .or(page.locator('[class*="inspector"]'));
+    await expect(propsPanel).toBeVisible();
 
-    if (await propsPanel.isVisible()) {
-      // Clear a required field like width
-      const widthInput = propsPanel.getByLabel(/width/i)
-        .or(propsPanel.locator('input[name="width"]'));
-      if (await widthInput.isVisible()) {
-        await widthInput.clear();
-        await widthInput.press('Tab');
+    // Clear a required field like width to trigger validation
+    const widthInput = propsPanel.getByLabel(/width/i)
+      .or(propsPanel.locator('input[name="width"]'));
+    await expect(widthInput).toBeVisible();
+    await widthInput.clear();
+    await widthInput.press('Tab');
 
-        // Expect validation error message
-        await expect(
-          page.getByText(/required|invalid|must be/i)
-            .or(page.locator('[class*="error"]'))
-            .or(page.locator('[role="alert"]'))
-        ).toBeVisible();
-      }
-    }
+    // Expect validation error message
+    await expect(
+      page.getByText(/required|invalid|must be/i)
+        .or(page.locator('[class*="error"]'))
+        .or(page.locator('[role="alert"]'))
+    ).toBeVisible();
   });
 });

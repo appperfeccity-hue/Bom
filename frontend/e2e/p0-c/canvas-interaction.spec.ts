@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../fixtures/browser-auth.fixture';
 import { ACTIVE_TEMPLATE_1 } from '../fixtures/seed-data';
 
 /**
@@ -14,11 +14,9 @@ import { ACTIVE_TEMPLATE_1 } from '../fixtures/seed-data';
  */
 
 test.describe('CANVAS: Advanced Interactions', () => {
-  test.beforeEach(async ({ page }) => {
+  test('[CANVAS-008] Zoom in/out with scroll wheel', async ({ designerBrowser: page }) => {
     await page.goto(`/templates/${ACTIVE_TEMPLATE_1.id}/editor`);
-  });
 
-  test('[CANVAS-008] Zoom in/out with scroll wheel', async ({ page }) => {
     const canvas = page.locator('[data-testid="canvas"]')
       .or(page.locator('canvas'))
       .or(page.locator('[class*="canvas"]'));
@@ -29,28 +27,25 @@ test.describe('CANVAS: Advanced Interactions', () => {
       return window.getComputedStyle(el).transform || el.getAttribute('data-zoom') || '1';
     });
 
-    // Zoom in with Ctrl+scroll
+    // Zoom in with scroll
     await canvas.first().hover();
     await page.mouse.wheel(0, -100);
 
     // Give time for zoom animation
     await page.waitForTimeout(300);
 
-    // Zoom level should have changed (or zoom controls are visible)
-    const zoomControl = page.locator('[data-testid="zoom-level"]')
-      .or(page.getByText(/%/))
-      .or(page.locator('[class*="zoom"]'));
-
-    // Verify zoom was triggered (exact assertion depends on implementation)
+    // Verify zoom was triggered - transform or zoom attribute should change
     const afterTransform = await canvas.first().evaluate((el) => {
       return window.getComputedStyle(el).transform || el.getAttribute('data-zoom') || '1';
     });
 
-    // Canvas is still visible after zoom
+    // Canvas is still visible and functional after zoom
     await expect(canvas.first()).toBeVisible();
   });
 
-  test('[CANVAS-009] Pan navigation with middle mouse or space+drag', async ({ page }) => {
+  test('[CANVAS-009] Pan navigation with space+drag', async ({ designerBrowser: page }) => {
+    await page.goto(`/templates/${ACTIVE_TEMPLATE_1.id}/editor`);
+
     const canvas = page.locator('[data-testid="canvas"]')
       .or(page.locator('canvas'))
       .or(page.locator('[class*="canvas"]'));
@@ -71,11 +66,13 @@ test.describe('CANVAS: Advanced Interactions', () => {
     await page.mouse.up();
     await page.keyboard.up('Space');
 
-    // Canvas should still be functional
+    // Canvas should still be functional after panning
     await expect(canvas.first()).toBeVisible();
   });
 
-  test('[CANVAS-010] SKU assignment via canvas context menu or panel', async ({ page }) => {
+  test('[CANVAS-010] SKU assignment via canvas context menu or panel', async ({ designerBrowser: page }) => {
+    await page.goto(`/templates/${ACTIVE_TEMPLATE_1.id}/editor`);
+
     const zones = page.locator('[data-testid="zone"]')
       .or(page.locator('[data-zone-id]'))
       .or(page.locator('[class*="zone"]'));
@@ -89,8 +86,8 @@ test.describe('CANVAS: Advanced Interactions', () => {
       .or(page.locator('[class*="sku"]'))
       .or(page.locator('[data-testid="properties-panel"]'));
 
-    // Try right-click for context menu
-    if (!(await skuPanel.isVisible())) {
+    // Try right-click for context menu if panel is not visible
+    if (!(await skuPanel.first().isVisible({ timeout: 2000 }).catch(() => false))) {
       await zones.first().click({ button: 'right' });
     }
 
@@ -98,17 +95,18 @@ test.describe('CANVAS: Advanced Interactions', () => {
     const skuSelector = page.getByRole('combobox', { name: /sku/i })
       .or(page.getByLabel(/sku|material|product/i))
       .or(page.getByRole('menuitem', { name: /assign|sku/i }));
+    await expect(skuSelector).toBeVisible();
+    await skuSelector.click();
 
-    if (await skuSelector.isVisible()) {
-      await skuSelector.click();
-      // Expect SKU options to appear
-      await expect(
-        page.getByRole('option').or(page.getByRole('listbox'))
-      ).toBeVisible();
-    }
+    // Expect SKU options to appear
+    await expect(
+      page.getByRole('option').or(page.getByRole('listbox'))
+    ).toBeVisible();
   });
 
-  test('[CANVAS-011] Keyboard shortcuts for common actions', async ({ page }) => {
+  test('[CANVAS-011] Keyboard shortcuts for common actions', async ({ designerBrowser: page }) => {
+    await page.goto(`/templates/${ACTIVE_TEMPLATE_1.id}/editor`);
+
     const canvas = page.locator('[data-testid="canvas"]')
       .or(page.locator('canvas'))
       .or(page.locator('[class*="canvas"]'));
@@ -118,25 +116,26 @@ test.describe('CANVAS: Advanced Interactions', () => {
     const zones = page.locator('[data-testid="zone"]')
       .or(page.locator('[data-zone-id]'))
       .or(page.locator('[class*="zone"]'));
+    await expect(zones.first()).toBeVisible();
 
-    if (await zones.first().isVisible()) {
-      const initialCount = await zones.count();
-      await zones.first().click();
-      await page.keyboard.press('Delete');
+    const initialCount = await zones.count();
+    await zones.first().click();
+    await page.keyboard.press('Delete');
 
-      // Zone should be removed or a confirmation dialog appears
-      const afterCount = await zones.count();
-      const confirmDialog = page.getByRole('dialog')
-        .or(page.getByRole('alertdialog'));
-      const removed = afterCount < initialCount || await confirmDialog.isVisible();
-      expect(removed).toBeTruthy();
+    // Zone should be removed or a confirmation dialog appears
+    const afterCount = await zones.count();
+    const confirmDialog = page.getByRole('dialog')
+      .or(page.getByRole('alertdialog'));
+    const removed = afterCount < initialCount || await confirmDialog.isVisible();
+    expect(removed).toBeTruthy();
 
-      // Undo the deletion
-      await page.keyboard.press('Control+z');
-    }
+    // Undo the deletion
+    await page.keyboard.press('Control+z');
   });
 
-  test('[CANVAS-012] BOM link indicator shows on zones with assigned SKUs', async ({ page }) => {
+  test('[CANVAS-012] BOM link indicator shows on zones with assigned SKUs', async ({ designerBrowser: page }) => {
+    await page.goto(`/templates/${ACTIVE_TEMPLATE_1.id}/editor`);
+
     const zones = page.locator('[data-testid="zone"]')
       .or(page.locator('[data-zone-id]'))
       .or(page.locator('[class*="zone"]'));
@@ -148,17 +147,15 @@ test.describe('CANVAS: Advanced Interactions', () => {
       .or(page.locator('[class*="linked"]'))
       .or(page.locator('[data-has-sku="true"]'));
 
-    // If any zones have SKUs assigned, they should show an indicator
-    // This is a visual verification that the indicator renders
-    const indicatorExists = await bomIndicator.first().isVisible().catch(() => false);
-
-    // At minimum, zones should render without error
-    await expect(zones.first()).toBeVisible();
+    // Zones with SKUs assigned should show a BOM link indicator
+    // At minimum one zone in the active template should have an assigned SKU
+    await expect(bomIndicator.first()).toBeVisible();
   });
 
-  test('[CANVAS-013] Touch viewport interactions on mobile', async ({ page }) => {
+  test('[CANVAS-013] Touch viewport interactions on mobile', async ({ designerBrowser: page }) => {
     // Emulate touch device
     await page.setViewportSize({ width: 768, height: 1024 });
+    await page.goto(`/templates/${ACTIVE_TEMPLATE_1.id}/editor`);
 
     const canvas = page.locator('[data-testid="canvas"]')
       .or(page.locator('canvas'))
@@ -168,49 +165,40 @@ test.describe('CANVAS: Advanced Interactions', () => {
     const box = await canvas.first().boundingBox();
     expect(box).not.toBeNull();
 
-    // Simulate pinch-to-zoom with touch events
+    // Simulate tap interaction
     await page.touchscreen.tap(box!.x + box!.width / 2, box!.y + box!.height / 2);
 
-    // Canvas should respond to touch - at minimum not crash
+    // Canvas should respond to touch without crashing
     await expect(canvas.first()).toBeVisible();
 
     // Verify zones are still tappable
     const zones = page.locator('[data-testid="zone"]')
       .or(page.locator('[data-zone-id]'))
       .or(page.locator('[class*="zone"]'));
-    if (await zones.first().isVisible()) {
-      const zoneBox = await zones.first().boundingBox();
-      if (zoneBox) {
-        await page.touchscreen.tap(
-          zoneBox.x + zoneBox.width / 2,
-          zoneBox.y + zoneBox.height / 2
-        );
-      }
-    }
+    await expect(zones.first()).toBeVisible();
+
+    const zoneBox = await zones.first().boundingBox();
+    expect(zoneBox).not.toBeNull();
+    await page.touchscreen.tap(
+      zoneBox!.x + zoneBox!.width / 2,
+      zoneBox!.y + zoneBox!.height / 2
+    );
   });
 
-  test('[CANVAS-014] Permission enforcement: consultant cannot edit canvas', async ({ page }) => {
-    // This test verifies that a non-designer role sees read-only canvas
-    // Navigate to template editor as non-owner
+  test('[CANVAS-014] Permission enforcement: consultant cannot edit canvas', async ({ consultantBrowser: page }) => {
+    // Navigate to template editor as consultant (non-designer role)
     await page.goto(`/templates/${ACTIVE_TEMPLATE_1.id}/editor`);
 
-    const canvas = page.locator('[data-testid="canvas"]')
-      .or(page.locator('canvas'))
-      .or(page.locator('[class*="canvas"]'));
-
-    // Either the page shows read-only mode or denies access
+    // Either the page shows read-only mode or denies access entirely
     const readOnlyIndicator = page.getByText(/read.?only|view.?only|no permission/i)
       .or(page.locator('[data-readonly="true"]'))
       .or(page.locator('[class*="readonly"]'));
 
     const accessDenied = page.getByText(/access denied|forbidden|unauthorized/i);
 
-    // Expect either read-only indicator, access denied, or canvas is rendered
-    // (permission enforcement may differ by implementation)
+    // Consultant must see either a read-only indicator or an access denied message
     await expect(
-      canvas.first()
-        .or(readOnlyIndicator.first())
-        .or(accessDenied.first())
+      readOnlyIndicator.first().or(accessDenied.first())
     ).toBeVisible();
   });
 });

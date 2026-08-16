@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../fixtures/browser-auth.fixture';
 
 /**
  * P0-C: Functional - General UI Behavior (Browser)
@@ -12,7 +12,7 @@ import { test, expect } from '@playwright/test';
  */
 
 test.describe('FUNC: General UI Behavior', () => {
-  test('[FUNC-006] SKU browser displays and filters SKUs', async ({ page }) => {
+  test('[FUNC-006] SKU browser displays and filters SKUs', async ({ designerBrowser: page }) => {
     await page.goto('/skus');
 
     // Expect the SKU listing page to render
@@ -31,14 +31,13 @@ test.describe('FUNC: General UI Behavior', () => {
     // Test filtering
     const searchInput = page.getByPlaceholder(/search|filter/i)
       .or(page.getByLabel(/search|filter/i));
-    if (await searchInput.isVisible()) {
-      await searchInput.fill('oak');
-      // Expect results to update (at least the list is still present)
-      await expect(skuItems.first()).toBeVisible();
-    }
+    await expect(searchInput).toBeVisible();
+    await searchInput.fill('oak');
+    // Expect results to update (at least the list is still present)
+    await expect(skuItems.first()).toBeVisible();
   });
 
-  test('[FUNC-008] Error messages display for invalid actions', async ({ page }) => {
+  test('[FUNC-008] Error messages display for invalid actions', async ({ designerBrowser: page }) => {
     // Navigate to a page that requires data - use an invalid project ID
     await page.goto('/projects/00000000-0000-0000-0000-000000000000');
 
@@ -50,57 +49,51 @@ test.describe('FUNC: General UI Behavior', () => {
     ).toBeVisible();
   });
 
-  test('[FUNC-009] Navigation between main sections works', async ({ page }) => {
+  test('[FUNC-009] Navigation between main sections works', async ({ designerBrowser: page }) => {
     await page.goto('/');
 
     // Navigate to projects
     const projectsNav = page.getByRole('link', { name: /projects/i })
       .or(page.getByRole('navigation').getByText(/projects/i));
-    if (await projectsNav.isVisible()) {
-      await projectsNav.click();
-      await expect(page).toHaveURL(/\/projects/);
-    }
+    await expect(projectsNav).toBeVisible();
+    await projectsNav.click();
+    await expect(page).toHaveURL(/\/projects/);
 
     // Navigate to templates
     const templatesNav = page.getByRole('link', { name: /templates/i })
       .or(page.getByRole('navigation').getByText(/templates/i));
-    if (await templatesNav.isVisible()) {
-      await templatesNav.click();
-      await expect(page).toHaveURL(/\/templates/);
-    }
+    await expect(templatesNav).toBeVisible();
+    await templatesNav.click();
+    await expect(page).toHaveURL(/\/templates/);
 
     // Navigate back home/dashboard
     const homeNav = page.getByRole('link', { name: /home|dashboard/i })
       .or(page.getByRole('navigation').getByText(/home|dashboard/i));
-    if (await homeNav.isVisible()) {
-      await homeNav.click();
-      await expect(page).toHaveURL(/\/($|dashboard)/);
-    }
+    await expect(homeNav).toBeVisible();
+    await homeNav.click();
+    await expect(page).toHaveURL(/\/($|dashboard)/);
   });
 
-  test('[FUNC-010] Logout terminates session', async ({ page }) => {
+  test('[FUNC-010] Logout terminates session', async ({ designerBrowser: page }) => {
     await page.goto('/');
 
     // Look for user menu or logout button
     const userMenu = page.getByRole('button', { name: /user|account|profile|menu/i })
       .or(page.locator('[data-testid="user-menu"]'));
-    if (await userMenu.isVisible()) {
-      await userMenu.click();
-    }
+    await expect(userMenu).toBeVisible();
+    await userMenu.click();
 
     const logoutBtn = page.getByRole('button', { name: /log ?out|sign ?out/i })
       .or(page.getByRole('link', { name: /log ?out|sign ?out/i }))
       .or(page.getByRole('menuitem', { name: /log ?out|sign ?out/i }));
+    await expect(logoutBtn).toBeVisible();
+    await logoutBtn.click();
 
-    if (await logoutBtn.isVisible()) {
-      await logoutBtn.click();
-
-      // Expect redirect to login page or landing page
-      await expect(page).toHaveURL(/\/login|\/auth|\/$/);
-    }
+    // Expect redirect to login page or landing page
+    await expect(page).toHaveURL(/\/login|\/auth|\/$/);
   });
 
-  test('[FUNC-011] Responsive layout adapts to mobile viewport', async ({ page }) => {
+  test('[FUNC-011] Responsive layout adapts to mobile viewport', async ({ designerBrowser: page }) => {
     // Set mobile viewport
     await page.setViewportSize({ width: 375, height: 667 });
     await page.goto('/');
@@ -120,7 +113,7 @@ test.describe('FUNC: General UI Behavior', () => {
     expect(hasLayout!.width).toBeLessThanOrEqual(375);
   });
 
-  test('[FUNC-012] Loading states appear during data fetch', async ({ page }) => {
+  test('[FUNC-012] Loading states appear during data fetch', async ({ designerBrowser: page }) => {
     // Slow down network to observe loading states
     await page.route('**/rest/v1/**', async (route) => {
       await new Promise((resolve) => setTimeout(resolve, 500));
@@ -137,7 +130,7 @@ test.describe('FUNC: General UI Behavior', () => {
       .or(page.locator('.spinner, .loading, [class*="skeleton"]'));
 
     // Either the loading state was visible or data loaded immediately
-    const wasVisible = await loadingIndicator.first().isVisible().catch(() => false);
+    await loadingIndicator.first().isVisible().catch(() => false);
 
     // After network resolves, content should be present
     await expect(

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../fixtures/browser-auth.fixture';
 import {
   ACTIVE_TEMPLATE_1,
 } from '../fixtures/seed-data';
@@ -12,7 +12,7 @@ import {
  */
 
 test.describe('FUNC: Template & Project Lifecycle UI', () => {
-  test('[FUNC-001] Project creation via UI', async ({ page }) => {
+  test('[FUNC-001] Project creation via UI', async ({ designerBrowser: page }) => {
     await page.goto('/projects/new');
 
     // Expect the new project form to be rendered
@@ -26,12 +26,11 @@ test.describe('FUNC: Template & Project Lifecycle UI', () => {
 
     // Select template
     const templateSelect = page.getByLabel(/template/i);
-    if (await templateSelect.isVisible()) {
-      await templateSelect.click();
-      await page
-        .getByRole('option', { name: new RegExp(ACTIVE_TEMPLATE_1.name, 'i') })
-        .click();
-    }
+    await expect(templateSelect).toBeVisible();
+    await templateSelect.click();
+    await page
+      .getByRole('option', { name: new RegExp(ACTIVE_TEMPLATE_1.name, 'i') })
+      .click();
 
     // Submit form
     await page.getByRole('button', { name: /create|submit|save/i }).click();
@@ -40,7 +39,7 @@ test.describe('FUNC: Template & Project Lifecycle UI', () => {
     await expect(page).toHaveURL(/\/projects\/[a-f0-9-]+|\/projects/);
   });
 
-  test('[FUNC-002] Template creation via UI', async ({ page }) => {
+  test('[FUNC-002] Template creation via UI', async ({ designerBrowser: page }) => {
     await page.goto('/templates/new');
 
     // Expect the new template form
@@ -65,8 +64,8 @@ test.describe('FUNC: Template & Project Lifecycle UI', () => {
     ).toBeVisible();
   });
 
-  test('[FUNC-007] Template activation via UI', async ({ page }) => {
-    // Navigate to a known draft template's detail page
+  test('[FUNC-007] Template activation via UI', async ({ designerBrowser: page }) => {
+    // Navigate to a known template's detail page
     await page.goto(`/templates/${ACTIVE_TEMPLATE_1.id}`);
 
     // Expect template detail to load
@@ -80,9 +79,12 @@ test.describe('FUNC: Template & Project Lifecycle UI', () => {
     });
     const statusSelect = page.getByLabel(/status/i);
 
+    // At least one activation mechanism must be present
+    await expect(activateBtn.or(statusSelect)).toBeVisible();
+
     if (await activateBtn.isVisible()) {
       await activateBtn.click();
-    } else if (await statusSelect.isVisible()) {
+    } else {
       await statusSelect.selectOption('active');
       await page.getByRole('button', { name: /save|update/i }).click();
     }

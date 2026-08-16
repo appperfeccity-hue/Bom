@@ -16,6 +16,7 @@ export default defineConfig({
     navigationTimeout: 60_000,
     screenshot: 'only-on-failure',
     trace: 'retain-on-failure',
+    video: 'retain-on-failure',
   },
   outputDir: 'test-results/',
   globalSetup: './e2e/global-setup.ts',
