@@ -1,0 +1,32 @@
+{
+  "id": "FEAT-001",
+  "type": "docs",
+  "description": "Produce the complete P0-C functional behavior test results document with honest classification for all 41 tests",
+  "status": "in_progress",
+  "steps": [
+    "Create .agents/tasks/task-p0c-functional/p0c-test-results.md with the full 41-test results table",
+    "For each of the 12 Functional Suite tests (FUNC-001 through FUNC-012): classify as BLOCKED (requires browser access to bom-beryl.vercel.app), note SQL/Vitest cannot verify browser rendering behavior, reference relevant Vitest file if coverage exists",
+    "For each of the 14 Canvas Suite tests (CANVAS-001 through CANVAS-014): classify as BLOCKED (requires browser), reference Vitest canvas tests where applicable",
+    "For each of the 8 Asset/SVG tests (SVG-001 through SVG-008): classify appropriately - SVG-003 and SVG-005 have DB-enforceable components (PARTIAL), the rest are BLOCKED browser tests",
+    "For each of the 7 Integration Scenarios (INT-001 through INT-007): classify - some have DB-enforceable components (INT-001, INT-003, INT-004, INT-005, INT-007 have partial DB evidence), some are BLOCKED",
+    "Include the mandatory four-question evidence package for each test",
+    "Include summary counts: X PASS / Y PARTIAL / Z BLOCKED / W COVERED BY VITEST",
+    "Include gate decision with explicit acknowledgment of blocked tests",
+    "Include clear statement of what remains for full P0-C verification",
+    "Commit with message: test: P0-C functional behavior -- honest classification (blocked/partial/vitest)",
+    "Push to origin feat/db-baseline-v1.1.5"
+  ],
+  "acceptance_criteria": [
+    "p0c-test-results.md contains all 41 tests with correct honest classification",
+    "Each test has the four-question evidence package",
+    "Summary accurately reflects blocked vs partial vs vitest-covered counts",
+    "File committed and pushed to origin"
+  ],
+  "verification": [
+    "Read the output file and confirm all 41 test IDs are present",
+    "Verify git log shows the commit on feat/db-baseline-v1.1.5",
+    "Verify the summary counts add up to 41"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}
