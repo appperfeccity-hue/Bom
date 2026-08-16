@@ -81,6 +81,9 @@ async function createAuthenticatedPage(
     { key: storageKey, value: storageValue }
   );
 
+  // Reload so the app re-reads auth state from localStorage on the fresh load
+  await page.reload({ waitUntil: 'domcontentloaded' });
+
   return page;
 }
 

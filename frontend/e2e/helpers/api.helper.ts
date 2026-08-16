@@ -43,8 +43,8 @@ export async function createProject(
     client_name?: string;
     notes?: string;
   }
-): Promise<{ id: string; status: string; [key: string]: unknown }> {
-  const response = await request.post(`${SUPABASE_URL}/rest/v1/projects`, {
+): Promise<{ project_id: string; status: string; [key: string]: unknown }> {
+  const response = await request.post(`${SUPABASE_URL}/rest/v1/project`, {
     data: {
       template_id: data.template_id,
       name: data.name,
@@ -68,9 +68,9 @@ export async function createProject(
 export async function getProject(
   request: APIRequestContext,
   id: string
-): Promise<{ id: string; status: string; [key: string]: unknown } | null> {
+): Promise<{ project_id: string; status: string; [key: string]: unknown } | null> {
   const response = await request.get(
-    `${SUPABASE_URL}/rest/v1/projects?id=eq.${id}&select=*`
+    `${SUPABASE_URL}/rest/v1/project?project_id=eq.${id}&select=*`
   );
 
   if (!response.ok()) {

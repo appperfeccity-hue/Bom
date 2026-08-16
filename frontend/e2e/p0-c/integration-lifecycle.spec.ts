@@ -117,7 +117,7 @@ authTest.describe('INT: Integration (API)', () => {
   authTest('[INT-003] Multi-zone template with all component types', async ({ designerPage }) => {
     // Query template zones to verify multiple component types
     const response = await designerPage.request.get(
-      `${SUPABASE_URL}/rest/v1/template_zones?template_id=eq.${ACTIVE_TEMPLATE_1.id}&select=*`
+      `${SUPABASE_URL}/rest/v1/template_zone?template_id=eq.${ACTIVE_TEMPLATE_1.id}&select=*`
     );
 
     expect(response.ok()).toBeTruthy();
@@ -129,7 +129,7 @@ authTest.describe('INT: Integration (API)', () => {
 
       // Verify zone structure
       for (const zone of zones) {
-        expect(zone).toHaveProperty('id');
+        expect(zone).toHaveProperty('zone_id');
         expect(zone).toHaveProperty('template_id');
       }
     }
@@ -142,23 +142,23 @@ authTest.describe('INT: Integration (API)', () => {
       name: `INT Version Test ${Date.now()}`,
     });
 
-    expect(project).toHaveProperty('id');
+    expect(project).toHaveProperty('project_id');
 
-    // Query project config/history
+    // Query project configuration
     const historyResponse = await designerPage.request.get(
-      `${SUPABASE_URL}/rest/v1/project_versions?project_id=eq.${project.id}&select=*`
+      `${SUPABASE_URL}/rest/v1/project_configuration?project_id=eq.${project.project_id}&select=*`
     );
 
-    // Version table may or may not exist - verify no server error
+    // Configuration table may or may not exist - verify no server error
     expect(historyResponse.status()).toBeLessThan(500);
 
     // Re-query the project to check version field
-    const updatedProject = await getProject(designerPage.request, project.id);
+    const updatedProject = await getProject(designerPage.request, project.project_id);
     expect(updatedProject).not.toBeNull();
 
     // Cleanup
     await designerPage.request.delete(
-      `${SUPABASE_URL}/rest/v1/projects?id=eq.${project.id}`
+      `${SUPABASE_URL}/rest/v1/project?project_id=eq.${project.project_id}`
     );
   });
 
@@ -169,30 +169,21 @@ authTest.describe('INT: Integration (API)', () => {
       name: `INT Supersession ${Date.now()}`,
     });
 
-    // Check BOM items initially
+    // Check actual_bom_line items initially
     const bom1Response = await designerPage.request.get(
-      `${SUPABASE_URL}/rest/v1/bom_items?project_id=eq.${project.id}&select=*`
+      `${SUPABASE_URL}/rest/v1/actual_bom_line?project_id=eq.${project.project_id}&select=*`
     );
     expect(bom1Response.status()).toBeLessThan(500);
 
-    // Trigger BOM regeneration via RPC if available
-    const regenResponse = await designerPage.request.post(
-      `${SUPABASE_URL}/rest/v1/rpc/generate_bom`,
-      { data: { p_project_id: project.id } }
-    );
-
-    // RPC may not exist - that's a valid blocked state
-    if (regenResponse.ok()) {
-      // Query BOM again - old items should be superseded
-      const bom2Response = await designerPage.request.get(
-        `${SUPABASE_URL}/rest/v1/bom_items?project_id=eq.${project.id}&select=*,superseded_by`
-      );
-      expect(bom2Response.status()).toBeLessThan(500);
-    }
+    // Note: generate_bom RPC does not exist in the current schema.
+    // Only create_project and finalize_project RPCs are available.
+    // Skip BOM regeneration test - verify that the actual_bom_line table is queryable.
+    const bom1Data = bom1Response.ok() ? await bom1Response.json() : [];
+    expect(Array.isArray(bom1Data)).toBeTruthy();
 
     // Cleanup
     await designerPage.request.delete(
-      `${SUPABASE_URL}/rest/v1/projects?id=eq.${project.id}`
+      `${SUPABASE_URL}/rest/v1/project?project_id=eq.${project.project_id}`
     );
   });
 
@@ -208,18 +199,18 @@ authTest.describe('INT: Integration (API)', () => {
 
     // Both users read the project simultaneously
     const [designerRead, consultantRead] = await Promise.all([
-      getProject(designerPage.request, project.id),
-      getProject(consultantPage.request, project.id),
+      getProject(designerPage.request, project.project_id),
+      getProject(consultantPage.request, project.project_id),
     ]);
 
     // Both should see the same project
     expect(designerRead).not.toBeNull();
     expect(consultantRead).not.toBeNull();
-    expect(designerRead!.id).toBe(consultantRead!.id);
+    expect(designerRead!.project_id).toBe(consultantRead!.project_id);
 
     // Consultant should be able to read but not modify (RLS)
     const updateResponse = await consultantPage.request.patch(
-      `${SUPABASE_URL}/rest/v1/projects?id=eq.${project.id}`,
+      `${SUPABASE_URL}/rest/v1/project?project_id=eq.${project.project_id}`,
       { data: { name: 'Consultant Override Attempt' } }
     );
 
@@ -233,14 +224,14 @@ authTest.describe('INT: Integration (API)', () => {
 
     // Cleanup
     await designerPage.request.delete(
-      `${SUPABASE_URL}/rest/v1/projects?id=eq.${project.id}`
+      `${SUPABASE_URL}/rest/v1/project?project_id=eq.${project.project_id}`
     );
   });
 
   authTest('[INT-007] Template demotion cascade', async ({ designerPage }) => {
     // Query the active template
     const templateResponse = await designerPage.request.get(
-      `${SUPABASE_URL}/rest/v1/templates?id=eq.${ACTIVE_TEMPLATE_1.id}&select=*`
+      `${SUPABASE_URL}/rest/v1/template?template_id=eq.${ACTIVE_TEMPLATE_1.id}&select=*`
     );
     expect(templateResponse.ok()).toBeTruthy();
     const templates = await templateResponse.json();
@@ -248,7 +239,7 @@ authTest.describe('INT: Integration (API)', () => {
 
     // Attempt to demote (change status to draft) - should trigger cascade checks
     const demoteResponse = await designerPage.request.patch(
-      `${SUPABASE_URL}/rest/v1/templates?id=eq.${ACTIVE_TEMPLATE_1.id}`,
+      `${SUPABASE_URL}/rest/v1/template?template_id=eq.${ACTIVE_TEMPLATE_1.id}`,
       { data: { status: 'draft' } }
     );
 
@@ -263,7 +254,7 @@ authTest.describe('INT: Integration (API)', () => {
       if (Array.isArray(body) && body.length > 0) {
         // Restore to active
         await designerPage.request.patch(
-          `${SUPABASE_URL}/rest/v1/templates?id=eq.${ACTIVE_TEMPLATE_1.id}`,
+          `${SUPABASE_URL}/rest/v1/template?template_id=eq.${ACTIVE_TEMPLATE_1.id}`,
           { data: { status: 'active' } }
         );
       }

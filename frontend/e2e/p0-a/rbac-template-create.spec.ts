@@ -25,7 +25,7 @@ test.describe('RBAC: Template Creation', () => {
 
     try {
       const response = await designerPage.request.post(
-        `${SUPABASE_URL}/rest/v1/templates`,
+        `${SUPABASE_URL}/rest/v1/template`,
         {
           data: payload,
         }
@@ -35,14 +35,14 @@ test.describe('RBAC: Template Creation', () => {
       expect(response.status()).toBeLessThan(400);
       const body = await response.json();
       const template = Array.isArray(body) ? body[0] : body;
-      templateId = template?.id;
-      expect(template).toHaveProperty('id');
+      templateId = template?.template_id;
+      expect(template).toHaveProperty('template_id');
       expect(template.name).toBe(payload.name);
     } finally {
       // Cleanup: delete the test template even if assertions fail
       if (templateId) {
         await designerPage.request.delete(
-          `${SUPABASE_URL}/rest/v1/templates?id=eq.${templateId}`
+          `${SUPABASE_URL}/rest/v1/template?template_id=eq.${templateId}`
         );
       }
     }
@@ -52,7 +52,7 @@ test.describe('RBAC: Template Creation', () => {
     const payload = makeTemplatePayload();
 
     const response = await consultantPage.request.post(
-      `${SUPABASE_URL}/rest/v1/templates`,
+      `${SUPABASE_URL}/rest/v1/template`,
       {
         data: payload,
       }
@@ -68,7 +68,7 @@ test.describe('RBAC: Template Creation', () => {
 
     try {
       const response = await adminPage.request.post(
-        `${SUPABASE_URL}/rest/v1/templates`,
+        `${SUPABASE_URL}/rest/v1/template`,
         {
           data: payload,
         }
@@ -78,14 +78,14 @@ test.describe('RBAC: Template Creation', () => {
       expect(response.status()).toBeLessThan(400);
       const body = await response.json();
       const template = Array.isArray(body) ? body[0] : body;
-      templateId = template?.id;
-      expect(template).toHaveProperty('id');
+      templateId = template?.template_id;
+      expect(template).toHaveProperty('template_id');
       expect(template.name).toBe(payload.name);
     } finally {
       // Cleanup: delete the test template even if assertions fail
       if (templateId) {
         await adminPage.request.delete(
-          `${SUPABASE_URL}/rest/v1/templates?id=eq.${templateId}`
+          `${SUPABASE_URL}/rest/v1/template?template_id=eq.${templateId}`
         );
       }
     }
