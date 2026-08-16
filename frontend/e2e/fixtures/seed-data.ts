@@ -3,12 +3,24 @@
  * These represent known-good records used for E2E test assertions.
  */
 
-// Supabase connection
-export const SUPABASE_URL =
-  process.env.SUPABASE_URL || 'https://fbiemsbykrmrbqcsobvh.supabase.co';
-export const SUPABASE_ANON_KEY =
-  process.env.SUPABASE_ANON_KEY ||
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZiaWVtc2J5a3JtcmJxY3NvYnZoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ3MjY0NDEsImV4cCI6MjEwMDMwMjQ0MX0.wVthrn8-pRfoBgIjowocD5ApAbiDMx61d5vs1RNlXQA';
+/**
+ * Reads a required environment variable and throws a clear error if missing.
+ * Never logs the value to prevent credential leakage.
+ */
+function requireEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(
+      `Missing required environment variable: ${name}. ` +
+        `Copy .env.e2e.example to .env.e2e and populate all values.`
+    );
+  }
+  return value;
+}
+
+// Supabase connection - always loaded from environment
+export const SUPABASE_URL = requireEnv('SUPABASE_URL');
+export const SUPABASE_ANON_KEY = requireEnv('SUPABASE_ANON_KEY');
 
 // User IDs
 export const DESIGNER_USER_ID = '7703d1f5-7297-47f7-ad72-23612138dc80';

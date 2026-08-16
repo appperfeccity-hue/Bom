@@ -3,7 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from './fixtures/seed-data';
 
-const AUTH_DIR = path.join(__dirname, '.auth');
+const AUTH_DIR = path.join(import.meta.dirname, '.auth');
 
 export const DESIGNER_AUTH_PATH = path.join(AUTH_DIR, 'designer.json');
 export const CONSULTANT_AUTH_PATH = path.join(AUTH_DIR, 'consultant.json');
@@ -17,6 +17,21 @@ interface AuthSession {
     email: string;
     role: string;
   };
+}
+
+/**
+ * Reads a required environment variable and throws a clear error if missing.
+ * Never logs the value to prevent credential leakage.
+ */
+function requireEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(
+      `Missing required environment variable: ${name}. ` +
+        `Copy .env.e2e.example to .env.e2e and populate all values.`
+    );
+  }
+  return value;
 }
 
 async function authenticate(
@@ -53,27 +68,27 @@ async function globalSetup(_config: FullConfig): Promise<void> {
 
   const users = [
     {
-      email: process.env.E2E_DESIGNER_EMAIL || 'designer@perfeccity.test',
-      password: process.env.E2E_DESIGNER_PASSWORD || 'Designer@123',
+      email: requireEnv('E2E_DESIGNER_EMAIL'),
+      password: requireEnv('E2E_DESIGNER_PASSWORD'),
       path: DESIGNER_AUTH_PATH,
       role: 'designer',
     },
     {
-      email: process.env.E2E_CONSULTANT_EMAIL || 'consultant@perfeccity.test',
-      password: process.env.E2E_CONSULTANT_PASSWORD || 'Consultant@123',
+      email: requireEnv('E2E_CONSULTANT_EMAIL'),
+      password: requireEnv('E2E_CONSULTANT_PASSWORD'),
       path: CONSULTANT_AUTH_PATH,
       role: 'consultant',
     },
     {
-      email: process.env.E2E_ADMIN_EMAIL || 'admin@perfeccity.test',
-      password: process.env.E2E_ADMIN_PASSWORD || 'Admin@123',
+      email: requireEnv('E2E_ADMIN_EMAIL'),
+      password: requireEnv('E2E_ADMIN_PASSWORD'),
       path: ADMIN_AUTH_PATH,
       role: 'admin',
     },
   ];
 
   for (const user of users) {
-    console.log(`Authenticating ${user.role} (${user.email})...`);
+    console.log(`Authenticating ${user.role}...`);
     const session = await authenticate(user.email, user.password);
     fs.writeFileSync(user.path, JSON.stringify(session, null, 2));
     console.log(`Stored auth state for ${user.role}`);
