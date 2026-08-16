@@ -1,5 +1,10 @@
 import { APIRequestContext } from '@playwright/test';
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../fixtures/seed-data';
+import { SUPABASE_URL, SUPABASE_ANON_KEY, RULE_SET_ID } from '../fixtures/seed-data';
+
+/** Generate a unique UUID using the global crypto API (Node 19+). */
+function uuid(): string {
+  return crypto.randomUUID();
+}
 
 /**
  * Authenticates a user via Supabase Auth REST API and returns the session.
@@ -33,25 +38,38 @@ export async function signIn(
 }
 
 /**
- * Creates a project via PostgREST using the authenticated user's token.
+ * Creates a project via the create_project RPC endpoint.
+ *
+ * The project table schema uses: project_id, customer_reference, site_reference,
+ * template_id, snapshot_id, current_configuration_id, current_actual_bom_id,
+ * created_by, status, created_at, updated_at, finalized_at.
+ *
+ * There is NO name, client_name, or notes column.
  */
 export async function createProject(
   request: APIRequestContext,
   data: {
     template_id: string;
-    name: string;
-    client_name?: string;
-    notes?: string;
+    user_id: string;
+    idempotency_key?: string;
+    snapshot_data?: Record<string, unknown>;
+    snapshot_hash?: string;
+    rule_set_id?: string;
   }
 ): Promise<{ project_id: string; status: string; [key: string]: unknown }> {
-  const response = await request.post(`${SUPABASE_URL}/rest/v1/project`, {
-    data: {
-      template_id: data.template_id,
-      name: data.name,
-      client_name: data.client_name || 'E2E Test Client',
-      notes: data.notes || 'Created by E2E test',
-    },
-  });
+  const response = await request.post(
+    `${SUPABASE_URL}/rest/v1/rpc/create_project`,
+    {
+      data: {
+        p_template_id: data.template_id,
+        p_user_id: data.user_id,
+        p_idempotency_key: data.idempotency_key || uuid(),
+        p_snapshot_data: data.snapshot_data || { zones: [], version: 1 },
+        p_snapshot_hash: data.snapshot_hash || uuid().replace(/-/g, ''),
+        p_rule_set_id: data.rule_set_id || RULE_SET_ID,
+      },
+    }
+  );
 
   if (!response.ok()) {
     const body = await response.text();
