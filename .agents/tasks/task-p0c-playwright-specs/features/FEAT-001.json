@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "feat",
   "description": "Create the 41 P0-C Playwright spec files in frontend/e2e/p0-c/ covering FUNC-001 to FUNC-012, CANVAS-001 to CANVAS-014, SVG-001 to SVG-008, and INT-001 to INT-007. Each test must be a proper Playwright browser test that exercises the live UI at bom-beryl.vercel.app using the existing auth fixtures and helpers. Tests that require browser interaction must use page navigation, assertions on DOM elements, and screenshot evidence. Tests that are API+Browser hybrid (INT-*) use both API helpers and browser assertions.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "Create frontend/e2e/p0-c/func-template-project.spec.ts covering FUNC-001 (Project creation via UI), FUNC-002 (Template creation via UI), FUNC-007 (Template activation via UI) - all grouped as template/project lifecycle UI tests. Use test.describe blocks. Import test/expect from ../fixtures/auth.fixture. Use designerPage for designer actions. Navigate to PLAYWRIGHT_BASE_URL pages. Assert visible elements. Mark tests with test IDs in test title e.g. '[FUNC-001]'.",
     "Create frontend/e2e/p0-c/func-measurement-bom.spec.ts covering FUNC-003 (Measurement entry via UI), FUNC-004 (BOM generation triggered and visible), FUNC-005 (Finalization via UI). Use consultantPage for measurement entry, designerPage for BOM/finalization. Navigate to project pages, interact with forms, assert results.",
@@ -30,5 +30,5 @@
     "Run: grep -r 'FUNC-\\|CANVAS-\\|SVG-\\|INT-' frontend/e2e/p0-c/ | grep -oP '(FUNC|CANVAS|SVG|INT)-\\d+' | sort -u | wc -l to confirm 41 unique test IDs"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "Playwright --list confirms 41 tests in 7 files parse correctly. Type errors from tsc are all pre-existing in e2e/fixtures/ (missing @types/node context) and don't affect Playwright runtime. NODE_OPTIONS env var in sandbox requires explicit override (NODE_OPTIONS='') to run npx commands. YAML validates via Python yaml.safe_load."
 }
