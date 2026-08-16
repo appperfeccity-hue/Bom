@@ -49,15 +49,20 @@ jobs:
       - name: Connectivity check
         run: |
           echo "Checking connectivity to target URLs..."
-          curl --max-time 10 --fail --silent --show-error -o /dev/null \
+          curl --max-time 10 --silent --show-error -o /dev/null -w "%{http_code}" \
             "${PLAYWRIGHT_BASE_URL:-https://bom-beryl.vercel.app}" \
+            | grep -qE "^[2-4]" \
             && echo "App URL: reachable" \
-            || { echo "App URL: UNREACHABLE"; exit 1; }
-          curl --max-time 10 --fail --silent --show-error -o /dev/null \
-            "${SUPABASE_URL}/rest/v1/" \
-            -H "apikey: ${SUPABASE_ANON_KEY}" \
-            && echo "Supabase URL: reachable" \
-            || { echo "Supabase URL: UNREACHABLE"; exit 1; }
+            || { echo "App URL: UNREACHABLE (no HTTP response)"; exit 1; }
+          HTTP_CODE=$(curl --max-time 10 --silent -o /dev/null -w "%{http_code}" \
+            "${SUPABASE_URL}/auth/v1/health" \
+            -H "apikey: ${SUPABASE_ANON_KEY}")
+          if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 500 ]; then
+            echo "Supabase URL: reachable (HTTP $HTTP_CODE)"
+          else
+            echo "Supabase URL: UNREACHABLE (HTTP $HTTP_CODE)"
+            exit 1
+          fi
 
       - name: Run P0-C Playwright tests
         id: playwright
