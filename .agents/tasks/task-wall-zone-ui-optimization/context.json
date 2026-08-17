@@ -1,0 +1,32 @@
+{
+  "project_type": "React SPA with Konva canvas - architectural panel configuration tool",
+  "language": "TypeScript / React 18",
+  "build_system": "Vite with npm",
+  "test_framework": "Vitest with @testing-library/react, jsdom",
+  "build_command": "cd /projects/sandbox/Bom/frontend && npm run build",
+  "test_command": "cd /projects/sandbox/Bom/frontend && NODE_OPTIONS=\"\" npx vitest run",
+  "verification_instructions": "1. Run typecheck: cd frontend && npm run typecheck. 2. Run build: cd frontend && npm run build. 3. Run tests: cd frontend && NODE_OPTIONS=\"\" npx vitest run. 4. Ensure all existing test data-testid selectors still work.",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "cd /projects/sandbox/Bom/frontend && npm install",
+  "environment_constraints": "COMMON_DEPENDENCIES network mode. No Docker. Use host-based validation only.",
+  "contribution_requirements": "Do not change business rules, calculation logic, database schema, APIs, validation rules, or canvas geometry behavior. UI/UX layer only.",
+  "key_patterns": "1. Inline styles using design system CSS custom properties (--color-*, --space-*, --text-*, etc.). 2. Zustand stores for state management. 3. data-testid attributes on all interactive elements. 4. CSS utility classes in components.css (btn-primary, btn-secondary, input, panel, etc.). 5. All panels use width 280-320px with borderLeft 1px solid --color-hairline. 6. Typography from typography.css (Inter font, --text-xs through --text-2xl). 7. Components reference colors by hex with comment noting the CSS variable name.",
+  "relevant_files": [
+    "frontend/src/components/WallConfigPanel.tsx",
+    "frontend/src/components/ZonePropertiesPanel.tsx",
+    "frontend/src/styles/design-system.css",
+    "frontend/src/styles/components.css",
+    "frontend/src/styles/typography.css",
+    "frontend/src/styles/animations.css",
+    "frontend/src/styles/responsive.css",
+    "frontend/src/styles/layout.css",
+    "frontend/src/stores/wallConfigStore.ts",
+    "frontend/src/stores/canvasStore.ts",
+    "frontend/src/stores/projectStore.ts",
+    "frontend/src/canvas/utils/useZoneValidation.ts",
+    "frontend/src/engines/types.ts",
+    "frontend/src/components/__tests__/ZonePropertiesPanel.validation.test.tsx",
+    "frontend/src/App.tsx"
+  ],
+  "directory_structure": "frontend/src/components/ - UI panels and controls. frontend/src/stores/ - Zustand state stores. frontend/src/canvas/ - Konva canvas layers, interactions, utils. frontend/src/engines/ - Business logic engines (wall config, panel frame generation). frontend/src/styles/ - CSS design system files. frontend/src/types/ - TypeScript type definitions."
+}
