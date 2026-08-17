@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "feat",
   "description": "Create a designLibraryStore (Zustand) that fetches ACTIVE templates with availability calculation, design family grouping, search/filter capabilities, and template detail/preview support. This store replaces the simple fetchAvailableTemplates in projectCreationStore for the Design Library UI.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "Create frontend/src/stores/designLibraryStore.ts with a Zustand store that: (a) fetches all ACTIVE templates from perfecity.template, (b) joins with design_family_master to get design family names, (c) checks template_zone_sku -> sku_master status and catalogue_entry status to compute availability (AVAILABLE if all zone SKUs are ACTIVE with catalogue READY, BLOCKED otherwise), (d) stores blocked reasons per template",
     "Add state fields: templates (with availability info), filteredTemplates, designFamilies (from design_family_master), filters (search text, design_family_id, wall_geometry, availability status), selectedTemplateDetail (for preview), isLoading, error",
@@ -25,5 +25,5 @@
     "cd frontend && NODE_OPTIONS=\"\" npx vitest run"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "Pre-existing TS error in ValidationOverlayLayer.tsx (unused variable errorCount) unrelated to this feature. All 1144 unit tests pass. E2E tests skipped (no SUPABASE_URL env var as documented). Build succeeds. The store staged with task-wall-zone-ui-optimization files that were in git index."
 }
