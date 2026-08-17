@@ -103,7 +103,7 @@ jobs:
            */
           function classify(test) {
             if (!test) return 'BLOCKED';
-            if (test.status === 'passed') return 'PASS';
+            if (test.status === 'passed' || test.status === 'expected') return 'PASS';
             if (test.status === 'skipped') return 'BLOCKED';
 
             const errorMsg = (test.errors || [])
