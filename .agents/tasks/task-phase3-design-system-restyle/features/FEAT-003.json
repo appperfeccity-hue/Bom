@@ -1,0 +1,49 @@
+{
+  "id": "FEAT-003",
+  "type": "feat",
+  "description": "Restyle BOM Panels, Template Management, and all Overlays/Modals (SkuBrowser, PublishWorkflow, ProjectCreation, Finalization) to use PERFECCITY design system",
+  "status": "completed",
+  "steps": [
+    "STEP 1 - BomPanel.tsx: Panel overlay uses 600px width, white bg (var(--color-surface)), hairline left border (var(--color-hairline)), subtle shadow (var(--shadow-panel)). Header: 15px semibold ink color. Close button: color var(--color-ink-secondary). Error color: var(--color-error) replacing #f44336.",
+    "STEP 2 - BomStatusBadge.tsx: Replace solid-color badges with .status-chip pattern. GENERATED=status-chip--inactive (gray bg, secondary text), VALIDATED=accent outline (border: 1px solid var(--color-accent), color: var(--color-accent), transparent bg), APPROVED=status-chip--active (success green), INVALIDATED=status-chip--blocked (error red), SUPERSEDED=warning style (rgba(166,106,45,0.1) bg, color: var(--color-warning)).",
+    "STEP 3 - BomSectionTable.tsx: Section headers -> 12px uppercase semibold secondary color. Table headers -> match .table-minimal pattern. Numeric quantity/dimension cells -> font-family: var(--font-mono). Replace #e0e0e0/#f5f5f5 borders with var(--color-hairline). Highlighted row bg -> rgba(154,123,79,0.08) instead of #fff8e1.",
+    "STEP 4 - BomReconciliationView.tsx: Replace Material colors with design system. UNCHANGED -> var(--color-ink-secondary) (neutral), QUANTITY_CHANGED -> var(--color-warning), SKU_CHANGED -> var(--color-accent), REMOVED -> var(--color-error), ADDED_BY_TRIGGER -> var(--color-accent), UNEXPECTED -> var(--color-error). Badge style: use background rgba of the color at 0.1 opacity with text in the color (like status-chip pattern) instead of solid bg + white text. Table borders -> var(--color-hairline). Qty cells -> font-family: var(--font-mono).",
+    "STEP 5 - MasterBomTable.tsx and ActualBomTable.tsx: Label text -> var(--color-ink-primary). Replace #666 with var(--color-ink-secondary).",
+    "STEP 6 - TemplateManagementPanel.tsx: 'Create New Template' button -> .btn-primary (accent). Close button -> .btn-tertiary pattern. Error text -> var(--color-error) replacing #d32f2f. Replace #e0e0e0 borders with var(--color-hairline).",
+    "STEP 7 - TemplateListItem.tsx: Cards -> border: 1px solid var(--color-hairline), add warm bg on hover pattern (backgroundColor on hover: var(--color-nav-active-bg)). Buttons: Edit -> .btn-secondary. Archive/Retire -> use warning color. Create Draft Copy -> .btn-primary. View -> .btn-secondary. Replace all #e3f2fd/#90caf9 (blue), #fff3e0/#ffcc80 (orange), #e8f5e9/#a5d6a7 (green), #f5f5f5/#e0e0e0 (gray) with design system tokens.",
+    "STEP 8 - TemplateStatusBadge.tsx: DRAFT -> status-chip--inactive (gray). ACTIVE -> status-chip--active (success green). RETIRED -> warning style (rgba(166,106,45,0.1) bg, color: var(--color-warning)). Add BLOCKED -> status-chip--blocked if needed.",
+    "STEP 9 - TemplateFilters.tsx: Inputs/selects -> .input class pattern. Borders -> var(--color-hairline).",
+    "STEP 10 - CreateTemplateDialog.tsx: Centered modal with 480px max-width, rounded corners (var(--radius-md)). Submit button -> .btn-primary (accent). Cancel -> .btn-secondary. Inputs -> .input pattern. Replace #1976d2 with var(--color-accent). Error text -> var(--color-error). Replace #ccc borders with var(--color-disabled).",
+    "STEP 11 - RetireTemplateDialog.tsx: Same modal pattern (480px max-width, centered, rounded corners). Retire button -> use var(--color-warning) instead of #e65100. Cancel -> .btn-secondary. Replace borders/bg.",
+    "STEP 12 - SkuBrowser.tsx: Panel -> 440px width, white bg, hairline left border, shadow (var(--shadow-panel)). Header -> 15px semibold ink. Close button -> var(--color-ink-secondary). Replace #e0e0e0 with var(--color-hairline).",
+    "STEP 13 - SkuFilterBar.tsx and SkuGrid.tsx and SkuDetailPanel.tsx: Apply .input to search/filter inputs. Replace any blue #1976d2 with var(--color-accent). Replace Material colors.",
+    "STEP 14 - PublishWorkflow.tsx: Panel -> 520px, white bg, hairline left border, shadow. Header -> 15px semibold ink. Close -> var(--color-ink-secondary). Error colors -> var(--color-error) replacing #c62828/#d32f2f/#fbe9e7.",
+    "STEP 15 - StepIndicator.tsx: Replace #4caf50 (completed) with var(--color-success). Replace #1976d2 (active) with var(--color-accent). Replace #e0e0e0 with var(--color-disabled). Replace #666666/#999999 with var(--color-ink-secondary).",
+    "STEP 16 - ApprovalStep.tsx: Approve button -> .btn-primary style with var(--color-success) bg. Re-run Validation button -> .btn-secondary style (replace #1976d2 border/text with var(--color-accent)). Table -> .table-minimal pattern. Replace #388e3c with var(--color-success). Replace #f5f5f5 bg with var(--color-canvas).",
+    "STEP 17 - ValidationResultsPanel.tsx: Replace #4caf50 check with var(--color-success). Replace #f44336 X with var(--color-error). Generate BOM button -> .btn-primary (accent replacing #1976d2). Re-run button -> .btn-secondary (accent). Info note bg -> rgba(154,123,79,0.08) replacing #e3f2fd, color -> var(--color-accent) replacing #1565c0. Warning box -> var(--color-warning) replacing #e65100/#fff3e0.",
+    "STEP 18 - PublishConfirmation.tsx: Success bg -> rgba(63,107,79,0.1) replacing #e8f5e9. Success text -> var(--color-success) replacing #2e7d32/#388e3c. Error text -> var(--color-error) replacing #c62828/#d32f2f. Retry button bg -> var(--color-error) replacing #f44336. Publish button bg -> var(--color-accent) replacing #7b1fa2. Close -> .btn-secondary.",
+    "STEP 19 - ProjectCreationWizard.tsx: Panel -> 600px, white bg, hairline left border, shadow (var(--shadow-panel)). Header -> 15px semibold ink. Close -> var(--color-ink-secondary). Replace #1976d2 with var(--color-accent). Replace #2e7d32 with var(--color-success). Replace #c62828/#d32f2f with var(--color-error). Replace #e0e0e0 with var(--color-hairline).",
+    "STEP 20 - DesignLibrary.tsx: Error colors -> var(--color-error) replacing #c62828/#fbe9e7. Loading/empty text -> var(--color-ink-secondary).",
+    "STEP 21 - TemplateCard.tsx: Card border -> var(--color-hairline). Status badge -> .status-chip--active pattern (replace #e8f5e9/#2e7d32). Geometry badge -> use accent tint (rgba(154,123,79,0.1), color: var(--color-accent)) replacing #e3f2fd/#1565c0. Select button -> .btn-primary (accent replacing #1976d2).",
+    "STEP 22 - ProjectDetailsForm.tsx: Inputs -> .input pattern. Create Project button -> .btn-primary (accent replacing #1976d2). Back button -> .btn-secondary. Labels -> var(--color-ink-secondary) replacing #333.",
+    "STEP 23 - FinalizationConfirmDialog.tsx: Modal -> 480px max-width, rounded corners (var(--radius-md)). Title color -> var(--color-error) replacing #d32f2f. Error msg -> var(--color-error) replacing #d32f2f, bg rgba(176,65,62,0.08) replacing #ffebee. Cancel -> .btn-secondary. Confirm button -> var(--color-success) replacing #2e7d32. Loading state -> lighter success.",
+    "STEP 24 - FinalizationSuccessPanel.tsx: Modal -> 480px, rounded (var(--radius-md)). Success icon bg -> rgba(63,107,79,0.1) replacing #e8f5e9. Success title -> var(--color-success) replacing #2e7d32. Body text -> var(--color-ink-secondary) replacing #616161. Detail labels -> var(--color-ink-secondary) replacing #757575. Detail values -> var(--color-ink-primary) + font-family: var(--font-mono) replacing monospace. Close button -> .btn-primary with var(--color-success)."
+  ],
+  "acceptance_criteria": [
+    "No occurrences of #1976d2, #f44336, #d32f2f, #c62828, #2e7d32, #4caf50, #388e3c in any of the listed component files",
+    "BomStatusBadge uses status-chip pattern with correct color mapping per spec",
+    "BomReconciliationView uses design system color vars for result types",
+    "All overlay panels (BomPanel, SkuBrowser, PublishWorkflow, ProjectCreation) use consistent styling: white bg, hairline left border, shadow-panel",
+    "Template Management dialogs use centered 480px max-width modal pattern",
+    "All data-testid attributes remain intact",
+    "No business logic is modified",
+    "vite build succeeds",
+    "vitest run passes"
+  ],
+  "verification": [
+    "cd /projects/sandbox/Bom/frontend && npx vite build",
+    "cd /projects/sandbox/Bom/frontend && npx vitest run"
+  ],
+  "blocked_reason": null,
+  "findings": "All 1094 tests pass. Build succeeds. Also updated ValidationGateIndicator.tsx and FinalizeButton.tsx which were not in the original file list but contained banned colors. Updated 3 test files (BomPanel.test.tsx, TemplateManagement.test.tsx, ValidationGateIndicator.test.tsx) to assert new design system color values instead of old Material Design hex colors. Post-review fixes applied: (1) BomReconciliationView destructures getResultStyle once per row instead of calling twice, (2) DashboardPage uses var(--shadow-sm) instead of hardcoded rgba, (3) removed all `as unknown as number` double-casts for fontWeight in BomSectionTable and BomPanel."
+}
