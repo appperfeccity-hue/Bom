@@ -13,6 +13,8 @@ import type {
 } from '@/types/database';
 import type { WallConfigInput, PanelFrame } from '@/engines/types';
 import { fromTable } from '@/lib/supabase';
+import { readSnapshot } from '@/lib/snapshotReader';
+import type { SnapshotAlternative, SnapshotConsultantPermission } from '@/lib/snapshotReader';
 import { createDebouncedSave } from '@/lib/autosave';
 import type { SaveStatus } from '@/types/canvas';
 import { useCanvasStore } from '@/stores/canvasStore';
@@ -25,6 +27,10 @@ export interface ProjectState {
   currentSnapshot: ProjectSnapshot | null;
   zones: TemplateZone[];
   zoneSku: Map<string, SkuMaster>;
+  /** Substitutable SKUs frozen into the snapshot, keyed by zone */
+  zoneAlternatives: Map<string, SnapshotAlternative[]>;
+  /** Consultant permissions frozen into the snapshot */
+  consultantPermissions: SnapshotConsultantPermission[];
   lighting: TemplateLighting[];
   furniture: TemplateFurniture[];
   trims: TemplateTrim[];
@@ -62,6 +68,8 @@ const initialState: ProjectState = {
   currentSnapshot: null,
   zones: [],
   zoneSku: new Map(),
+  zoneAlternatives: new Map(),
+  consultantPermissions: [],
   lighting: [],
   furniture: [],
   trims: [],
@@ -159,14 +167,32 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
         .single();
       if (mErr && mErr.code !== 'PGRST116') throw mErr;
 
+      const { data: snapshot, error: sErr } = await fromTable('project_snapshot')
+        .select('*')
+        .eq('project_id', id)
+        .single();
+      if (sErr) throw sErr;
+
+      // The project executes against its frozen snapshot, never against the
+      // live template: later designer edits must not reach an existing project.
+      const typedSnapshot = snapshot as ProjectSnapshot;
+      const hydrated = readSnapshot(typedSnapshot.snapshot_data, typedSnapshot.template_id);
+
       set({
         currentProject: project as Project,
+        currentSnapshot: typedSnapshot,
         measurements: (measurements as ProjectMeasurement) ?? null,
+        currentTemplate: hydrated.template,
+        zones: hydrated.zones,
+        zoneSku: hydrated.zoneSku,
+        zoneAlternatives: hydrated.zoneAlternatives,
+        lighting: hydrated.lighting,
+        furniture: hydrated.furniture,
+        trims: hydrated.trims,
+        consultantPermissions: hydrated.consultantPermissions,
+        wallGeometry: hydrated.wallGeometry.type,
         isLoading: false,
       });
-
-      // Load associated template
-      await get().loadTemplate((project as Project).template_id);
     } catch (err) {
       set({ error: (err as Error).message, isLoading: false });
     }

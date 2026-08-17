@@ -126,7 +126,7 @@ CREATE POLICY "template_wall_config_insert"
     EXISTS (
       SELECT 1 FROM perfecity.template t
       WHERE t.template_id = template_wall_configuration.template_id
-        AND t.created_by = auth.uid()::text
+        AND t.created_by = auth.uid()
     )
   );
 
@@ -137,7 +137,7 @@ CREATE POLICY "template_wall_config_update"
     EXISTS (
       SELECT 1 FROM perfecity.template t
       WHERE t.template_id = template_wall_configuration.template_id
-        AND t.created_by = auth.uid()::text
+        AND t.created_by = auth.uid()
     )
   );
 
@@ -148,7 +148,7 @@ CREATE POLICY "template_wall_config_delete"
     EXISTS (
       SELECT 1 FROM perfecity.template t
       WHERE t.template_id = template_wall_configuration.template_id
-        AND t.created_by = auth.uid()::text
+        AND t.created_by = auth.uid()
     )
   );
 
@@ -165,7 +165,7 @@ CREATE POLICY "project_wall_config_insert"
     EXISTS (
       SELECT 1 FROM perfecity.project p
       WHERE p.project_id = project_wall_configuration.project_id
-        AND p.created_by = auth.uid()::text
+        AND p.created_by = auth.uid()
     )
   );
 
@@ -176,7 +176,7 @@ CREATE POLICY "project_wall_config_update"
     EXISTS (
       SELECT 1 FROM perfecity.project p
       WHERE p.project_id = project_wall_configuration.project_id
-        AND p.created_by = auth.uid()::text
+        AND p.created_by = auth.uid()
     )
   );
 
@@ -187,7 +187,7 @@ CREATE POLICY "project_wall_config_delete"
     EXISTS (
       SELECT 1 FROM perfecity.project p
       WHERE p.project_id = project_wall_configuration.project_id
-        AND p.created_by = auth.uid()::text
+        AND p.created_by = auth.uid()
     )
   );
 
@@ -204,7 +204,7 @@ CREATE POLICY "project_obstruction_insert"
     EXISTS (
       SELECT 1 FROM perfecity.project p
       WHERE p.project_id = project_obstruction.project_id
-        AND p.created_by = auth.uid()::text
+        AND p.created_by = auth.uid()
     )
   );
 
@@ -215,7 +215,7 @@ CREATE POLICY "project_obstruction_update"
     EXISTS (
       SELECT 1 FROM perfecity.project p
       WHERE p.project_id = project_obstruction.project_id
-        AND p.created_by = auth.uid()::text
+        AND p.created_by = auth.uid()
     )
   );
 
@@ -226,7 +226,7 @@ CREATE POLICY "project_obstruction_delete"
     EXISTS (
       SELECT 1 FROM perfecity.project p
       WHERE p.project_id = project_obstruction.project_id
-        AND p.created_by = auth.uid()::text
+        AND p.created_by = auth.uid()
     )
   );
 
@@ -247,7 +247,7 @@ CREATE POLICY "generated_panel_frame_insert"
     EXISTS (
       SELECT 1 FROM perfecity.project p
       WHERE p.project_id = generated_panel_frame.project_id
-        AND p.created_by = auth.uid()::text
+        AND p.created_by = auth.uid()
     )
   );
 
