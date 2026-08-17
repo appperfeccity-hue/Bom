@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "feat",
   "description": "Redesign the Design Library UI to match the premium interior-design reference aesthetic. This transforms the current basic grid with dropdown filters into an immersive, image-first gallery experience with: (1) 'Explore designs for' horizontal category cards for room types based on wall_application field, (2) 'Explore all looks' visual material/style swatches based on design families, (3) Smart filter bar with category chips replacing dropdown selects, (4) Template grid with large image cards featuring a heart/favorite toggle, design name overlay, and approximate price indicator, (5) Overall premium warm/minimal aesthetic using the existing design system tokens.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "Create a new CSS module or stylesheet for the redesigned Design Library at frontend/src/styles/design-library.css with styles for: category cards (horizontal scroll), material swatches, filter chips, image-first template cards with heart button and overlay text, using existing CSS custom properties from design-system.css.",
     "Create a new component frontend/src/components/ProjectCreation/CategoryCarousel.tsx - horizontal row of clickable room-type category cards ('Living Room', 'TV Unit', 'Bedroom', etc.) derived from wall_application values in the store. Each card should have a placeholder image area with warm gradient, the room type name, and on-click should filter the templates. Section header: 'Explore designs for'.",
@@ -30,5 +30,5 @@
     "cd /projects/sandbox/Bom/frontend && NODE_OPTIONS=\"\" npm run build"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All 1205 unit tests pass. Build succeeds. The EnhancedTemplateCard availability badge was converted from visible text to a dot indicator, with visually-hidden text to maintain test compatibility (tests assert on textContent). The CategoryCarousel derives categories from wall_application field on the full templates[] array (not filteredTemplates) so categories remain visible even when other filters are applied. The category filter is local UI state layered on top of the store's existing filter system to avoid modifying the store."
 }
