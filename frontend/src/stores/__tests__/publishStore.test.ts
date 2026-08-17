@@ -17,7 +17,7 @@ vi.mock('@/lib/supabase', () => {
   };
   return {
     fromTable: vi.fn(() => ({ ...mockQueryBuilder })),
-    supabase: {},
+    supabase: { rpc: vi.fn() },
     isSupabaseConfigured: false,
   };
 });
@@ -471,26 +471,16 @@ describe('publishStore', () => {
 
   describe('publishTemplate', () => {
     it('updates template and sets PUBLISHED on success', async () => {
-      const { fromTable } = await import('@/lib/supabase');
-      const mockedFromTable = vi.mocked(fromTable);
-
-      const mockEq = vi.fn().mockResolvedValue({ data: null, error: null });
-      const mockUpdate = vi.fn().mockReturnValue({ eq: mockEq });
-
-      mockedFromTable.mockReturnValue({
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        in: vi.fn().mockReturnThis(),
-        insert: vi.fn().mockReturnThis(),
-        update: mockUpdate,
-        single: vi.fn().mockResolvedValue({ data: null, error: null }),
-      } as unknown as ReturnType<typeof fromTable>);
+      const { supabase } = await import('@/lib/supabase');
+      const mockedRpc = vi.mocked(supabase.rpc);
+      mockedRpc.mockResolvedValue({ data: 'tpl-1', error: null } as never);
 
       await usePublishStore.getState().publishTemplate('tpl-1');
 
-      expect(mockedFromTable).toHaveBeenCalledWith('template');
-      expect(mockUpdate).toHaveBeenCalledWith({ status: 'ACTIVE' });
-      expect(mockEq).toHaveBeenCalledWith('template_id', 'tpl-1');
+      expect(mockedRpc).toHaveBeenCalledWith('publish_template', {
+        p_template_id: 'tpl-1',
+        p_user_id: 'user-1',
+      });
 
       const state = usePublishStore.getState();
       expect(state.currentStep).toBe(PublishStep.PUBLISHED);
@@ -498,20 +488,9 @@ describe('publishStore', () => {
     });
 
     it('syncs projectStore.currentTemplate.status to ACTIVE after success', async () => {
-      const { fromTable } = await import('@/lib/supabase');
-      const mockedFromTable = vi.mocked(fromTable);
-
-      const mockEq = vi.fn().mockResolvedValue({ data: null, error: null });
-      const mockUpdate = vi.fn().mockReturnValue({ eq: mockEq });
-
-      mockedFromTable.mockReturnValue({
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        in: vi.fn().mockReturnThis(),
-        insert: vi.fn().mockReturnThis(),
-        update: mockUpdate,
-        single: vi.fn().mockResolvedValue({ data: null, error: null }),
-      } as unknown as ReturnType<typeof fromTable>);
+      const { supabase } = await import('@/lib/supabase');
+      const mockedRpc = vi.mocked(supabase.rpc);
+      mockedRpc.mockResolvedValue({ data: 'tpl-1', error: null } as never);
 
       // Verify initial state is DRAFT
       expect(useProjectStore.getState().currentTemplate?.status).toBe(TemplateStatus.DRAFT);
@@ -523,29 +502,18 @@ describe('publishStore', () => {
     });
 
     it('handles DB trigger error gracefully', async () => {
-      const { fromTable } = await import('@/lib/supabase');
-      const mockedFromTable = vi.mocked(fromTable);
-
-      const mockEq = vi.fn().mockResolvedValue({
+      const { supabase } = await import('@/lib/supabase');
+      const mockedRpc = vi.mocked(supabase.rpc);
+      mockedRpc.mockResolvedValue({
         data: null,
-        error: { message: 'Trigger validation failed: template has no approved BOM' },
-      });
-      const mockUpdate = vi.fn().mockReturnValue({ eq: mockEq });
-
-      mockedFromTable.mockReturnValue({
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        in: vi.fn().mockReturnThis(),
-        insert: vi.fn().mockReturnThis(),
-        update: mockUpdate,
-        single: vi.fn().mockResolvedValue({ data: null, error: null }),
-      } as unknown as ReturnType<typeof fromTable>);
+        error: { message: 'Template cannot be published: no approved BOM' },
+      } as never);
 
       await usePublishStore.getState().publishTemplate('tpl-1');
 
       const state = usePublishStore.getState();
       expect(state.currentStep).toBe(PublishStep.ERROR);
-      expect(state.error).toBe('Trigger validation failed: template has no approved BOM');
+      expect(state.error).toBe('Template cannot be published: no approved BOM');
       expect(state.isLoading).toBe(false);
     });
   });

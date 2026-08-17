@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import type { MasterBom, MasterBomLine, Template } from '@/types/database';
-import { fromTable } from '@/lib/supabase';
+import { fromTable, supabase } from '@/lib/supabase';
 import { useProjectStore } from '@/stores/projectStore';
 import { useAuthStore } from '@/stores/authStore';
 import {
@@ -305,9 +305,12 @@ export const usePublishStore = create<PublishStore>((set) => ({
     set({ currentStep: PublishStep.PUBLISHING, isLoading: true, error: null });
 
     try {
-      const { error } = await fromTable('template')
-        .update({ status: 'ACTIVE' })
-        .eq('template_id', templateId);
+      const userId = useAuthStore.getState().user?.id;
+
+      const { data, error } = await supabase.rpc('publish_template', {
+        p_template_id: templateId,
+        p_user_id: userId,
+      });
 
       if (error) {
         set({
