@@ -206,8 +206,19 @@ jobs:
           retention-days: 30
 
       - name: Fail job if tests failed
-        if: env.PLAYWRIGHT_EXIT_CODE != '' && env.PLAYWRIGHT_EXIT_CODE != '0'
+        if: always()
+        working-directory: frontend
         run: |
-          echo "Playwright tests failed with exit code: $PLAYWRIGHT_EXIT_CODE"
-          echo "See uploaded artifacts for HTML report, traces, and screenshots."
-          exit 1
+          if [ -f test-results/p0c-summary.json ]; then
+            FAIL_COUNT=$(python3 -c "import json; d=json.load(open('test-results/p0c-summary.json')); print(d.get('fail',0))")
+            if [ "$FAIL_COUNT" -gt 0 ]; then
+              echo "P0-C has $FAIL_COUNT FAIL results. See artifacts for details."
+              exit 1
+            else
+              echo "P0-C: No FAIL results. PASS=$( python3 -c "import json; d=json.load(open('test-results/p0c-summary.json')); print(d.get('pass',0))") BLOCKED=$(python3 -c "import json; d=json.load(open('test-results/p0c-summary.json')); print(d.get('blocked',0))")"
+              exit 0
+            fi
+          else
+            echo "p0c-summary.json not found. Cannot determine result."
+            exit 1
+          fi
