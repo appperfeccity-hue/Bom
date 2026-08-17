@@ -1,0 +1,24 @@
+{
+  "id": "FEAT-002",
+  "type": "fix",
+  "description": "P1: Tighten Consultant RLS on template table. Replace the permissive template_select_authenticated policy (USING(true)) with role-specific SELECT policies: CONSULTANT sees only status='ACTIVE', DESIGNER sees all (needs DRAFT/BLOCKED visibility), ADMIN sees all. Applied via Supabase MCP execute_sql.",
+  "status": "in_progress",
+  "steps": [
+    "Use Supabase MCP execute_sql (project_id: fbiemsbykrmrbqcsobvh) to DROP POLICY template_select_authenticated ON perfecity.template",
+    "Use Supabase MCP execute_sql to CREATE POLICY template_select_consultant ON perfecity.template FOR SELECT TO authenticated USING (perfecity.current_user_role() = 'CONSULTANT' AND status = 'ACTIVE')",
+    "Use Supabase MCP execute_sql to CREATE POLICY template_select_designer ON perfecity.template FOR SELECT TO authenticated USING (perfecity.current_user_role() = 'DESIGNER')",
+    "Use Supabase MCP execute_sql to CREATE POLICY template_select_admin ON perfecity.template FOR SELECT TO authenticated USING (perfecity.current_user_role() = 'ADMIN')",
+    "Save the RLS change SQL as part of the migration file migrations/v1.1.7_publish_template_and_create_project_fix.sql (append to existing file from FEAT-001)"
+  ],
+  "acceptance_criteria": [
+    "The old template_select_authenticated policy no longer exists",
+    "CONSULTANT role can only SELECT templates with status='ACTIVE'",
+    "DESIGNER and ADMIN roles can SELECT all templates regardless of status",
+    "Direct API/RPC access by a CONSULTANT cannot expose DRAFT/RETIRED templates"
+  ],
+  "verification": [
+    "Use Supabase MCP execute_sql: SELECT policyname, qual FROM pg_policies WHERE tablename = 'template' AND schemaname = 'perfecity' AND cmd = 'SELECT' -- confirm three role-specific policies exist and old policy is gone"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

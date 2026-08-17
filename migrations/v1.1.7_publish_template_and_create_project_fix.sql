@@ -146,3 +146,36 @@ $$;
 -- Revoke from anon/public, grant only to authenticated
 REVOKE ALL ON FUNCTION perfecity.publish_template(UUID, UUID) FROM anon, public;
 GRANT EXECUTE ON FUNCTION perfecity.publish_template(UUID, UUID) TO authenticated;
+
+-- ---------------------------------------------------------------------------
+-- P1: Tighten Consultant RLS on perfecity.template
+-- ---------------------------------------------------------------------------
+-- Replace the overly permissive template_select_authenticated policy
+-- (USING(true) for all authenticated users) with role-specific SELECT policies.
+-- CONSULTANT can only see ACTIVE templates, preventing exposure of DRAFT/RETIRED
+-- metadata via direct API/RPC calls. DESIGNER and ADMIN see all templates.
+-- ---------------------------------------------------------------------------
+
+-- Drop the old permissive policy
+DROP POLICY IF EXISTS template_select_authenticated ON perfecity.template;
+
+-- CONSULTANT: can only SELECT templates with status = 'ACTIVE'
+CREATE POLICY template_select_consultant
+    ON perfecity.template
+    FOR SELECT
+    TO authenticated
+    USING (perfecity.current_user_role() = 'CONSULTANT' AND status = 'ACTIVE');
+
+-- DESIGNER: can SELECT all templates (needs visibility into DRAFT/BLOCKED)
+CREATE POLICY template_select_designer
+    ON perfecity.template
+    FOR SELECT
+    TO authenticated
+    USING (perfecity.current_user_role() = 'DESIGNER');
+
+-- ADMIN: can SELECT all templates
+CREATE POLICY template_select_admin
+    ON perfecity.template
+    FOR SELECT
+    TO authenticated
+    USING (perfecity.current_user_role() = 'ADMIN');
