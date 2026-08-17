@@ -68,6 +68,7 @@ jobs:
         id: playwright
         working-directory: frontend
         run: |
+          mkdir -p test-results
           npx playwright test e2e/p0-c/; EC=$?
           echo "PLAYWRIGHT_EXIT_CODE=$EC" >> "$GITHUB_ENV"
           exit 0
@@ -132,6 +133,7 @@ jobs:
           let results = {};
           try {
             const raw = readFileSync('test-results/p0c-results.json', 'utf-8');
+            console.log('JSON report found, size:', raw.length, 'bytes');
             const report = JSON.parse(raw);
 
             // Extract test results from Playwright JSON format

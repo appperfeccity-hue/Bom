@@ -80,6 +80,10 @@ export async function createProject(
   }
 
   const result = await response.json();
+  // RPC returns raw UUID string, wrap it in object for consistent interface
+  if (typeof result === 'string') {
+    return { project_id: result, status: 'DRAFT' };
+  }
   return Array.isArray(result) ? result[0] : result;
 }
 
