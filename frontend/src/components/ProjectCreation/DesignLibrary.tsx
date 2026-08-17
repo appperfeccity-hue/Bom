@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useDesignLibraryStore } from '@/stores/designLibraryStore';
 import type { TemplateWithAvailability } from '@/stores/designLibraryStore';
 import { useProjectCreationStore } from '@/stores/projectCreationStore';
+import type { WallGeometryType } from '@/types/database';
 import { EnhancedTemplateCard } from './EnhancedTemplateCard';
 import { TemplatePreviewPanel } from './TemplatePreviewPanel';
 import { CategoryCarousel } from './CategoryCarousel';
@@ -180,7 +181,7 @@ export function DesignLibrary() {
                 data-testid="geometry-filter-select"
                 value={filters.wallGeometry ?? ''}
                 onChange={(e) =>
-                  setWallGeometryFilter(e.target.value === '' ? null : e.target.value)
+                  setWallGeometryFilter(e.target.value === '' ? null : e.target.value as WallGeometryType)
                 }
               >
                 <option value="">All Geometries</option>
