@@ -7,6 +7,7 @@ import type {
   SkuMaster,
   WallGeometry,
 } from '@/types/database';
+import { AdaptationStrategy, TemplateStatus } from '@/types/database';
 
 /**
  * Reads a frozen project snapshot back into the shapes the consultant UI works
@@ -17,7 +18,12 @@ import type {
  *               resolved rule set.
  *   version 1 — legacy, browser-built; only geometry, zones with a primary SKU
  *               and the lighting/furniture/trim rows. A missing
- *               snapshot_version is treated as version 1.
+ *               snapshot_version is treated as version 1. Since no template
+ *               record was frozen, a minimal one is reconstructed from the
+ *               snapshot geometry — the canvas, zone validation and the zone
+ *               properties panel all key off `currentTemplate`, and a null
+ *               there would silently give legacy projects a default-sized wall
+ *               and read-only zones.
  */
 
 export interface SnapshotAlternative {
@@ -81,6 +87,39 @@ function asArray(value: unknown): unknown[] {
   return Array.isArray(value) ? value : [];
 }
 
+/**
+ * A v1 snapshot froze no template row, so rebuild just enough of one for the
+ * geometry-dependent UI. Fields the legacy format never carried stay empty
+ * rather than being invented, and nothing is read back from the live template.
+ */
+function legacyTemplate(data: Json, wallGeometry: WallGeometry, templateId: string): Template | null {
+  if (!templateId) return null;
+  const base = asObject(data.base_dimensions);
+  const metadata = asObject(data.project_metadata);
+  return {
+    template_id: templateId,
+    name: (metadata.template_name as string | undefined) ?? '',
+    description: null,
+    design_family_id: null,
+    design_subfamily_id: null,
+    wall_application: null,
+    wall_geometry: {
+      ...wallGeometry,
+      base_width_mm: Number(base.width_mm ?? wallGeometry.base_width_mm ?? 0),
+      base_height_mm: Number(base.height_mm ?? wallGeometry.base_height_mm ?? 0),
+    },
+    adaptation_strategy:
+      (data.adaptation_strategy as AdaptationStrategy | undefined) ?? AdaptationStrategy.PROPORTIONAL,
+    priority_zone_id: (data.priority_zone_id as string | undefined) ?? null,
+    waste_factor: (asObject(data.calculation_parameters).waste_factor as number | undefined) ?? null,
+    metadata: null,
+    status: TemplateStatus.ACTIVE,
+    created_by: '',
+    created_at: '',
+    updated_at: '',
+  };
+}
+
 export function getSnapshotVersion(snapshotData: unknown): 1 | 2 {
   const raw = asObject(snapshotData).snapshot_version;
   return Number(raw) === 2 ? 2 : 1;
@@ -89,9 +128,12 @@ export function getSnapshotVersion(snapshotData: unknown): 1 | 2 {
 export function readSnapshot(snapshotData: unknown, templateId?: string): HydratedSnapshot {
   const data = asObject(snapshotData);
   const version = getSnapshotVersion(data);
-  const template = version === 2 ? (asObject(data.template) as unknown as Template) : null;
-  const resolvedTemplateId = template?.template_id ?? templateId ?? '';
   const wallGeometry = (data.wall_geometry as WallGeometry | undefined) ?? DEFAULT_WALL_GEOMETRY;
+  const template =
+    version === 2
+      ? (asObject(data.template) as unknown as Template)
+      : legacyTemplate(data, wallGeometry, templateId ?? '');
+  const resolvedTemplateId = template?.template_id ?? templateId ?? '';
 
   const zones: TemplateZone[] = [];
   const zoneSku = new Map<string, SkuMaster>();

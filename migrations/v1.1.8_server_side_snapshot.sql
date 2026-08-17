@@ -150,6 +150,23 @@ BEGIN
         RAISE EXCEPTION 'Rule set % does not exist', p_rule_set_id;
     END IF;
 
+    -- A zone with no SKU would freeze an empty baseline and produce an empty
+    -- BOM downstream, so refuse to build the snapshot at all. uq_zone_single_sku
+    -- guarantees at most one row per zone, which is why the zone query below
+    -- joins on zone_id alone rather than on the is_primary flag (nothing in the
+    -- application ever sets that flag).
+    IF EXISTS (
+        SELECT 1
+          FROM perfecity.template_zone tz
+         WHERE tz.template_id = p_template_id
+           AND NOT EXISTS (
+               SELECT 1 FROM perfecity.template_zone_sku tzs WHERE tzs.zone_id = tz.zone_id
+           )
+    ) THEN
+        RAISE EXCEPTION 'Template % has zones without an assigned SKU', p_template_id
+            USING ERRCODE = 'check_violation';
+    END IF;
+
     -- Every SKU this template can ever reference, primary and alternative
     -- alike; used to freeze the relevant slice of sku_compatibility.
     SELECT array_agg(DISTINCT sku_id) INTO v_sku_ids FROM (
@@ -222,7 +239,7 @@ BEGIN
                 ) AS z
                 FROM perfecity.template_zone tz
                 LEFT JOIN perfecity.template_zone_sku primary_sku
-                       ON primary_sku.zone_id = tz.zone_id AND primary_sku.is_primary
+                       ON primary_sku.zone_id = tz.zone_id
                 WHERE tz.template_id = p_template_id
             ) zones
         ),

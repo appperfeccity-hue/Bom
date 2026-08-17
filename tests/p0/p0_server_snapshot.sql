@@ -88,7 +88,10 @@ BEGIN
     VALUES (v_template, 0, 0, 600, 2400, 'PROPORTIONAL', 'DERIVED_FROM_WALL', 'FIXED')
     RETURNING zone_id INTO v_zone;
 
-    INSERT INTO template_zone_sku (zone_id, sku_id, is_primary) VALUES (v_zone, v_sku, true);
+    -- Deliberately left at the is_primary default of false: that is what the
+    -- application writes when a designer assigns a SKU, and uq_zone_single_sku
+    -- already makes the zone's single row unambiguous.
+    INSERT INTO template_zone_sku (zone_id, sku_id) VALUES (v_zone, v_sku);
     INSERT INTO template_zone_alternative (template_zone_id, alternative_sku_id, display_order, status)
     VALUES (v_zone, v_alt_sku, 1, 'ACTIVE');
     INSERT INTO template_consultant_permission (template_id, parameter_key, parameter_type, edit_mode, min_value, max_value)
@@ -245,5 +248,35 @@ BEGIN
         RAISE EXCEPTION 'FAIL: T-P0-SSS-006 - a DESIGNER was allowed to create a project';
     END IF;
     RAISE NOTICE 'PASS: T-P0-SSS-006 - non-CONSULTANT callers are rejected';
+END;
+$$;
+
+-- ============================================================================
+-- T-P0-SSS-007: a zone with no SKU can never be frozen into a snapshot
+-- ============================================================================
+DO $$
+DECLARE
+    v_template UUID := current_setting('test.template_id')::uuid;
+    v_empty_zone UUID;
+    v_message TEXT := '';
+BEGIN
+    INSERT INTO template_zone (template_id, x_mm, y_mm, width_mm, height_mm, width_strategy, height_strategy, position_strategy)
+    VALUES (v_template, 600, 0, 600, 2400, 'PROPORTIONAL', 'DERIVED_FROM_WALL', 'FIXED')
+    RETURNING zone_id INTO v_empty_zone;
+    UPDATE template SET status = 'ACTIVE' WHERE template_id = v_template;
+
+    BEGIN
+        PERFORM perfecity.create_project(v_template, current_setting('test.consultant')::uuid,
+                                         'sss-key-empty-zone', NULL, NULL);
+    EXCEPTION WHEN OTHERS THEN
+        v_message := SQLERRM;
+    END;
+
+    IF v_message NOT LIKE '%zones without an assigned SKU%' THEN
+        RAISE EXCEPTION 'FAIL: T-P0-SSS-007 - an empty zone was frozen instead of rejected (got: %)', v_message;
+    END IF;
+
+    DELETE FROM template_zone WHERE zone_id = v_empty_zone;
+    RAISE NOTICE 'PASS: T-P0-SSS-007 - a zone without a SKU cannot be frozen';
 END;
 $$;

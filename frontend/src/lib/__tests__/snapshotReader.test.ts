@@ -102,7 +102,6 @@ describe('snapshotReader', () => {
     const hydrated = readSnapshot(v1Snapshot, 'tpl-legacy');
 
     expect(hydrated.version).toBe(1);
-    expect(hydrated.template).toBeNull();
     expect(hydrated.zones[0]).toMatchObject({
       zone_id: 'zone-legacy',
       template_id: 'tpl-legacy',
@@ -115,6 +114,20 @@ describe('snapshotReader', () => {
     expect(hydrated.consultantPermissions).toEqual([]);
     expect(hydrated.wallPermissions).toEqual({ wall_width: 'EDITABLE' });
     expect(hydrated.ruleSet).toBeNull();
+  });
+
+  it('reconstructs a geometry-carrying template for legacy projects', () => {
+    // currentTemplate drives the canvas wall size, zone validation bounds and
+    // the zone properties panel; a null here silently degrades legacy projects.
+    const hydrated = readSnapshot(v1Snapshot, 'tpl-legacy');
+
+    expect(hydrated.template).not.toBeNull();
+    expect(hydrated.template?.template_id).toBe('tpl-legacy');
+    expect(hydrated.template?.wall_geometry).toMatchObject({
+      type: 'STRAIGHT',
+      base_width_mm: 2400,
+      base_height_mm: 2400,
+    });
   });
 
   it('tolerates an empty or malformed snapshot', () => {
