@@ -72,8 +72,6 @@ jobs:
             --reporter=html,json; EC=$?
           echo "PLAYWRIGHT_EXIT_CODE=$EC" >> "$GITHUB_ENV"
           exit 0
-        env:
-          PLAYWRIGHT_JSON_OUTPUT_NAME: test-results/p0c-results.json
 
       - name: Generate P0-C result summary
         if: always()

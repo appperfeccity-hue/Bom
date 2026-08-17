@@ -10,7 +10,7 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: 0,
   workers: process.env.CI ? 1 : undefined,
-  reporter: [['html'], ['list']],
+  reporter: [['html'], ['list'], ['json', { outputFile: 'test-results/p0c-results.json' }]],
   use: {
     baseURL: process.env.PLAYWRIGHT_BASE_URL || 'https://bom-beryl.vercel.app',
     navigationTimeout: 60_000,

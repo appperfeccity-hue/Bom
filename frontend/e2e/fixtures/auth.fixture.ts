@@ -52,6 +52,7 @@ export const test = base.extend<{
         'Content-Type': 'application/json',
         Prefer: 'return=representation',
         'Accept-Profile': 'perfecity',
+        'Content-Profile': 'perfecity',
       },
     });
     await use({ request, token: state.access_token, userId: state.user.id });
@@ -68,6 +69,7 @@ export const test = base.extend<{
         'Content-Type': 'application/json',
         Prefer: 'return=representation',
         'Accept-Profile': 'perfecity',
+        'Content-Profile': 'perfecity',
       },
     });
     await use({
@@ -88,6 +90,7 @@ export const test = base.extend<{
         'Content-Type': 'application/json',
         Prefer: 'return=representation',
         'Accept-Profile': 'perfecity',
+        'Content-Profile': 'perfecity',
       },
     });
     await use({ request, token: state.access_token, userId: state.user.id });

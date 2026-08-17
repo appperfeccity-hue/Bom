@@ -60,6 +60,9 @@ export async function createProject(
   const response = await request.post(
     `${SUPABASE_URL}/rest/v1/rpc/create_project`,
     {
+      headers: {
+        'Content-Profile': 'perfecity',
+      },
       data: {
         p_template_id: data.template_id,
         p_user_id: data.user_id,
@@ -110,6 +113,9 @@ export async function finalize(
   const response = await request.post(
     `${SUPABASE_URL}/rest/v1/rpc/finalize_project`,
     {
+      headers: {
+        'Content-Profile': 'perfecity',
+      },
       data: { p_project_id: projectId },
     }
   );

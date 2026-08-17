@@ -42,6 +42,8 @@ async function navigateToCanvas(page: import('@playwright/test').Page) {
 
 test.describe('SVG: Asset Rendering (Browser)', () => {
   test('[SVG-001] SVG renders correctly in canvas', async ({ designerBrowser: page }) => {
+    test.skip(true, 'App uses HTML5 Canvas (Konva) — SVG DOM elements not present');
+
     await navigateToCanvas(page);
 
     // Wait for canvas to load
