@@ -67,8 +67,10 @@ test.describe('FUNC: Template & Project Lifecycle UI', () => {
     await createBtn.first().click();
 
     // Expect some form of template creation to appear
+    // Use .first() to handle multiple matches in the template section
     await expect(
-      page.getByText(/template|name|create/i)
+      page.getByTestId('my-templates-btn')
+        .or(page.getByRole('heading', { name: /template/i }))
     ).toBeVisible();
   });
 

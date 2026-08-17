@@ -110,12 +110,10 @@ test.describe('FUNC: General UI Behavior', () => {
     await expect(logoutBtn.first()).toBeVisible();
     await logoutBtn.first().click();
 
-    // Expect redirect to login page or the page state to change
-    // (authenticated content should no longer be visible)
+    // Expect redirect to login page — use specific testids from the deployed app
     await expect(
-      page.getByRole('button', { name: /log ?in|sign ?in/i })
-        .or(page.getByText(/log ?in|sign ?in|email/i))
-        .or(page.locator('input[type="email"]'))
+      page.getByTestId('login-submit-btn')
+        .or(page.getByRole('heading', { name: 'Sign In' }))
     ).toBeVisible({ timeout: 10_000 });
   });
 

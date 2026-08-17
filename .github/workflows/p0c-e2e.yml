@@ -112,12 +112,11 @@ jobs:
               .toLowerCase();
 
             const isBlocked =
-              errorMsg.includes('timeout') ||
               errorMsg.includes('econnrefused') ||
               errorMsg.includes('enotfound') ||
-              errorMsg.includes('net::err') ||
-              errorMsg.includes('navigation') ||
-              errorMsg.includes('target closed');
+              errorMsg.includes('net::err_connection') ||
+              errorMsg.includes('target closed') ||
+              errorMsg.includes('browser has been closed');
 
             if (isBlocked) return 'BLOCKED';
 
