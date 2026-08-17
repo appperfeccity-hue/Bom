@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "fix",
   "description": "P0: Fix Consultant selection authorization in create_project RPC AND create publish_template RPC for atomic publication. These are the two critical database-side security fixes. (1) Update create_project to call check_template_eligible(p_template_id) after the status='ACTIVE' check, raising 'Template dependencies are not available' if it returns false. (2) Create a new publish_template RPC (SECURITY DEFINER, SET search_path TO 'perfecity') that validates auth, DESIGNER role, ownership, DRAFT status, and eligibility before atomically setting status='ACTIVE'. Both applied via Supabase MCP execute_sql.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "Use Supabase MCP execute_sql (project_id: fbiemsbykrmrbqcsobvh) to CREATE OR REPLACE the create_project function adding a check_template_eligible call: after the 'Template is not active or does not exist' block, add: IF NOT perfecity.check_template_eligible(p_template_id) THEN RAISE EXCEPTION 'Template dependencies are not available'; END IF;",
     "Use Supabase MCP execute_sql to create the publish_template function: CREATE OR REPLACE FUNCTION perfecity.publish_template(p_template_id uuid, p_user_id uuid) RETURNS uuid LANGUAGE plpgsql SECURITY DEFINER SET search_path = 'perfecity' with body that: (a) validates auth.uid() matches p_user_id, (b) validates current_user_role()='DESIGNER', (c) validates template exists with created_by=p_user_id and status='DRAFT', (d) calls check_template_eligible() raising detailed error if false, (e) UPDATEs template SET status='ACTIVE', (f) returns template_id",
@@ -20,5 +20,5 @@
     "Use Supabase MCP execute_sql to call: SELECT proname, prosecdef FROM pg_proc WHERE proname = 'publish_template' AND pronamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'perfecity') -- confirm it exists and is SECURITY DEFINER"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "Both functions applied successfully via Supabase MCP execute_sql. Verified: (1) create_project prosrc now contains check_template_eligible call with 'Template dependencies are not available' exception. (2) publish_template exists as SECURITY DEFINER. (3) Grants confirmed: only postgres (owner) and authenticated have EXECUTE on publish_template; anon and public revoked. (4) All 1205 unit tests pass; E2E failures are pre-existing (missing SUPABASE_URL env var). (5) Vite build passes cleanly."
 }
