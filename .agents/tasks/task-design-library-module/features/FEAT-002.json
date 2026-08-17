@@ -2,7 +2,7 @@
   "id": "FEAT-002",
   "type": "feat",
   "description": "Enhance the DesignLibrary component with search bar, filter controls (design family, wall geometry, availability), Design Family grouping display, availability badges, blocked-reason tooltips, and a template detail/preview panel. Replace the basic grid with an enhanced gallery.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "Refactor frontend/src/components/ProjectCreation/DesignLibrary.tsx to use the new useDesignLibraryStore instead of useProjectCreationStore for template fetching. Keep using useProjectCreationStore.selectTemplate for template selection (project creation flow unchanged).",
     "Add a search input at the top of the Design Library (data-testid='design-library-search') that calls setSearchFilter on the designLibraryStore",
@@ -31,5 +31,5 @@
     "cd frontend && npm run build"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All 1144 unit tests pass. Build succeeds. Only pre-existing TS error (ValidationOverlayLayer.tsx errorCount unused variable). Updated existing test file to mock useDesignLibraryStore instead of useProjectCreationStore for DesignLibrary tests. The empty state logic checks that no filters are active before showing 'No templates available' to distinguish from a 'no results for filter' state."
 }
