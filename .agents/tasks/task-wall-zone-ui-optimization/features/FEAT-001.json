@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "feat",
   "description": "Redesign WallConfigPanel.tsx for professional CAD/CPQ-style clarity, compact layout, strong hierarchy, consistent design tokens, and improved UX while preserving all existing data-testid attributes and business logic",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "Refactor frontend/src/components/WallConfigPanel.tsx inline style constants to use CSS custom properties from design-system.css (--color-*, --space-*, --radius-*, --text-*) instead of hard-coded hex values. Keep inline styles but reference var() where supported, or use the existing CSS utility classes from components.css (.input, .btn-primary, .btn-secondary, .panel, .panel-header).",
     "Restructure the panel layout for clear section hierarchy: (1) Panel header with title. (2) Wall Type section with clear Straight/L-Corner indication, Wall dimensions with 'mm' unit labels. (3) For L-Corner walls, show Segment A/B width fields (config.segment_a_width_mm / segment_b_width_mm). (4) Panel Layout section (rows, columns, fit algorithm, fit intensity). (5) Spacing section (panel gap, edge margins). (6) Mounting section. (7) Lighting section. (8) Furniture section. (9) Generated panel count status.",
@@ -32,5 +32,5 @@
     "cd /projects/sandbox/Bom/frontend && NODE_OPTIONS=\"\" npx vitest run src/stores/__tests__/wallConfigStore.test.ts"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "Pre-existing typecheck error in ValidationOverlayLayer.tsx (TS6133 unused var) - not caused by this change. All 1144 unit/component tests pass. 8 e2e suites fail due to missing SUPABASE_URL env var (pre-existing). Build succeeds cleanly. Progressive disclosure for Lighting/Furniture add forms hides the form fields until user clicks + Add, but data-testid attributes are all preserved (no tests reference the form-level testids directly)."
 }
