@@ -1,0 +1,24 @@
+{
+  "id": "FEAT-001",
+  "type": "fix",
+  "description": "P0: Fix Consultant selection authorization in create_project RPC AND create publish_template RPC for atomic publication. These are the two critical database-side security fixes. (1) Update create_project to call check_template_eligible(p_template_id) after the status='ACTIVE' check, raising 'Template dependencies are not available' if it returns false. (2) Create a new publish_template RPC (SECURITY DEFINER, SET search_path TO 'perfecity') that validates auth, DESIGNER role, ownership, DRAFT status, and eligibility before atomically setting status='ACTIVE'. Both applied via Supabase MCP execute_sql.",
+  "status": "in_progress",
+  "steps": [
+    "Use Supabase MCP execute_sql (project_id: fbiemsbykrmrbqcsobvh) to CREATE OR REPLACE the create_project function adding a check_template_eligible call: after the 'Template is not active or does not exist' block, add: IF NOT perfecity.check_template_eligible(p_template_id) THEN RAISE EXCEPTION 'Template dependencies are not available'; END IF;",
+    "Use Supabase MCP execute_sql to create the publish_template function: CREATE OR REPLACE FUNCTION perfecity.publish_template(p_template_id uuid, p_user_id uuid) RETURNS uuid LANGUAGE plpgsql SECURITY DEFINER SET search_path = 'perfecity' with body that: (a) validates auth.uid() matches p_user_id, (b) validates current_user_role()='DESIGNER', (c) validates template exists with created_by=p_user_id and status='DRAFT', (d) calls check_template_eligible() raising detailed error if false, (e) UPDATEs template SET status='ACTIVE', (f) returns template_id",
+    "Use Supabase MCP execute_sql to REVOKE EXECUTE on publish_template from anon and public, GRANT EXECUTE to authenticated",
+    "Save the combined SQL as a new migration file: migrations/v1.1.7_publish_template_and_create_project_fix.sql"
+  ],
+  "acceptance_criteria": [
+    "create_project RPC rejects templates where check_template_eligible returns false with error 'Template dependencies are not available'",
+    "publish_template RPC exists, callable only by authenticated, validates DESIGNER role + ownership + DRAFT status + eligibility",
+    "publish_template returns the template_id on success after setting status to ACTIVE",
+    "Migration SQL file is saved locally for version tracking"
+  ],
+  "verification": [
+    "Use Supabase MCP execute_sql to call: SELECT prosrc FROM pg_proc WHERE proname = 'create_project' AND pronamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'perfecity') -- confirm check_template_eligible is in the body",
+    "Use Supabase MCP execute_sql to call: SELECT proname, prosecdef FROM pg_proc WHERE proname = 'publish_template' AND pronamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'perfecity') -- confirm it exists and is SECURITY DEFINER"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}
