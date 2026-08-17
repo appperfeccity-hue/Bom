@@ -1,16 +1,20 @@
-import { useEffect } from 'react';
-import { useDesignLibraryStore, groupByDesignFamily } from '@/stores/designLibraryStore';
+import { useEffect, useMemo, useState } from 'react';
+import { useDesignLibraryStore } from '@/stores/designLibraryStore';
 import type { TemplateWithAvailability } from '@/stores/designLibraryStore';
-import type { WallGeometryType } from '@/types/database';
 import { useProjectCreationStore } from '@/stores/projectCreationStore';
 import { EnhancedTemplateCard } from './EnhancedTemplateCard';
 import { TemplatePreviewPanel } from './TemplatePreviewPanel';
+import { CategoryCarousel } from './CategoryCarousel';
+import { LookSwatches } from './LookSwatches';
+import { FilterChipBar } from './FilterChipBar';
+import '@/styles/design-library.css';
 
 /**
- * DesignLibrary - enhanced template gallery with search, filters,
- * design family grouping, availability badges, and preview panel.
+ * DesignLibrary - premium interior-design gallery with
+ * category cards, look swatches, smart filter chips, and image-first grid.
  */
 export function DesignLibrary() {
+  const templates = useDesignLibraryStore((s) => s.templates);
   const filteredTemplates = useDesignLibraryStore((s) => s.filteredTemplates);
   const designFamilies = useDesignLibraryStore((s) => s.designFamilies);
   const filters = useDesignLibraryStore((s) => s.filters);
@@ -26,6 +30,10 @@ export function DesignLibrary() {
 
   const selectTemplate = useProjectCreationStore((s) => s.selectTemplate);
 
+  // Local state for category filter (wall_application)
+  // This is a UI-level filter that works alongside the store's existing filters
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
+
   useEffect(() => {
     fetchTemplatesWithAvailability();
   }, [fetchTemplatesWithAvailability]);
@@ -36,6 +44,35 @@ export function DesignLibrary() {
 
   const handlePreview = (template: TemplateWithAvailability) => {
     selectTemplateForPreview(template);
+  };
+
+  // Apply local category filter on top of store's filteredTemplates
+  const displayedTemplates = useMemo(() => {
+    if (!activeCategory) return filteredTemplates;
+    return filteredTemplates.filter((t) => t.wall_application === activeCategory);
+  }, [filteredTemplates, activeCategory]);
+
+  // Get active design family name for display in chips
+  const activeDesignFamilyName = useMemo(() => {
+    if (!filters.designFamilyId) return null;
+    const family = designFamilies.find((f) => f.design_family_id === filters.designFamilyId);
+    return family ? family.name : null;
+  }, [filters.designFamilyId, designFamilies]);
+
+  const handleCategorySelect = (category: string | null) => {
+    setActiveCategory(category);
+  };
+
+  const handleDesignFamilySelect = (id: string | null) => {
+    setDesignFamilyFilter(id);
+  };
+
+  const handleClearAll = () => {
+    setActiveCategory(null);
+    setSearchFilter('');
+    setDesignFamilyFilter(null);
+    setWallGeometryFilter(null);
+    setAvailabilityFilter('ALL');
   };
 
   if (isLoading) {
@@ -72,176 +109,66 @@ export function DesignLibrary() {
     );
   }
 
-  const grouped = groupByDesignFamily(filteredTemplates);
-
-  const geometryOptions: Array<{ label: string; value: WallGeometryType | null }> = [
-    { label: 'All Geometries', value: null },
-    { label: 'STRAIGHT', value: 'STRAIGHT' },
-    { label: 'L_CORNER', value: 'L_CORNER' },
-  ];
-
-  const availabilityOptions: Array<{ label: string; value: 'ALL' | 'AVAILABLE' | 'BLOCKED' }> = [
-    { label: 'All', value: 'ALL' },
-    { label: 'Available', value: 'AVAILABLE' },
-    { label: 'Blocked', value: 'BLOCKED' },
-  ];
-
   return (
     <div data-testid="design-library" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       {/* Search */}
-      <div style={{ padding: '12px 16px 0 16px' }}>
+      <div className="dl-search-wrapper">
         <input
           data-testid="design-library-search"
           type="text"
           placeholder="Search templates..."
           value={filters.search}
           onChange={(e) => setSearchFilter(e.target.value)}
-          style={{
-            width: '100%',
-            padding: '8px 12px',
-            fontSize: 'var(--text-base)',
-            border: '1px solid var(--color-disabled)',
-            borderRadius: 'var(--radius-sm)',
-            boxSizing: 'border-box',
-          }}
+          className="dl-search-input"
         />
       </div>
 
-      {/* Filter row */}
-      <div
-        style={{
-          display: 'flex',
-          gap: '8px',
-          alignItems: 'center',
-          padding: '8px 16px',
-          borderBottom: '1px solid var(--color-hairline)',
-          flexWrap: 'wrap',
-        }}
-      >
-        <select
-          data-testid="design-library-family-filter"
-          value={filters.designFamilyId ?? ''}
-          onChange={(e) => {
-            const val = e.target.value;
-            setDesignFamilyFilter(val || null);
-          }}
-          style={{
-            padding: '6px 10px',
-            fontSize: 'var(--text-base)',
-            border: '1px solid var(--color-disabled)',
-            borderRadius: 'var(--radius-sm)',
-            height: '32px',
-            boxSizing: 'border-box',
-          }}
-        >
-          <option value="">All Families</option>
-          {designFamilies.map((family) => (
-            <option key={family.design_family_id} value={family.design_family_id}>
-              {family.name}
-            </option>
-          ))}
-        </select>
+      {/* Category Carousel */}
+      <CategoryCarousel
+        templates={templates}
+        activeCategory={activeCategory}
+        onCategorySelect={handleCategorySelect}
+      />
 
-        <select
-          data-testid="design-library-geometry-filter"
-          value={filters.wallGeometry ?? ''}
-          onChange={(e) => {
-            const val = e.target.value;
-            setWallGeometryFilter(val ? (val as WallGeometryType) : null);
-          }}
-          style={{
-            padding: '6px 10px',
-            fontSize: 'var(--text-base)',
-            border: '1px solid var(--color-disabled)',
-            borderRadius: 'var(--radius-sm)',
-            height: '32px',
-            boxSizing: 'border-box',
-          }}
-        >
-          {geometryOptions.map((opt) => (
-            <option key={opt.label} value={opt.value ?? ''}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
+      {/* Look Swatches */}
+      <LookSwatches
+        designFamilies={designFamilies}
+        activeDesignFamilyId={filters.designFamilyId}
+        onDesignFamilySelect={handleDesignFamilySelect}
+      />
 
-        <select
-          data-testid="design-library-availability-filter"
-          value={filters.availability}
-          onChange={(e) => {
-            setAvailabilityFilter(e.target.value as 'ALL' | 'AVAILABLE' | 'BLOCKED');
-          }}
-          style={{
-            padding: '6px 10px',
-            fontSize: 'var(--text-base)',
-            border: '1px solid var(--color-disabled)',
-            borderRadius: 'var(--radius-sm)',
-            height: '32px',
-            boxSizing: 'border-box',
-          }}
-        >
-          {availabilityOptions.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
-      </div>
+      {/* Filter Chip Bar */}
+      <FilterChipBar
+        activeCategory={activeCategory}
+        activeDesignFamilyName={activeDesignFamilyName}
+        activeGeometry={filters.wallGeometry}
+        activeAvailability={filters.availability}
+        searchTerm={filters.search}
+        onClearCategory={() => setActiveCategory(null)}
+        onClearDesignFamily={() => setDesignFamilyFilter(null)}
+        onClearGeometry={() => setWallGeometryFilter(null)}
+        onClearAvailability={() => setAvailabilityFilter('ALL')}
+        onClearSearch={() => setSearchFilter('')}
+        onClearAll={handleClearAll}
+      />
 
-      {/* Template groups */}
-      <div style={{ flex: 1, overflow: 'auto', padding: '16px' }}>
-        {filteredTemplates.length === 0 ? (
-          <div style={{ textAlign: 'center', color: 'var(--color-ink-secondary)', padding: '24px' }}>
+      {/* Template Grid */}
+      <div style={{ flex: 1, overflow: 'auto' }}>
+        {displayedTemplates.length === 0 ? (
+          <div className="dl-empty-state">
             No templates match your filters
           </div>
         ) : (
-          Array.from(grouped.entries()).map(([familyName, templates]) => (
-            <div key={familyName} style={{ marginBottom: '24px' }}>
-              {/* Group header */}
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  marginBottom: '12px',
-                }}
-              >
-                <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: 'var(--color-ink-primary)' }}>
-                  {familyName}
-                </h3>
-                <span
-                  style={{
-                    fontSize: '11px',
-                    fontWeight: 500,
-                    padding: '2px 6px',
-                    borderRadius: '4px',
-                    backgroundColor: 'rgba(154,123,79,0.1)',
-                    color: 'var(--color-accent)',
-                  }}
-                >
-                  {templates.length}
-                </span>
-              </div>
-
-              {/* Grid within group */}
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
-                  gap: '16px',
-                }}
-              >
-                {templates.map((template) => (
-                  <EnhancedTemplateCard
-                    key={template.template_id}
-                    template={template}
-                    onSelect={handleSelect}
-                    onPreview={handlePreview}
-                  />
-                ))}
-              </div>
-            </div>
-          ))
+          <div className="dl-template-grid">
+            {displayedTemplates.map((template) => (
+              <EnhancedTemplateCard
+                key={template.template_id}
+                template={template}
+                onSelect={handleSelect}
+                onPreview={handlePreview}
+              />
+            ))}
+          </div>
         )}
       </div>
 

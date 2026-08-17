@@ -1,0 +1,32 @@
+{
+  "project_type": "React 18 + TypeScript + Vite SPA with Zustand state management",
+  "language": "TypeScript/React",
+  "build_system": "Vite 6 with npm scripts; no build quirks",
+  "test_framework": "Vitest with @testing-library/react, jsdom environment, setupFiles: ./src/test-setup.ts",
+  "build_command": "cd /projects/sandbox/Bom/frontend && NODE_OPTIONS=\"\" npm run build",
+  "test_command": "cd /projects/sandbox/Bom/frontend && NODE_OPTIONS=\"\" npx vitest run",
+  "verification_instructions": "1. Run vitest to confirm all unit tests pass. 2. Run npm run build to confirm no TypeScript/build errors. 3. Existing tests may need updates if data-testid attributes or component structure changes.",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "cd /projects/sandbox/Bom/frontend && npm install (already done)",
+  "environment_constraints": "No Supabase instance available, tests mock @/lib/supabase. E2E tests require env vars that are absent. Only unit tests and build can be verified.",
+  "contribution_requirements": "UI-only changes. Do NOT modify backend security, RLS, RPCs, or database schema. Do NOT change the designLibraryStore's fetch/filter logic.",
+  "key_patterns": "Inline styles using CSS custom properties from design-system.css. Zustand stores with selector pattern. data-testid attributes on key elements. Components export from index.ts barrel. Existing CSS utility classes in components.css (btn-primary, btn-secondary, status-chip, etc). Animations in animations.css (panel-slide-in, card hover, chip-appear).",
+  "relevant_files": [
+    "frontend/src/components/ProjectCreation/DesignLibrary.tsx",
+    "frontend/src/components/ProjectCreation/EnhancedTemplateCard.tsx",
+    "frontend/src/components/ProjectCreation/TemplatePreviewPanel.tsx",
+    "frontend/src/components/ProjectCreation/ProjectCreationWizard.tsx",
+    "frontend/src/components/ProjectCreation/index.ts",
+    "frontend/src/stores/designLibraryStore.ts",
+    "frontend/src/types/database.ts",
+    "frontend/src/styles/design-system.css",
+    "frontend/src/styles/components.css",
+    "frontend/src/styles/animations.css",
+    "frontend/src/styles/typography.css",
+    "frontend/src/styles/layout.css",
+    "frontend/src/components/ProjectCreation/__tests__/EnhancedTemplateCard.test.tsx",
+    "frontend/src/components/ProjectCreation/__tests__/ProjectCreationWizard.test.tsx",
+    "frontend/src/components/ProjectCreation/__tests__/TemplatePreviewPanel.test.tsx"
+  ],
+  "directory_structure": "frontend/src/components/ProjectCreation/ - main Design Library UI components. frontend/src/stores/ - Zustand stores. frontend/src/styles/ - CSS design system. frontend/src/types/ - TypeScript interfaces."
+}
