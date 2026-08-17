@@ -697,7 +697,7 @@ function LightingSection() {
                   color: 'var(--color-accent)',
                   fontWeight: 500,
                 }}
-                data-testid="add-light-btn"
+                data-testid="submit-light-btn"
               >
                 Add Light
               </button>
@@ -890,7 +890,7 @@ function FurnitureSection() {
                   color: 'var(--color-accent)',
                   fontWeight: 500,
                 }}
-                data-testid="add-furniture-btn"
+                data-testid="submit-furniture-btn"
               >
                 Add Furniture
               </button>

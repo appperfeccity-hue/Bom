@@ -74,7 +74,7 @@ const BUTTON_PRIMARY_STYLE: React.CSSProperties = {
   borderRadius: 'var(--radius-sm)',
   cursor: 'pointer',
   backgroundColor: 'var(--color-accent)',
-  color: '#FFFFFF',
+  color: 'var(--color-surface)',
   fontFamily: 'var(--font-sans)',
 };
 
