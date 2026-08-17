@@ -13,6 +13,11 @@ interface EnhancedTemplateCardProps {
  * Preserves all data-testid attributes for test compatibility.
  */
 export function EnhancedTemplateCard({ template, onSelect, onPreview }: EnhancedTemplateCardProps) {
+  // NOTE: isFavorited is intentionally ephemeral component-local state (cosmetic only).
+  // It resets on unmount and is not persisted to any backend or store. This is by design
+  // for the current UI redesign -- no backend favorites persistence is required at this stage.
+  // When a favorites feature with persistence is implemented, this should be lifted to a
+  // dedicated favorites store or backed by a Supabase table.
   const [isFavorited, setIsFavorited] = useState(false);
   const isBlocked = template.availability === 'BLOCKED';
 

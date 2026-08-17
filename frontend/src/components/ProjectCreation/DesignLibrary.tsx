@@ -30,9 +30,15 @@ export function DesignLibrary() {
 
   const selectTemplate = useProjectCreationStore((s) => s.selectTemplate);
 
-  // Local state for category filter (wall_application)
-  // This is a UI-level filter that works alongside the store's existing filters
+  // TECH DEBT: activeCategory is intentionally kept as local component state rather than
+  // being added to the Zustand designLibraryStore. This avoids modifying the store per task
+  // constraints. The trade-off is that this filter is invisible to any future URL-sync,
+  // deep-linking, or state-persistence mechanisms. When store modifications are permitted,
+  // consider migrating activeCategory into a dedicated UI-state slice in the store.
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
+
+  // State for the "More Filters" popover (geometry + availability)
+  const [showMoreFilters, setShowMoreFilters] = useState(false);
 
   useEffect(() => {
     fetchTemplatesWithAvailability();
@@ -151,6 +157,58 @@ export function DesignLibrary() {
         onClearSearch={() => setSearchFilter('')}
         onClearAll={handleClearAll}
       />
+
+      {/* More Filters - geometry and availability setters */}
+      <div className="dl-more-filters" data-testid="more-filters">
+        <button
+          className="dl-more-filters__toggle"
+          onClick={() => setShowMoreFilters(!showMoreFilters)}
+          aria-expanded={showMoreFilters}
+          data-testid="more-filters-toggle"
+        >
+          More Filters {showMoreFilters ? '\u25B2' : '\u25BC'}
+        </button>
+        {showMoreFilters && (
+          <div className="dl-more-filters__panel" data-testid="more-filters-panel">
+            <div className="dl-more-filters__group">
+              <label className="dl-more-filters__label" htmlFor="geometry-filter">
+                Wall Geometry
+              </label>
+              <select
+                id="geometry-filter"
+                className="dl-more-filters__select"
+                data-testid="geometry-filter-select"
+                value={filters.wallGeometry ?? ''}
+                onChange={(e) =>
+                  setWallGeometryFilter(e.target.value === '' ? null : e.target.value)
+                }
+              >
+                <option value="">All Geometries</option>
+                <option value="STRAIGHT">Straight</option>
+                <option value="L_CORNER">L-Corner</option>
+              </select>
+            </div>
+            <div className="dl-more-filters__group">
+              <label className="dl-more-filters__label" htmlFor="availability-filter">
+                Availability
+              </label>
+              <select
+                id="availability-filter"
+                className="dl-more-filters__select"
+                data-testid="availability-filter-select"
+                value={filters.availability}
+                onChange={(e) =>
+                  setAvailabilityFilter(e.target.value as 'ALL' | 'AVAILABLE' | 'BLOCKED')
+                }
+              >
+                <option value="ALL">All</option>
+                <option value="AVAILABLE">Available</option>
+                <option value="BLOCKED">Blocked</option>
+              </select>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Template Grid */}
       <div style={{ flex: 1, overflow: 'auto' }}>
