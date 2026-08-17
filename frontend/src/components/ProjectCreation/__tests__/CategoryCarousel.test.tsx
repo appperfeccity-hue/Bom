@@ -46,19 +46,25 @@ describe('CategoryCarousel', () => {
     onCategorySelect = vi.fn();
   });
 
-  it('renders nothing when templates have no wall_application', () => {
+  it('renders all 12 required categories even with no matching templates', () => {
     const templates = [makeTemplate({ wall_application: null })];
-    const { container } = render(
+    render(
       <CategoryCarousel templates={templates} activeCategory={null} onCategorySelect={onCategorySelect} />
     );
-    expect(container.innerHTML).toBe('');
+    // All 12 categories always visible
+    expect(screen.getByText('TV Unit Wall')).toBeDefined();
+    expect(screen.getByText('Living Room')).toBeDefined();
+    expect(screen.getByText('Kids Room')).toBeDefined();
+    expect(screen.getByText('Customer Spaces')).toBeDefined();
   });
 
-  it('renders nothing when templates array is empty', () => {
-    const { container } = render(
+  it('renders all 12 categories when templates array is empty', () => {
+    render(
       <CategoryCarousel templates={[]} activeCategory={null} onCategorySelect={onCategorySelect} />
     );
-    expect(container.innerHTML).toBe('');
+    expect(screen.getByText('TV Unit Wall')).toBeDefined();
+    expect(screen.getByText('Bed Back Wall')).toBeDefined();
+    expect(screen.getByText('Mandir Corner')).toBeDefined();
   });
 
   it('renders the section title', () => {
@@ -72,31 +78,32 @@ describe('CategoryCarousel', () => {
   it('renders category cards from unique wall_application values', () => {
     const templates = [
       makeTemplate({ template_id: 'tpl-1', wall_application: 'Living Room' }),
-      makeTemplate({ template_id: 'tpl-2', wall_application: 'Bedroom Wall' }),
+      makeTemplate({ template_id: 'tpl-2', wall_application: 'Bed Back Wall' }),
       makeTemplate({ template_id: 'tpl-3', wall_application: 'Living Room' }),
     ];
     render(
       <CategoryCarousel templates={templates} activeCategory={null} onCategorySelect={onCategorySelect} />
     );
+    // All 12 categories visible regardless of templates
     expect(screen.getByText('Living Room')).toBeDefined();
-    expect(screen.getByText('Bedroom Wall')).toBeDefined();
-    // Should deduplicate
+    expect(screen.getByText('Bed Back Wall')).toBeDefined();
+    expect(screen.getByText('TV Unit Wall')).toBeDefined();
+    // Each category only appears once
     expect(screen.getAllByText('Living Room')).toHaveLength(1);
   });
 
-  it('excludes empty or whitespace-only wall_application values', () => {
+  it('always renders all 12 categories regardless of template data', () => {
     const templates = [
-      makeTemplate({ template_id: 'tpl-1', wall_application: 'TV Wall' }),
+      makeTemplate({ template_id: 'tpl-1', wall_application: 'TV Unit Wall' }),
       makeTemplate({ template_id: 'tpl-2', wall_application: '' }),
       makeTemplate({ template_id: 'tpl-3', wall_application: '   ' }),
     ];
     render(
       <CategoryCarousel templates={templates} activeCategory={null} onCategorySelect={onCategorySelect} />
     );
-    expect(screen.getByText('TV Wall')).toBeDefined();
-    // Only one category card rendered
+    // All 12 required categories always rendered
     const buttons = screen.getAllByRole('button');
-    expect(buttons).toHaveLength(1);
+    expect(buttons).toHaveLength(12);
   });
 
   it('calls onCategorySelect with category name on click', () => {
@@ -120,35 +127,35 @@ describe('CategoryCarousel', () => {
   it('marks active category with aria-pressed=true', () => {
     const templates = [
       makeTemplate({ template_id: 'tpl-1', wall_application: 'Living Room' }),
-      makeTemplate({ template_id: 'tpl-2', wall_application: 'Bedroom Wall' }),
+      makeTemplate({ template_id: 'tpl-2', wall_application: 'Bed Back Wall' }),
     ];
     render(
       <CategoryCarousel templates={templates} activeCategory="Living Room" onCategorySelect={onCategorySelect} />
     );
-    const livingRoom = screen.getByLabelText('Filter by Living Room');
-    const bedroom = screen.getByLabelText('Filter by Bedroom Wall');
+    const livingRoom = screen.getByLabelText(/Filter by Living Room/);
+    const bedroom = screen.getByLabelText(/Filter by Bed Back Wall/);
     expect(livingRoom.getAttribute('aria-pressed')).toBe('true');
     expect(bedroom.getAttribute('aria-pressed')).toBe('false');
   });
 
   it('supports keyboard activation with Enter key', () => {
-    const templates = [makeTemplate({ wall_application: 'TV Wall' })];
+    const templates = [makeTemplate({ wall_application: 'TV Unit Wall' })];
     render(
       <CategoryCarousel templates={templates} activeCategory={null} onCategorySelect={onCategorySelect} />
     );
-    const card = screen.getByLabelText('Filter by TV Wall');
+    const card = screen.getByLabelText(/Filter by TV Unit Wall/);
     fireEvent.keyDown(card, { key: 'Enter' });
-    expect(onCategorySelect).toHaveBeenCalledWith('TV Wall');
+    expect(onCategorySelect).toHaveBeenCalledWith('TV Unit Wall');
   });
 
   it('supports keyboard activation with Space key', () => {
-    const templates = [makeTemplate({ wall_application: 'TV Wall' })];
+    const templates = [makeTemplate({ wall_application: 'TV Unit Wall' })];
     render(
       <CategoryCarousel templates={templates} activeCategory={null} onCategorySelect={onCategorySelect} />
     );
-    const card = screen.getByLabelText('Filter by TV Wall');
+    const card = screen.getByLabelText(/Filter by TV Unit Wall/);
     fireEvent.keyDown(card, { key: ' ' });
-    expect(onCategorySelect).toHaveBeenCalledWith('TV Wall');
+    expect(onCategorySelect).toHaveBeenCalledWith('TV Unit Wall');
   });
 
   it('has data-testid="category-carousel" on root', () => {
