@@ -196,17 +196,17 @@ authTest.describe('INT: Integration (API)', () => {
     }
   });
 
-  authTest('[INT-004] Project configuration versioning', async ({ designerPage }) => {
+  authTest('[INT-004] Project configuration versioning', async ({ consultantPage }) => {
     // Create a project via RPC with correct parameters
-    const project = await createProject(designerPage.request, {
+    const project = await createProject(consultantPage.request, {
       template_id: ACTIVE_TEMPLATE_1.id,
-      user_id: designerPage.userId,
+      user_id: consultantPage.userId,
     });
 
     expect(project).toHaveProperty('project_id');
 
     // Query project configuration
-    const historyResponse = await designerPage.request.get(
+    const historyResponse = await consultantPage.request.get(
       `${SUPABASE_URL}/rest/v1/project_configuration?project_id=eq.${project.project_id}&select=*`
     );
 
@@ -214,24 +214,24 @@ authTest.describe('INT: Integration (API)', () => {
     expect(historyResponse.status()).toBeLessThan(500);
 
     // Re-query the project to check status
-    const updatedProject = await getProject(designerPage.request, project.project_id);
+    const updatedProject = await getProject(consultantPage.request, project.project_id);
     expect(updatedProject).not.toBeNull();
 
     // Cleanup
-    await designerPage.request.delete(
+    await consultantPage.request.delete(
       `${SUPABASE_URL}/rest/v1/project?project_id=eq.${project.project_id}`
     );
   });
 
-  authTest('[INT-005] BOM supersession on re-generation', async ({ designerPage }) => {
+  authTest('[INT-005] BOM supersession on re-generation', async ({ consultantPage }) => {
     // Create a project via RPC
-    const project = await createProject(designerPage.request, {
+    const project = await createProject(consultantPage.request, {
       template_id: ACTIVE_TEMPLATE_1.id,
-      user_id: designerPage.userId,
+      user_id: consultantPage.userId,
     });
 
     // Check actual_bom_line items initially
-    const bom1Response = await designerPage.request.get(
+    const bom1Response = await consultantPage.request.get(
       `${SUPABASE_URL}/rest/v1/actual_bom_line?project_id=eq.${project.project_id}&select=*`
     );
     expect(bom1Response.status()).toBeLessThan(500);
@@ -243,7 +243,7 @@ authTest.describe('INT: Integration (API)', () => {
     expect(Array.isArray(bom1Data)).toBeTruthy();
 
     // Cleanup
-    await designerPage.request.delete(
+    await consultantPage.request.delete(
       `${SUPABASE_URL}/rest/v1/project?project_id=eq.${project.project_id}`
     );
   });
@@ -253,9 +253,9 @@ authTest.describe('INT: Integration (API)', () => {
     consultantPage,
   }) => {
     // Designer creates a project via RPC
-    const project = await createProject(designerPage.request, {
+    const project = await createProject(consultantPage.request, {
       template_id: ACTIVE_TEMPLATE_1.id,
-      user_id: designerPage.userId,
+      user_id: consultantPage.userId,
     });
 
     // Both users read the project simultaneously

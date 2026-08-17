@@ -68,8 +68,7 @@ jobs:
         id: playwright
         working-directory: frontend
         run: |
-          npx playwright test e2e/p0-c/ \
-            --reporter=html,json; EC=$?
+          npx playwright test e2e/p0-c/; EC=$?
           echo "PLAYWRIGHT_EXIT_CODE=$EC" >> "$GITHUB_ENV"
           exit 0
 
