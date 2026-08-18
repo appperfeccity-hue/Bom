@@ -132,13 +132,12 @@ describe('projectStore.removeSku', () => {
     expect(useProjectStore.getState().zoneSku.has('zone-1')).toBe(false);
   });
 
-  it('rolls back on database error', async () => {
-    mockDeleteShouldFail = true;
-
+  it('successfully removes SKU in-memory without DB call (project isolation)', async () => {
+    // Since Phase 2 made removeSku in-memory only, there is no DB call
+    // and therefore no rollback scenario. The SKU is always removed.
     await useProjectStore.getState().removeSku('zone-1');
 
-    // Should rollback - SKU should be back
-    expect(useProjectStore.getState().zoneSku.has('zone-1')).toBe(true);
-    expect(useProjectStore.getState().error).toBe('DB error');
+    expect(useProjectStore.getState().zoneSku.has('zone-1')).toBe(false);
+    expect(useProjectStore.getState().error).toBeNull();
   });
 });

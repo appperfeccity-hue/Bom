@@ -24,7 +24,8 @@ vi.mock('@/lib/supabase', () => {
       in: vi.fn().mockReturnThis(),
       insert: vi.fn().mockReturnThis(),
       update: vi.fn().mockReturnThis(),
-      single: vi.fn().mockResolvedValue({ data: null, error: null }),
+      order: vi.fn().mockResolvedValue({ data: [{ actual_bom_line_id: 'line-1', actual_bom_id: 'bom-1', sku_id: 'sku-1', sku_code: 'SKU001', product_type: 'PANEL', component_id: 'zone-1', quantity: 10, required_quantity: 10, waste_quantity: 0, unit_of_measure: 'unit', resolved_dimensions: {} }], error: null }),
+      single: vi.fn().mockResolvedValue({ data: { actual_bom_id: 'bom-1', configuration_id: 'config-1', rule_set_id: 'rs-1' }, error: null }),
     })),
     supabase: {
       rpc: vi.fn().mockResolvedValue({ data: 'final-bom-id-123', error: null }),
@@ -32,6 +33,11 @@ vi.mock('@/lib/supabase', () => {
     isSupabaseConfigured: false,
   };
 });
+
+// Mock sortKeysDeep used by finalizationStore
+vi.mock('@/lib/snapshotBuilder', () => ({
+  sortKeysDeep: (v: unknown) => v,
+}));
 
 // Mock crypto.subtle.digest for SHA-256 computation
 const mockDigest = vi.fn().mockResolvedValue(new ArrayBuffer(32));
@@ -76,9 +82,9 @@ describe('P0: Finalization Concurrency', () => {
         customer_reference: 'Concurrency Test Project',
         site_reference: null,
         template_id: 'tpl-1',
-        snapshot_id: null,
-        current_configuration_id: null,
-        current_actual_bom_id: null,
+        snapshot_id: 'snap-1',
+        current_configuration_id: 'config-1',
+        current_actual_bom_id: 'bom-1',
         status: ProjectStatus.VALIDATED,
         created_by: 'user-1',
         created_at: '2024-01-01T00:00:00Z',
@@ -147,6 +153,24 @@ describe('P0: Finalization Concurrency', () => {
         finalizedAt: null,
         isLoading: false,
         error: null,
+      });
+
+      // Reset project state back to VALIDATED (first call transitioned it to FINALIZED)
+      useProjectStore.setState({
+        currentProject: {
+          project_id: 'proj-concurrent',
+          customer_reference: 'Concurrency Test Project',
+          site_reference: null,
+          template_id: 'tpl-1',
+          snapshot_id: 'snap-1',
+          current_configuration_id: 'config-1',
+          current_actual_bom_id: 'bom-1',
+          status: ProjectStatus.VALIDATED,
+          created_by: 'user-1',
+          created_at: '2024-01-01T00:00:00Z',
+          updated_at: '2024-01-01T00:00:00Z',
+          finalized_at: null,
+        },
       });
 
       // Second call should work since state was reset
@@ -280,6 +304,24 @@ describe('P0: Finalization Concurrency', () => {
         finalizedAt: null,
         isLoading: false,
         error: null,
+      });
+
+      // Reset project state back to VALIDATED (first call transitioned it to FINALIZED)
+      useProjectStore.setState({
+        currentProject: {
+          project_id: 'proj-concurrent',
+          customer_reference: 'Concurrency Test Project',
+          site_reference: null,
+          template_id: 'tpl-1',
+          snapshot_id: 'snap-1',
+          current_configuration_id: 'config-1',
+          current_actual_bom_id: 'bom-1',
+          status: ProjectStatus.VALIDATED,
+          created_by: 'user-1',
+          created_at: '2024-01-01T00:00:00Z',
+          updated_at: '2024-01-01T00:00:00Z',
+          finalized_at: null,
+        },
       });
 
       await useFinalizationStore.getState().confirmFinalization('proj-concurrent', 'key-same');

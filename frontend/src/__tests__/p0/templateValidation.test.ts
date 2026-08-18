@@ -35,19 +35,8 @@ vi.mock('@/lib/supabase', () => {
   };
 });
 
-// Mock snapshotBuilder
-vi.mock('@/lib/snapshotBuilder', () => ({
-  buildSnapshotData: vi.fn(() => ({
-    base_dimensions: { width_mm: 3000, height_mm: 2700 },
-    zones: [],
-    lighting: [],
-    furniture: [],
-    trims: [],
-    hidden_components: [],
-    calculation_parameters: {},
-  })),
-  computeSnapshotHash: vi.fn(() => Promise.resolve('abc123hash')),
-}));
+// snapshotBuilder is no longer imported by projectCreationStore (server-side snapshot in v1.1.8).
+// This mock is retained as a no-op for safety but has no effect.
 
 const makeTemplate = (overrides: Partial<Template> = {}): Template => ({
   template_id: 'tpl-active-1',

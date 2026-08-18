@@ -1,0 +1,27 @@
+{
+  "id": "FEAT-006",
+  "type": "feat",
+  "description": "Phase 6 - Real Master BOM generation: Create migration v1.2.1 with generate_master_bom RPC. Rewire publishStore.generateMasterBom to call the server-side RPC instead of client-side insert with string 'default' rule_set_id.",
+  "status": "completed",
+  "steps": [
+    "Create migrations/v1.2.1_master_bom_generation.sql with: (a) CREATE FUNCTION perfecity.generate_master_bom(p_template_id UUID, p_user_id UUID) RETURNS UUID SECURITY DEFINER SET search_path='perfecity' with body: auth check, DESIGNER/ADMIN role + ownership, template status=DRAFT check, resolve ACTIVE rule_set_id server-side (SELECT rule_set_id FROM rule_set WHERE status='ACTIVE'), compute baseline quantities at template base dimensions using the same rules as the BOM engine, INSERT master_bom (status='APPROVED', engine_version, rule_set_id, generated_at=now(), approved_by=p_user_id, approved_at=now()), INSERT master_bom_line for each zone/lighting/furniture/trim/mandatory-hidden-component (template_component_id, sku_id, product_type, source_zone_id, quantity_rule, default_quantity=1 as baseline, unit_of_measure, mandatory, hidden, calculation_parameters, parent_bom_line_id for DERIVED_FROM_PARENT), supersede previous APPROVED BOM (set status='INVALIDATED'). (b) Strengthen check_template_eligible: after existing checks, add a check that the APPROVED master_bom has >=1 master_bom_line AND covers every zone/lighting/furniture/trim/mandatory-hidden-component. (c) REVOKE ALL FROM anon, public; GRANT EXECUTE TO authenticated. (d) INSERT audit_event (MASTER_BOM_GENERATED).",
+    "Update frontend/src/stores/publishStore.ts generateMasterBom action: Replace the client-side fromTable('master_bom').insert({...rule_set_id: 'default'...}) with a single supabase.rpc('generate_master_bom', { p_template_id: templateId, p_user_id: userId }) call. On success, fetch the generated BOM and lines to populate generatedBom/generatedBomLines state. Remove the hard-coded 'default' string.",
+    "Update frontend/src/stores/__tests__/publishStore.test.ts: Update mocks to reflect the RPC call instead of the direct insert. Test that the store correctly calls the RPC and handles success/error responses.",
+    "Add SQL test file tests/regression_v1.2.1.sql with structural assertions: generate_master_bom function exists with correct signature, check_template_eligible includes master_bom_line coverage check."
+  ],
+  "acceptance_criteria": [
+    "migrations/v1.2.1_master_bom_generation.sql is syntactically valid SQL",
+    "generate_master_bom resolves rule_set_id server-side (no client-supplied UUID)",
+    "publishStore.generateMasterBom calls supabase.rpc instead of direct table insert",
+    "The string 'default' for rule_set_id no longer appears in publishStore.ts",
+    "check_template_eligible now requires master_bom_line coverage (not just header existence)",
+    "All vitest tests pass",
+    "TypeScript type-checking passes"
+  ],
+  "verification": [
+    "cd frontend && npx vitest run",
+    "cd frontend && npx tsc --noEmit"
+  ],
+  "blocked_reason": null,
+  "findings": "All 1351 vitest tests pass. TypeScript has 3 pre-existing TS6133/TS6196 errors (ValidationOverlayLayer.tsx:35, projectStore.projectIsolation.test.ts:3, publishStore.ts:319 - the data variable in publishTemplate). The publishStore.ts:310 error moved to line 319 due to the added code in generateMasterBom but is the same pre-existing unused 'data' variable in publishTemplate. No new errors introduced. Build succeeds. The generateMasterBom now uses supabase.rpc and fetches both BOM header and lines after generation. The 'default' string for rule_set_id is completely removed."
+}

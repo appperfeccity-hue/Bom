@@ -436,6 +436,7 @@ describe('P0: Transaction Atomicity', () => {
         wasteQuantity: 0,
         unitOfMeasure: 'PCS',
         calculationRule: 'WALL_PANEL',
+        productType: 'WALL_PANEL' as const,
       };
 
       const { runBomPipeline: mockedPipeline } = await import('@/engines/bomPipeline');
