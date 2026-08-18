@@ -141,7 +141,7 @@ BEGIN
                         SELECT abl.actual_bom_line_id,
                                abl.sku_id,
                                abl.product_type,
-                               abl.quantity,
+                               abl.quantity::float8,
                                abl.required_quantity,
                                abl.waste_quantity,
                                abl.unit_of_measure,

@@ -655,7 +655,7 @@ describe('bomStore', () => {
 
       const { runBomPipeline } = await import('@/engines/bomPipeline');
       vi.mocked(runBomPipeline).mockReturnValue({
-        actualBomLines: [{ lineId: 'l1', componentId: 'c1', skuId: 's1', quantity: 5, requiredQuantity: 5, wasteQuantity: 0, unitOfMeasure: 'PCS', calculationRule: 'FIXED' }],
+        actualBomLines: [{ lineId: 'l1', componentId: 'c1', skuId: 's1', quantity: 5, requiredQuantity: 5, wasteQuantity: 0, unitOfMeasure: 'PCS', calculationRule: 'FIXED', productType: 'WALL_PANEL' }],
         errors: [],
         warnings: [],
         status: 'SUCCESS',
@@ -896,7 +896,7 @@ describe('bomStore', () => {
           message: 'test warning',
         }],
         pipelineProgress: 'Running pipeline',
-        pipelineOutputLines: [{ lineId: 'l1', componentId: 'c1', skuId: 's1', quantity: 5, requiredQuantity: 5, wasteQuantity: 0, unitOfMeasure: 'PCS', calculationRule: 'FIXED' }],
+        pipelineOutputLines: [{ lineId: 'l1', componentId: 'c1', skuId: 's1', quantity: 5, requiredQuantity: 5, wasteQuantity: 0, unitOfMeasure: 'PCS', calculationRule: 'FIXED', productType: 'WALL_PANEL' }],
       });
 
       useBomStore.getState().resetPipeline();
@@ -959,6 +959,7 @@ describe('bomStore', () => {
             wasteQuantity: 0,
             unitOfMeasure: 'PCS',
             calculationRule: 'FIXED',
+            productType: 'WALL_PANEL',
           },
         ],
       });
@@ -1065,6 +1066,7 @@ describe('bomStore', () => {
             wasteQuantity: 0,
             unitOfMeasure: 'PCS',
             calculationRule: 'FIXED',
+            productType: 'WALL_PANEL',
           },
         ],
       });
@@ -1160,6 +1162,7 @@ describe('bomStore', () => {
             wasteQuantity: 0,
             unitOfMeasure: 'PCS',
             calculationRule: 'FIXED',
+            productType: 'WALL_PANEL',
           },
         ],
       });

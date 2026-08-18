@@ -521,6 +521,7 @@ export const useBomStore = create<BomStore>((set, get) => ({
       const bomLines = pipelineOutputLines.map((line) => ({
         component_id: line.componentId,
         sku_id: line.skuId,
+        product_type: line.productType,
         quantity: line.quantity,
         required_quantity: line.requiredQuantity,
         waste_quantity: line.wasteQuantity,

@@ -54,6 +54,7 @@ export interface BomOutputLine {
   wasteQuantity: number;
   unitOfMeasure: string;
   calculationRule: string;
+  productType: 'WALL_PANEL' | 'LIGHT' | 'FURNITURE' | 'HIDDEN_COMPONENT';
 }
 
 export interface SnapshotZone {
@@ -513,6 +514,7 @@ function runQuantityCalculation(
           wasteQuantity: panelOutput.wasteQuantity,
           unitOfMeasure: 'PCS',
           calculationRule: 'WALL_PANEL',
+          productType: 'WALL_PANEL',
         });
       } catch {
         errors.push(
@@ -552,6 +554,7 @@ function runQuantityCalculation(
           wasteQuantity: panelOutput.wasteQuantity,
           unitOfMeasure: 'PCS',
           calculationRule: 'WALL_PANEL',
+          productType: 'WALL_PANEL',
         });
       } catch {
         errors.push(
@@ -588,6 +591,7 @@ function runQuantityCalculation(
           wasteQuantity: 0,
           unitOfMeasure: light.mode === 'LINEAR' ? 'MM' : 'PCS',
           calculationRule: 'LIGHT',
+          productType: 'LIGHT',
         });
       } catch {
         // Light calculation failure is a warning, not blocking
@@ -622,6 +626,7 @@ function runQuantityCalculation(
           wasteQuantity: 0,
           unitOfMeasure: 'PCS',
           calculationRule: 'FURNITURE',
+          productType: 'FURNITURE',
         });
       }
     }
@@ -653,6 +658,7 @@ function runQuantityCalculation(
           wasteQuantity: 0,
           unitOfMeasure: 'PCS',
           calculationRule: 'HIDDEN_COMPONENT',
+          productType: 'HIDDEN_COMPONENT',
         });
       }
     }

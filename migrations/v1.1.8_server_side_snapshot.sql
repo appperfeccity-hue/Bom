@@ -354,7 +354,7 @@ BEGIN
 
   -- 9. Compute SHA-256 hash of the canonical snapshot
   v_hash := encode(
-    pg_catalog.sha256(convert_to(perfecity.canonical_jsonb(v_snapshot)::text, 'UTF8')),
+    digest(convert_to(perfecity.canonical_jsonb(v_snapshot)::text, 'UTF8'), 'sha256'),
     'hex'
   );
 
