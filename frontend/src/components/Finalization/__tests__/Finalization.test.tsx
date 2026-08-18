@@ -13,6 +13,7 @@ vi.mock('@/lib/supabase', () => ({
     schema: vi.fn(() => ({
       rpc: vi.fn().mockResolvedValue({ data: null, error: null }),
     })),
+    rpc: vi.fn().mockResolvedValue({ data: null, error: null }),
   },
   fromTable: vi.fn(() => ({
     select: vi.fn().mockReturnThis(),
@@ -20,7 +21,8 @@ vi.mock('@/lib/supabase', () => ({
     in: vi.fn().mockReturnThis(),
     insert: vi.fn().mockReturnThis(),
     update: vi.fn().mockReturnThis(),
-    single: vi.fn().mockResolvedValue({ data: null, error: null }),
+    order: vi.fn().mockResolvedValue({ data: [{ actual_bom_line_id: 'line-1', actual_bom_id: 'bom-1', sku_id: 'sku-1', sku_code: 'SKU001', product_type: 'PANEL', component_id: 'zone-1', quantity: 10, required_quantity: 10, waste_quantity: 0, unit_of_measure: 'unit', resolved_dimensions: {} }], error: null }),
+    single: vi.fn().mockResolvedValue({ data: { actual_bom_id: 'bom-1', configuration_id: 'config-1', rule_set_id: 'rs-1' }, error: null }),
   })),
   isSupabaseConfigured: false,
 }));
@@ -34,6 +36,11 @@ vi.stubGlobal('crypto', {
   randomUUID: () => 'test-uuid-1234',
 });
 
+// Mock sortKeysDeep used by finalizationStore
+vi.mock('@/lib/snapshotBuilder', () => ({
+  sortKeysDeep: (v: unknown) => v,
+}));
+
 // Import after mocks
 import { FinalizeButton } from '../FinalizeButton';
 import { FinalizationConfirmDialog } from '../FinalizationConfirmDialog';
@@ -45,9 +52,9 @@ const makeProject = (overrides: Partial<Project> = {}): Project => ({
   customer_reference: 'Test Project',
   site_reference: null,
   template_id: 'tpl-1',
-  snapshot_id: null,
-  current_configuration_id: null,
-  current_actual_bom_id: null,
+  snapshot_id: 'snap-1',
+  current_configuration_id: 'config-1',
+  current_actual_bom_id: 'bom-1',
   status: ProjectStatus.VALIDATED,
   created_by: 'user-1',
   created_at: '2024-01-01T00:00:00Z',
