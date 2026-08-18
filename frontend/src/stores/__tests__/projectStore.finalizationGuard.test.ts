@@ -85,7 +85,7 @@ describe('projectStore - finalization guards', () => {
       expect(useProjectStore.getState().zones).toEqual(originalZones);
     });
 
-    it('allows zone update when project is not FINALIZED', async () => {
+    it('does not update zone in a non-FINALIZED project either, since the write targets the template', async () => {
       useProjectStore.setState({
         currentProject: makeProject({ status: ProjectStatus.VALIDATED }),
       });
@@ -93,9 +93,8 @@ describe('projectStore - finalization guards', () => {
 
       await useProjectStore.getState().updateZone(updatedZone);
 
-      // Zone should be updated (optimistic update)
       const zone = useProjectStore.getState().zones.find((z) => z.zone_id === 'zone-1');
-      expect(zone?.width_mm).toBe(200);
+      expect(zone?.width_mm).toBe(100);
     });
   });
 

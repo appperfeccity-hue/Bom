@@ -32,6 +32,7 @@ export function Toolbar() {
   const layerVisibility = useCanvasStore((s) => s.layerVisibility);
   const currentTemplate = useProjectStore((s) => s.currentTemplate);
   const currentProject = useProjectStore((s) => s.currentProject);
+  const projectError = useProjectStore((s) => s.error);
   const runValidation = usePublishStore((s) => s.runValidation);
   const history = useHistory();
 
@@ -269,10 +270,34 @@ export function Toolbar() {
       {/* Generate Actual BOM button - CONSULTANT mode */}
       <GenerateActualBomButton />
 
+      {/* Rejected edit / load failure */}
+      {projectError && (
+        <span
+          role="alert"
+          data-testid="project-error"
+          title={projectError}
+          style={{
+            marginLeft: 'auto',
+            maxWidth: '480px',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            padding: '4px 8px',
+            borderRadius: '4px',
+            fontSize: '12px',
+            backgroundColor: 'rgba(176, 65, 62, 0.06)', /* --color-error 6% */
+            color: '#B0413E', /* --color-error */
+            border: '1px solid #B0413E', /* --color-error */
+          }}
+        >
+          {projectError}
+        </span>
+      )}
+
       {/* Save status */}
       <span
         style={{
-          marginLeft: 'auto',
+          marginLeft: projectError ? '12px' : 'auto',
           fontSize: '12px',
           color: status.color,
           fontWeight: 500,

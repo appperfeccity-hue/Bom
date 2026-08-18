@@ -21,20 +21,6 @@ vi.mock('@/lib/supabase', () => {
   };
 });
 
-// Mock snapshotBuilder
-vi.mock('@/lib/snapshotBuilder', () => ({
-  buildSnapshotData: vi.fn(() => ({
-    base_dimensions: { width_mm: 3000, height_mm: 2700 },
-    zones: [],
-    lighting: [],
-    furniture: [],
-    trims: [],
-    hidden_components: [],
-    calculation_parameters: {},
-  })),
-  computeSnapshotHash: vi.fn(() => Promise.resolve('abc123hash')),
-}));
-
 const makeTemplate = (overrides: Partial<Template> = {}): Template => ({
   template_id: 'tpl-1',
   name: 'Test Template',
@@ -230,15 +216,20 @@ describe('projectCreationStore', () => {
       expect(mockedRpc).toHaveBeenCalledWith('create_project', expect.objectContaining({
         p_template_id: 'tpl-1',
         p_user_id: 'user-1',
-        p_snapshot_data: expect.objectContaining({
-          project_metadata: {
-            customer_reference: 'CUST-001',
-            site_reference: 'SITE-001',
-          },
-        }),
-        p_snapshot_hash: 'abc123hash',
-        p_rule_set_id: null,
+        p_customer_reference: 'CUST-001',
+        p_site_reference: 'SITE-001',
       }));
+
+      // The snapshot, its hash and the rule set are the database's to produce
+      const params0 = mockedRpc.mock.calls[0][1] as Record<string, unknown>;
+      expect(params0).not.toHaveProperty('p_snapshot_data');
+      expect(params0).not.toHaveProperty('p_snapshot_hash');
+      expect(params0).not.toHaveProperty('p_rule_set_id');
+
+      // No template child table is read in the browser during creation
+      expect(mockedFromTable).not.toHaveBeenCalledWith('template_zone');
+      expect(mockedFromTable).not.toHaveBeenCalledWith('template_zone_sku');
+      expect(mockedFromTable).not.toHaveBeenCalledWith('sku_master');
 
       // Verify idempotency key contains user id and template id
       const rpcCall = mockedRpc.mock.calls[0];

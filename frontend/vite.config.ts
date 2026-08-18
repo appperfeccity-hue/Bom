@@ -30,5 +30,8 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: ['./src/test-setup.ts'],
+    // Playwright specs are run by `npm run e2e`; collecting them under Vitest
+    // fails on the missing live SUPABASE_URL.
+    exclude: ['node_modules/**', 'dist/**', 'e2e/**', 'tests/e2e/**', '**/*.spec.ts'],
   },
 });
