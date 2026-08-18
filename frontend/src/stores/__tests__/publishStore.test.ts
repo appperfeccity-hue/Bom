@@ -306,78 +306,117 @@ describe('publishStore', () => {
   });
 
   describe('generateMasterBom', () => {
-    it('calls insert and sets BOM_GENERATED on success', async () => {
-      const { fromTable } = await import('@/lib/supabase');
+    it('calls RPC and sets BOM_GENERATED on success', async () => {
+      const { supabase, fromTable } = await import('@/lib/supabase');
+      const mockedRpc = vi.mocked(supabase.rpc);
       const mockedFromTable = vi.mocked(fromTable);
 
       const mockBom = {
         master_bom_id: 'bom-1',
         template_id: 'tpl-1',
-        status: 'GENERATED',
+        status: 'APPROVED',
         generated_at: '2024-01-01T00:00:00Z',
         engine_version: '1.0',
-        rule_set_id: 'default',
-        approved_by: null,
-        approved_at: null,
+        rule_set_id: 'rs-1',
+        approved_by: 'user-1',
+        approved_at: '2024-01-01T00:00:00Z',
         created_at: '2024-01-01T00:00:00Z',
       };
 
-      const mockSingle = vi.fn().mockResolvedValue({ data: mockBom, error: null });
-      const mockSelect = vi.fn().mockReturnValue({ single: mockSingle });
-      const mockInsert = vi.fn().mockReturnValue({ select: mockSelect });
+      const mockLines = [
+        {
+          master_bom_line_id: 'line-1',
+          master_bom_id: 'bom-1',
+          template_component_id: 'zone-1',
+          sku_id: 'sku-1',
+          product_type: 'WALL_PANEL',
+          source_zone_id: 'zone-1',
+          quantity_rule: 'CALCULATED',
+          default_quantity: 1,
+          unit_of_measure: 'PIECE',
+          mandatory: true,
+          hidden: false,
+          calculation_parameters: {},
+          parent_bom_line_id: null,
+        },
+      ];
 
-      mockedFromTable.mockReturnValue({
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        in: vi.fn().mockReturnThis(),
-        insert: mockInsert,
-        update: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({ data: null, error: null }),
-      } as unknown as ReturnType<typeof fromTable>);
+      // Mock the RPC call to return the new BOM ID
+      mockedRpc.mockResolvedValue({ data: 'bom-1', error: null } as never);
+
+      // Mock fromTable for fetching the BOM header and lines
+      const mockSingle = vi.fn().mockResolvedValue({ data: mockBom, error: null });
+      const mockEqBom = vi.fn().mockReturnValue({ single: mockSingle });
+      const mockEqLines = vi.fn().mockResolvedValue({ data: mockLines, error: null });
+
+      let callCount = 0;
+      mockedFromTable.mockImplementation(() => {
+        callCount++;
+        if (callCount === 1) {
+          // First call: fetch master_bom header
+          return {
+            select: vi.fn().mockReturnValue({ eq: mockEqBom }),
+          } as unknown as ReturnType<typeof fromTable>;
+        } else {
+          // Second call: fetch master_bom_line rows
+          return {
+            select: vi.fn().mockReturnValue({ eq: mockEqLines }),
+          } as unknown as ReturnType<typeof fromTable>;
+        }
+      });
 
       await usePublishStore.getState().generateMasterBom('tpl-1');
 
-      expect(mockedFromTable).toHaveBeenCalledWith('master_bom');
-      expect(mockInsert).toHaveBeenCalledWith(
-        expect.objectContaining({
-          template_id: 'tpl-1',
-          status: 'GENERATED',
-          engine_version: '1.0',
-          rule_set_id: 'default',
-        }),
-      );
+      expect(mockedRpc).toHaveBeenCalledWith('generate_master_bom', {
+        p_template_id: 'tpl-1',
+        p_user_id: 'user-1',
+      });
 
       const state = usePublishStore.getState();
       expect(state.currentStep).toBe(PublishStep.BOM_GENERATED);
       expect(state.generatedBom).toEqual(mockBom);
+      expect(state.generatedBomLines).toEqual(mockLines);
       expect(state.isLoading).toBe(false);
     });
 
-    it('sets ERROR step on failure', async () => {
-      const { fromTable } = await import('@/lib/supabase');
+    it('sets ERROR step on RPC failure', async () => {
+      const { supabase } = await import('@/lib/supabase');
+      const mockedRpc = vi.mocked(supabase.rpc);
+
+      mockedRpc.mockResolvedValue({
+        data: null,
+        error: { message: 'Template must be in DRAFT status' },
+      } as never);
+
+      await usePublishStore.getState().generateMasterBom('tpl-1');
+
+      const state = usePublishStore.getState();
+      expect(state.currentStep).toBe(PublishStep.ERROR);
+      expect(state.error).toBe('Template must be in DRAFT status');
+    });
+
+    it('sets ERROR step on BOM fetch failure', async () => {
+      const { supabase, fromTable } = await import('@/lib/supabase');
+      const mockedRpc = vi.mocked(supabase.rpc);
       const mockedFromTable = vi.mocked(fromTable);
+
+      mockedRpc.mockResolvedValue({ data: 'bom-1', error: null } as never);
 
       const mockSingle = vi.fn().mockResolvedValue({
         data: null,
-        error: { message: 'Insert failed' },
+        error: { message: 'Not found' },
       });
-      const mockSelect = vi.fn().mockReturnValue({ single: mockSingle });
-      const mockInsert = vi.fn().mockReturnValue({ select: mockSelect });
+      const mockEqBom = vi.fn().mockReturnValue({ single: mockSingle });
 
       mockedFromTable.mockReturnValue({
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        in: vi.fn().mockReturnThis(),
-        insert: mockInsert,
-        update: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({ data: null, error: null }),
+        select: vi.fn().mockReturnValue({ eq: mockEqBom }),
       } as unknown as ReturnType<typeof fromTable>);
 
       await usePublishStore.getState().generateMasterBom('tpl-1');
 
       const state = usePublishStore.getState();
       expect(state.currentStep).toBe(PublishStep.ERROR);
-      expect(state.error).toBe('Insert failed');
+      expect(state.error).toBe('Not found');
     });
   });
 
