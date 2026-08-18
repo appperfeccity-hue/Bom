@@ -2,7 +2,7 @@
   "id": "FEAT-004",
   "type": "feat",
   "description": "Phase 3 - Repair the BOM pipeline inputs: Create snapshotMapper.ts with v1/v2 mappers that convert DB snake_case snapshot data to camelCase BomPipelineInput format. Rewrite bomStore.runPipeline to use mappers instead of querying non-existent tables (permission_rule, compatibility_rule). Add BOM_ENGINE_VERSION constant. Create comprehensive unit tests for mappers.",
-  "status": "pending",
+  "status": "completed",
   "steps": [
     "Create frontend/src/lib/bomEngine/version.ts with export const BOM_ENGINE_VERSION = '1.0.0' (per spec Decision 3: one constant, never derived from package.json).",
     "Create frontend/src/lib/snapshotMapper.ts with four exported functions: (a) mapSnapshotToPipeline(s: SnapshotDataV2): maps snapshot zones to BomPipelineInput.snapshotData format (zone_id->zoneId, x_mm->x, y_mm->y, width_mm->width, height_mm->height, primary_sku.sku_id->skuId, primary_sku.width_mm->panelWidth, primary_sku.height_mm->panelHeight, primary_sku.gh_mm->gapHorizontal, primary_sku.gv_mm->gapVertical, width_strategy mapping: FIXED|PROPORTIONAL->RESIZABLE, LOCKED->LOCKED, height_strategy->heightMode, lighting/furniture/hidden_components mapped per spec 3.1 field mapping), (b) mapPermissions(s: SnapshotDataV2): PermissionRule[] from consultant_permissions array, (c) mapCompatibility(s: SnapshotDataV2): CompatibilityRule[] from sku_compatibility array, (d) mapRuleSet(s: SnapshotDataV2): BomRuleSet from rule_set field. Also create a legacy v1 mapper that handles old client-built snapshots (no alternatives, no hidden_components, no consultant_permissions, no frozen sku_compatibility).",
@@ -25,5 +25,5 @@
     "cd frontend && npx tsc --noEmit"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All 1345 tests pass. V1 legacy mapper correctly degrades: no hidden_components, permissions, or sku_compatibility. V2 mapper handles full field mapping. The projectStore.projectIsolation.test.ts TS6196 error (unused ProjectMeasurement import) is pre-existing from FEAT-003. Integration test for v1 snapshot correctly expects no hiddenComponent output since v1 snapshots never froze hidden components. Obstruction data is fetched but not yet consumed in pipeline input (Phase 4 will wire it to frame generation)."
 }

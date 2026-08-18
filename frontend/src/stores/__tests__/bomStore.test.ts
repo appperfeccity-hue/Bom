@@ -550,15 +550,29 @@ describe('bomStore', () => {
       const { fromTable } = await import('@/lib/supabase');
       const mockedFromTable = vi.mocked(fromTable);
 
-      const mockChain = {
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        neq: vi.fn().mockReturnThis(),
-        limit: vi.fn().mockReturnThis(),
-        order: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({ data: { snapshot_data: { zones: [] }, configuration: {}, rule_set: {} }, error: null }),
-      };
-      mockedFromTable.mockReturnValue(mockChain as unknown as ReturnType<typeof fromTable>);
+      let callCount = 0;
+      mockedFromTable.mockImplementation(() => {
+        callCount++;
+        const chain = {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          neq: vi.fn().mockReturnThis(),
+          limit: vi.fn().mockReturnThis(),
+          order: vi.fn().mockReturnThis(),
+          single: vi.fn().mockResolvedValue({
+            data: { snapshot_data: { zones: [] } },
+            error: null,
+          }),
+        };
+        if (callCount === 4) {
+          // project_obstruction returns array, not single
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockResolvedValue({ data: [], error: null }),
+          } as unknown as ReturnType<typeof fromTable>;
+        }
+        return chain as unknown as ReturnType<typeof fromTable>;
+      });
 
       const { runBomPipeline } = await import('@/engines/bomPipeline');
       vi.mocked(runBomPipeline).mockReturnValue({
@@ -577,15 +591,46 @@ describe('bomStore', () => {
       const { fromTable } = await import('@/lib/supabase');
       const mockedFromTable = vi.mocked(fromTable);
 
-      const mockChain = {
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        neq: vi.fn().mockReturnThis(),
-        limit: vi.fn().mockReturnThis(),
-        order: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({ data: { snapshot_data: { zones: [] }, configuration: {}, rule_set: {}, wall_width: 2400, wall_height: 1200, template_wall_width: 2400 }, error: null }),
-      };
-      mockedFromTable.mockReturnValue(mockChain as unknown as ReturnType<typeof fromTable>);
+      let callCount = 0;
+      mockedFromTable.mockImplementation(() => {
+        callCount++;
+        if (callCount === 1) {
+          // project_snapshot
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            single: vi.fn().mockResolvedValue({
+              data: { snapshot_data: { zones: [], base_dimensions: { width_mm: 3000, height_mm: 2400 } } },
+              error: null,
+            }),
+          } as unknown as ReturnType<typeof fromTable>;
+        } else if (callCount === 2) {
+          // project_measurement
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            single: vi.fn().mockResolvedValue({
+              data: { wall_width_mm: 3000, wall_height_mm: 2400 },
+              error: null,
+            }),
+          } as unknown as ReturnType<typeof fromTable>;
+        } else if (callCount === 3) {
+          // project_configuration
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            order: vi.fn().mockReturnThis(),
+            limit: vi.fn().mockReturnThis(),
+            single: vi.fn().mockResolvedValue({ data: null, error: null }),
+          } as unknown as ReturnType<typeof fromTable>;
+        } else {
+          // project_obstruction
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockResolvedValue({ data: [], error: null }),
+          } as unknown as ReturnType<typeof fromTable>;
+        }
+      });
 
       const { runBomPipeline } = await import('@/engines/bomPipeline');
       vi.mocked(runBomPipeline).mockReturnValue({
@@ -609,15 +654,42 @@ describe('bomStore', () => {
       const { fromTable } = await import('@/lib/supabase');
       const mockedFromTable = vi.mocked(fromTable);
 
-      const mockChain = {
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        neq: vi.fn().mockReturnThis(),
-        limit: vi.fn().mockReturnThis(),
-        order: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({ data: { snapshot_data: { zones: [] }, configuration: {}, rule_set: {}, wall_width: 2400, wall_height: 1200, template_wall_width: 2400 }, error: null }),
-      };
-      mockedFromTable.mockReturnValue(mockChain as unknown as ReturnType<typeof fromTable>);
+      let callCount = 0;
+      mockedFromTable.mockImplementation(() => {
+        callCount++;
+        if (callCount === 1) {
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            single: vi.fn().mockResolvedValue({
+              data: { snapshot_data: { zones: [], base_dimensions: { width_mm: 3000, height_mm: 2400 } } },
+              error: null,
+            }),
+          } as unknown as ReturnType<typeof fromTable>;
+        } else if (callCount === 2) {
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            single: vi.fn().mockResolvedValue({
+              data: { wall_width_mm: 3000, wall_height_mm: 2400 },
+              error: null,
+            }),
+          } as unknown as ReturnType<typeof fromTable>;
+        } else if (callCount === 3) {
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            order: vi.fn().mockReturnThis(),
+            limit: vi.fn().mockReturnThis(),
+            single: vi.fn().mockResolvedValue({ data: null, error: null }),
+          } as unknown as ReturnType<typeof fromTable>;
+        } else {
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockResolvedValue({ data: [], error: null }),
+          } as unknown as ReturnType<typeof fromTable>;
+        }
+      });
 
       const blockedError: PipelineError = {
         code: ErrorCode.GEO_ZONE_OVERLAP,
@@ -669,15 +741,42 @@ describe('bomStore', () => {
       const { fromTable } = await import('@/lib/supabase');
       const mockedFromTable = vi.mocked(fromTable);
 
-      const mockChain = {
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        neq: vi.fn().mockReturnThis(),
-        limit: vi.fn().mockReturnThis(),
-        order: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({ data: { snapshot_data: { zones: [] }, configuration: {}, rule_set: {}, wall_width: 2400, wall_height: 1200, template_wall_width: 2400 }, error: null }),
-      };
-      mockedFromTable.mockReturnValue(mockChain as unknown as ReturnType<typeof fromTable>);
+      let callCount = 0;
+      mockedFromTable.mockImplementation(() => {
+        callCount++;
+        if (callCount === 1) {
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            single: vi.fn().mockResolvedValue({
+              data: { snapshot_data: { zones: [], base_dimensions: { width_mm: 3000, height_mm: 2400 } } },
+              error: null,
+            }),
+          } as unknown as ReturnType<typeof fromTable>;
+        } else if (callCount === 2) {
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            single: vi.fn().mockResolvedValue({
+              data: { wall_width_mm: 3000, wall_height_mm: 2400 },
+              error: null,
+            }),
+          } as unknown as ReturnType<typeof fromTable>;
+        } else if (callCount === 3) {
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            order: vi.fn().mockReturnThis(),
+            limit: vi.fn().mockReturnThis(),
+            single: vi.fn().mockResolvedValue({ data: null, error: null }),
+          } as unknown as ReturnType<typeof fromTable>;
+        } else {
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockResolvedValue({ data: [], error: null }),
+          } as unknown as ReturnType<typeof fromTable>;
+        }
+      });
 
       const warning: PipelineError = {
         code: ErrorCode.GEO_GAP_TOO_SMALL,
@@ -700,6 +799,62 @@ describe('bomStore', () => {
       expect(state.pipelineStatus).toBe('success');
       expect(state.pipelineWarnings).toHaveLength(1);
       expect(state.pipelineWarnings[0].code).toBe(ErrorCode.GEO_GAP_TOO_SMALL);
+    });
+
+    it('should not query permission_rule or compatibility_rule tables', async () => {
+      const { fromTable } = await import('@/lib/supabase');
+      const mockedFromTable = vi.mocked(fromTable);
+
+      let callCount = 0;
+      const calledTables: string[] = [];
+      mockedFromTable.mockImplementation((table: string) => {
+        calledTables.push(table);
+        callCount++;
+        if (callCount <= 2) {
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            single: vi.fn().mockResolvedValue({
+              data: callCount === 1
+                ? { snapshot_data: { zones: [], base_dimensions: { width_mm: 3000, height_mm: 2400 } } }
+                : { wall_width_mm: 3000, wall_height_mm: 2400 },
+              error: null,
+            }),
+          } as unknown as ReturnType<typeof fromTable>;
+        } else if (callCount === 3) {
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            order: vi.fn().mockReturnThis(),
+            limit: vi.fn().mockReturnThis(),
+            single: vi.fn().mockResolvedValue({ data: null, error: null }),
+          } as unknown as ReturnType<typeof fromTable>;
+        } else {
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockResolvedValue({ data: [], error: null }),
+          } as unknown as ReturnType<typeof fromTable>;
+        }
+      });
+
+      const { runBomPipeline } = await import('@/engines/bomPipeline');
+      vi.mocked(runBomPipeline).mockReturnValue({
+        actualBomLines: [],
+        errors: [],
+        warnings: [],
+        status: 'SUCCESS',
+      });
+
+      await useBomStore.getState().runPipeline('proj-1', 'snap-1');
+
+      // Verify no queries to non-existent tables
+      expect(calledTables).not.toContain('permission_rule');
+      expect(calledTables).not.toContain('compatibility_rule');
+      // Verify correct tables are queried
+      expect(calledTables).toContain('project_snapshot');
+      expect(calledTables).toContain('project_measurement');
+      expect(calledTables).toContain('project_configuration');
+      expect(calledTables).toContain('project_obstruction');
     });
   });
 
