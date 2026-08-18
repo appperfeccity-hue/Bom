@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { useProjectStore } from '@/stores/projectStore';
+import { useProjectStore, PROJECT_TEMPLATE_WRITE_BLOCKED } from '@/stores/projectStore';
+import { useCanvasStore } from '@/stores/canvasStore';
 
 const fromTableMock = vi.fn();
 
@@ -107,5 +108,52 @@ describe('projectStore snapshot boundary', () => {
     expect(state.error).toBe('no snapshot');
     expect(state.zones).toEqual([]);
     expect(fromTableMock.mock.calls.map((call) => call[0])).not.toContain('template_zone');
+  });
+
+  describe('template writes from a project context', () => {
+    beforeEach(async () => {
+      await useProjectStore.getState().loadProject('proj-1');
+      fromTableMock.mockClear();
+      useCanvasStore.getState().setSaveStatus('saved');
+    });
+
+    const mutations: [string, () => Promise<void>][] = [
+      ['updateZone', () => useProjectStore.getState().updateZone({ ...useProjectStore.getState().zones[0], width_mm: 1200 })],
+      ['addZone', () => useProjectStore.getState().addZone({ template_id: 'tpl-1', x_mm: 0, y_mm: 0, width_mm: 600, height_mm: 2400 } as never)],
+      ['removeZone', () => useProjectStore.getState().removeZone('zone-1')],
+      ['assignSku', () => useProjectStore.getState().assignSku('zone-1', 'sku-9')],
+      ['removeSku', () => useProjectStore.getState().removeSku('zone-1')],
+    ];
+
+    it.each(mutations)('%s is rejected and writes nothing', async (_name, mutate) => {
+      const before = useProjectStore.getState();
+      const zonesBefore = before.zones;
+      const skuBefore = before.zoneSku.get('zone-1');
+
+      await mutate();
+
+      const state = useProjectStore.getState();
+      expect(fromTableMock).not.toHaveBeenCalled();
+      expect(state.error).toBe(PROJECT_TEMPLATE_WRITE_BLOCKED);
+      expect(useCanvasStore.getState().saveStatus).toBe('error');
+      expect(state.zones).toEqual(zonesBefore);
+      expect(state.zoneSku.get('zone-1')).toBe(skuBefore);
+    });
+  });
+
+  it('still writes template_zone in designer context, where no project is loaded', async () => {
+    fromTableMock.mockImplementation(() => ({
+      insert: () => ({
+        select: () => ({
+          single: () =>
+            Promise.resolve({ data: { zone_id: 'zone-new', template_id: 'tpl-1' }, error: null }),
+        }),
+      }),
+    }));
+
+    await useProjectStore.getState().addZone({ template_id: 'tpl-1' } as never);
+
+    expect(fromTableMock).toHaveBeenCalledWith('template_zone');
+    expect(useProjectStore.getState().zones.map((z) => z.zone_id)).toEqual(['zone-new']);
   });
 });

@@ -82,6 +82,15 @@ const initialState: ProjectState = {
 };
 
 /**
+ * Shown when a project-context edit would have to be written to the designer-owned
+ * `template_*` tables. Projects read from the immutable snapshot, so such a write
+ * would mutate the shared template and be discarded on the next load.
+ */
+export const PROJECT_TEMPLATE_WRITE_BLOCKED =
+  'This change was not saved. Editing zones or SKUs inside a project is not available yet — ' +
+  'the project reads a frozen snapshot, and saving would modify the shared designer template.';
+
+/**
  * Module-level autosave debouncer instance, created lazily.
  * Wraps zone-persistence calls with debounce and save-status transitions.
  * Uses a Map keyed by zone ID so that concurrent zone updates within the
@@ -104,6 +113,21 @@ function getAutosaver(onStatusChange: (status: SaveStatus) => void): ReturnType<
     );
   }
   return autosaver;
+}
+
+/**
+ * True when the store holds a project (snapshot-backed), in which case zone and SKU
+ * mutations must not fall through to the designer template. Reports the rejection
+ * through the store error and the save-status indicator.
+ */
+function rejectTemplateWrite(
+  get: () => ProjectStore,
+  set: (partial: Partial<ProjectStore>) => void,
+): boolean {
+  if (!get().currentProject) return false;
+  set({ error: PROJECT_TEMPLATE_WRITE_BLOCKED });
+  useCanvasStore.getState().setSaveStatus('error');
+  return true;
 }
 
 export const useProjectStore = create<ProjectStore>((set, get) => ({
@@ -201,6 +225,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   updateZone: async (zone: TemplateZone) => {
     // Guard: prevent mutations on a finalized project
     if (get().currentProject?.status === 'FINALIZED') return;
+    if (rejectTemplateWrite(get, set)) return;
 
     // Auto-compute segment based on position for L_CORNER walls
     const { wallGeometry, measurements } = get();
@@ -251,6 +276,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   addZone: async (zone) => {
     // Guard: prevent mutations on a finalized project
     if (get().currentProject?.status === 'FINALIZED') return;
+    if (rejectTemplateWrite(get, set)) return;
 
     try {
       const { data, error } = await fromTable('template_zone')
@@ -267,6 +293,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   removeZone: async (zoneId: string) => {
     // Guard: prevent mutations on a finalized project
     if (get().currentProject?.status === 'FINALIZED') return;
+    if (rejectTemplateWrite(get, set)) return;
 
     const prevZones = get().zones;
     set({ zones: prevZones.filter((z) => z.zone_id !== zoneId) });
@@ -286,6 +313,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   assignSku: async (zoneId: string, skuId: string) => {
     // Guard: prevent mutations on a finalized project
     if (get().currentProject?.status === 'FINALIZED') return;
+    if (rejectTemplateWrite(get, set)) return;
 
     try {
       // Upsert zone-sku mapping
@@ -311,6 +339,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   removeSku: async (zoneId: string) => {
     // Guard: prevent mutations on a finalized project
     if (get().currentProject?.status === 'FINALIZED') return;
+    if (rejectTemplateWrite(get, set)) return;
 
     const prevSkuMap = get().zoneSku;
     const newSkuMap = new Map(prevSkuMap);
