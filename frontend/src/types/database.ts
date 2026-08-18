@@ -485,6 +485,22 @@ export interface ConsultantWallPermission {
   updated_at: string;
 }
 
+/**
+ * Template consultant permission record (v1.1.8 snapshot shape).
+ */
+export interface TemplateConsultantPermission {
+  permission_id: string;
+  template_id: string;
+  parameter_key: string;
+  parameter_type: string;
+  edit_mode: string;
+  min_value: number | null;
+  max_value: number | null;
+  allowed_values: unknown[] | null;
+  source_component_id: string | null;
+  created_at: string;
+}
+
 // --- Wall Configuration Tables (Amendment 001) ---
 
 /**

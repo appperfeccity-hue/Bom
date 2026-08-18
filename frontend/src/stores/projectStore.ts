@@ -9,6 +9,7 @@ import type {
   ProjectSnapshot,
   ProjectMeasurement,
   SkuMaster,
+  WallGeometry,
   WallGeometryType,
 } from '@/types/database';
 import type { WallConfigInput, PanelFrame } from '@/engines/types';
@@ -153,20 +154,83 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
         .single();
       if (pErr) throw pErr;
 
+      const typedProject = project as Project;
+
+      // Fetch snapshot by snapshot_id (if present)
+      let snapshot: ProjectSnapshot | null = null;
+      if (typedProject.snapshot_id) {
+        const { data: snapshotData, error: sErr } = await fromTable('project_snapshot')
+          .select('*')
+          .eq('snapshot_id', typedProject.snapshot_id)
+          .single();
+        if (sErr && sErr.code !== 'PGRST116') throw sErr;
+        snapshot = (snapshotData as ProjectSnapshot) ?? null;
+      }
+
+      // Fetch project measurement
       const { data: measurements, error: mErr } = await fromTable('project_measurement')
         .select('*')
         .eq('project_id', id)
         .single();
       if (mErr && mErr.code !== 'PGRST116') throw mErr;
 
+      // Hydrate zones/lighting/furniture/trims from snapshot_data if available
+      const snapshotPayload = snapshot?.snapshot_data as Record<string, unknown> | undefined;
+      let hydratedZones: TemplateZone[] = [];
+      let hydratedLighting: TemplateLighting[] = [];
+      let hydratedFurniture: TemplateFurniture[] = [];
+      let hydratedTrims: TemplateTrim[] = [];
+      let hydratedZoneSku = new Map<string, SkuMaster>();
+      let hydratedWallGeometry: WallGeometryType = 'STRAIGHT';
+
+      if (snapshotPayload) {
+        // Hydrate zones
+        const rawZones = (snapshotPayload.zones as Array<Record<string, unknown>>) ?? [];
+        hydratedZones = rawZones.map((z) => ({
+          zone_id: z.zone_id as string,
+          template_id: typedProject.template_id,
+          segment: (z.segment as TemplateZone['segment']) ?? null,
+          x_mm: z.x_mm as number,
+          y_mm: z.y_mm as number,
+          width_mm: z.width_mm as number,
+          height_mm: z.height_mm as number,
+          width_strategy: (z.width_strategy as string) as ZoneWidthStrategy,
+          height_strategy: (z.height_strategy as string) as ZoneHeightStrategy,
+          position_strategy: (z.position_strategy as string) as ZonePositionStrategy,
+          created_at: '',
+        }));
+
+        // Hydrate zone SKU map
+        for (const z of rawZones) {
+          if (z.primary_sku) {
+            hydratedZoneSku.set(z.zone_id as string, z.primary_sku as unknown as SkuMaster);
+          }
+        }
+
+        // Hydrate lighting/furniture/trims
+        hydratedLighting = ((snapshotPayload.lighting as TemplateLighting[]) ?? []);
+        hydratedFurniture = ((snapshotPayload.furniture as TemplateFurniture[]) ?? []);
+        hydratedTrims = ((snapshotPayload.trims as TemplateTrim[]) ?? []);
+
+        // Hydrate wall geometry
+        const wallGeo = snapshotPayload.wall_geometry as WallGeometry | undefined;
+        if (wallGeo) {
+          hydratedWallGeometry = wallGeo.type;
+        }
+      }
+
       set({
-        currentProject: project as Project,
+        currentProject: typedProject,
+        currentSnapshot: snapshot,
+        zones: hydratedZones,
+        zoneSku: hydratedZoneSku,
+        lighting: hydratedLighting,
+        furniture: hydratedFurniture,
+        trims: hydratedTrims,
         measurements: (measurements as ProjectMeasurement) ?? null,
+        wallGeometry: hydratedWallGeometry,
         isLoading: false,
       });
-
-      // Load associated template
-      await get().loadTemplate((project as Project).template_id);
     } catch (err) {
       set({ error: (err as Error).message, isLoading: false });
     }

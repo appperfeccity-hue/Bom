@@ -1,8 +1,7 @@
 import { create } from 'zustand';
-import type { Template, TemplateZone, TemplateLighting, TemplateFurniture, TemplateTrim, SkuMaster } from '@/types/database';
+import type { Template } from '@/types/database';
 import { CanvasMode } from '@/types/database';
 import { fromTable, supabase } from '@/lib/supabase';
-import { buildSnapshotData, computeSnapshotHash } from '@/lib/snapshotBuilder';
 import { useAuthStore } from '@/stores/authStore';
 import { useProjectStore } from '@/stores/projectStore';
 import { useCanvasStore } from '@/stores/canvasStore';
@@ -106,92 +105,13 @@ export const useProjectCreationStore = create<ProjectCreationStore>((set, get) =
         set({ idempotencyKey });
       }
 
-      // Load full template data in parallel (zones, lighting, furniture, trims)
-      const [zonesResult, lightingResult, furnitureResult, trimsResult] = await Promise.all([
-        fromTable('template_zone')
-          .select('*')
-          .eq('template_id', templateId)
-          .order('z_index'),
-        fromTable('template_lighting')
-          .select('*')
-          .eq('template_id', templateId),
-        fromTable('template_furniture')
-          .select('*')
-          .eq('template_id', templateId),
-        fromTable('template_trim')
-          .select('*')
-          .eq('template_id', templateId),
-      ]);
-
-      if (zonesResult.error) throw zonesResult.error;
-      if (lightingResult.error) throw lightingResult.error;
-      if (furnitureResult.error) throw furnitureResult.error;
-      if (trimsResult.error) throw trimsResult.error;
-
-      // Load zone SKU mappings
-      const typedZones = (zonesResult.data ?? []) as TemplateZone[];
-      const zoneIds = typedZones.map((z) => z.zone_id);
-      const zoneSku = new Map<string, SkuMaster>();
-
-      if (zoneIds.length > 0) {
-        const { data: zoneSkuData, error: zsErr } = await fromTable('template_zone_sku')
-          .select('zone_id, sku_id')
-          .in('zone_id', zoneIds);
-        if (zsErr) throw zsErr;
-
-        if (zoneSkuData && zoneSkuData.length > 0) {
-          const skuIds = (zoneSkuData as Array<{ zone_id: string; sku_id: string }>).map((zs) => zs.sku_id);
-          const { data: skus, error: sErr } = await fromTable('sku_master')
-            .select('*')
-            .in('sku_id', skuIds);
-          if (sErr) throw sErr;
-
-          const skuMap = new Map<string, SkuMaster>();
-          for (const sku of (skus ?? []) as SkuMaster[]) {
-            skuMap.set(sku.sku_id, sku);
-          }
-
-          for (const zs of zoneSkuData as Array<{ zone_id: string; sku_id: string }>) {
-            const sku = skuMap.get(zs.sku_id);
-            if (sku) {
-              zoneSku.set(zs.zone_id, sku);
-            }
-          }
-        }
-      }
-
-      // Build snapshot data (include project metadata with customer/site references)
-      const snapshotData = buildSnapshotData(
-        selectedTemplate,
-        typedZones,
-        (lightingResult.data ?? []) as TemplateLighting[],
-        (furnitureResult.data ?? []) as TemplateFurniture[],
-        (trimsResult.data ?? []) as TemplateTrim[],
-        zoneSku,
-      );
-
-      // Embed project metadata (customer/site references) in snapshot
-      const snapshotWithMetadata = {
-        ...snapshotData,
-        project_metadata: {
-          customer_reference: customerReference,
-          site_reference: siteReference,
-        },
-      };
-
-      // Compute hash over the design freeze only (excludes project_metadata).
-      // The hash is a content-addressable identifier for the template geometry/materials,
-      // not the full payload. project_metadata (customer/site refs) is mutable context.
-      const snapshotHash = await computeSnapshotHash(snapshotData);
-
-      // Call RPC to create project atomically
+      // Call RPC to create project atomically (server builds snapshot)
       const { data: projectId, error: rpcErr } = await supabase.rpc('create_project', {
         p_template_id: templateId,
         p_user_id: userId,
         p_idempotency_key: idempotencyKey,
-        p_snapshot_data: snapshotWithMetadata,
-        p_snapshot_hash: snapshotHash,
-        p_rule_set_id: null,
+        p_customer_reference: customerReference || null,
+        p_site_reference: siteReference || null,
       });
       if (rpcErr) throw rpcErr;
 
