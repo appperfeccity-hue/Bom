@@ -48,7 +48,7 @@ $$;
 
 -- =============================================================================
 -- Test 3: finalize_project computes hash server-side (D6 fix)
--- Verify function body contains sha256/encode pattern
+-- Verify function body contains digest/encode pattern and canonical_jsonb
 -- =============================================================================
 
 DO $$
@@ -65,15 +65,23 @@ BEGIN
     RAISE EXCEPTION 'FAIL: finalize_project function not found';
   END IF;
 
-  IF v_func_body NOT LIKE '%sha256%' THEN
-    RAISE EXCEPTION 'FAIL: finalize_project does not contain sha256 (D6 server-side hash not applied)';
+  IF v_func_body NOT LIKE '%digest%' THEN
+    RAISE EXCEPTION 'FAIL: finalize_project does not contain digest (D6 server-side hash not applied)';
   END IF;
 
   IF v_func_body NOT LIKE '%encode%' THEN
     RAISE EXCEPTION 'FAIL: finalize_project does not contain encode (D6 hex encoding not applied)';
   END IF;
 
-  RAISE NOTICE 'PASS: finalize_project contains sha256 and encode (D6 fix verified)';
+  IF v_func_body NOT LIKE '%canonical_jsonb%' THEN
+    RAISE EXCEPTION 'FAIL: finalize_project does not use canonical_jsonb for deterministic key ordering';
+  END IF;
+
+  IF v_func_body NOT LIKE '%actual_bom_line abl%' THEN
+    RAISE EXCEPTION 'FAIL: finalize_project hash computation does not reference actual_bom_line';
+  END IF;
+
+  RAISE NOTICE 'PASS: finalize_project contains digest, encode, and canonical_jsonb (D6 fix verified)';
 END;
 $$;
 
@@ -202,7 +210,7 @@ END;
 $$;
 
 -- =============================================================================
--- Test 9: finalize_project writes audit_event
+-- Test 9: finalize_project writes audit_event with correct columns
 -- =============================================================================
 
 DO $$
@@ -223,7 +231,24 @@ BEGIN
     RAISE EXCEPTION 'FAIL: finalize_project does not use PROJECT_FINALIZED event type';
   END IF;
 
-  RAISE NOTICE 'PASS: finalize_project writes audit_event with PROJECT_FINALIZED';
+  -- Verify correct column names (actor_id, actor_role, entity_type, entity_id, after_state)
+  IF v_func_body NOT LIKE '%actor_id%' THEN
+    RAISE EXCEPTION 'FAIL: finalize_project audit INSERT does not use actor_id column';
+  END IF;
+
+  IF v_func_body NOT LIKE '%actor_role%' THEN
+    RAISE EXCEPTION 'FAIL: finalize_project audit INSERT does not use actor_role column';
+  END IF;
+
+  IF v_func_body NOT LIKE '%entity_type%' THEN
+    RAISE EXCEPTION 'FAIL: finalize_project audit INSERT does not use entity_type column';
+  END IF;
+
+  IF v_func_body NOT LIKE '%entity_id%' THEN
+    RAISE EXCEPTION 'FAIL: finalize_project audit INSERT does not use entity_id column';
+  END IF;
+
+  RAISE NOTICE 'PASS: finalize_project writes audit_event with correct columns and PROJECT_FINALIZED';
 END;
 $$;
 

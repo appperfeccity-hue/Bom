@@ -126,30 +126,43 @@ BEGIN
     ORDER BY abl.actual_bom_line_id;
     PERFORM set_config('perfecity.internal_finalization', 'false', true);
 
-    -- D6 fix: Compute server-side hash from inserted final_bom_line rows
-    -- Canonical JSON: array of line objects ordered by actual_bom_line_id,
-    -- each containing the full row data with keys sorted alphabetically.
+    -- D6 fix: Compute server-side hash from actual_bom_line rows (the same
+    -- source data the client has access to). Uses canonical_jsonb for
+    -- alphabetical key ordering, matching the client's sortKeysDeep.
     SELECT encode(
-        sha256(
+        digest(
             convert_to(
                 (
                     SELECT string_agg(
-                        row_to_json(sub.*)::text, ','
+                        perfecity.canonical_jsonb(row_to_json(sub.*)::jsonb)::text, ','
                         ORDER BY sub.actual_bom_line_id
                     )
                     FROM (
-                        SELECT fbl.actual_bom_line_id, fbl.sku_id, fbl.sku_code,
-                               fbl.product_type, fbl.quantity, fbl.required_quantity,
-                               fbl.waste_quantity, fbl.unit_of_measure,
-                               fbl.resolved_dimensions, fbl.source_zone_id,
-                               fbl.source_trace
-                        FROM perfecity.final_bom_line fbl
-                        WHERE fbl.final_bom_id = v_final_bom_id
-                        ORDER BY fbl.actual_bom_line_id
+                        SELECT abl.actual_bom_line_id,
+                               abl.sku_id,
+                               abl.product_type,
+                               abl.quantity,
+                               abl.required_quantity,
+                               abl.waste_quantity,
+                               abl.unit_of_measure,
+                               abl.resolved_dimensions,
+                               abl.component_id AS source_zone_id,
+                               jsonb_build_object(
+                                   'actual_bom_id', v_actual_bom_id,
+                                   'actual_bom_line_id', abl.actual_bom_line_id,
+                                   'configuration_id', v_configuration_id,
+                                   'rule_set_id', v_rule_set_id,
+                                   'snapshot_id', v_snapshot_id,
+                                   'zone_id', abl.component_id
+                               ) AS source_trace
+                        FROM perfecity.actual_bom_line abl
+                        WHERE abl.actual_bom_id = v_actual_bom_id
+                        ORDER BY abl.actual_bom_line_id
                     ) sub
                 ),
                 'UTF8'
-            )
+            ),
+            'sha256'
         ),
         'hex'
     ) INTO v_server_hash;
@@ -176,12 +189,19 @@ BEGIN
     END IF;
 
     -- Audit event
-    INSERT INTO perfecity.audit_event (event_type, user_id, project_id, payload)
-    VALUES ('PROJECT_FINALIZED', p_user_id, p_project_id, jsonb_build_object(
-        'final_bom_id', v_final_bom_id,
-        'actual_bom_id', v_actual_bom_id,
-        'final_bom_hash', v_server_hash
-    ));
+    INSERT INTO perfecity.audit_event (
+        actor_id, actor_role, event_type, entity_type,
+        entity_id, project_id, after_state
+    )
+    VALUES (
+        p_user_id, 'CONSULTANT', 'PROJECT_FINALIZED', 'final_bom',
+        v_final_bom_id, p_project_id,
+        jsonb_build_object(
+            'final_bom_id', v_final_bom_id,
+            'actual_bom_id', v_actual_bom_id,
+            'final_bom_hash', v_server_hash
+        )
+    );
 
     RETURN v_final_bom_id;
 END;

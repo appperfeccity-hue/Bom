@@ -58,32 +58,36 @@ async function computeSha256(input: string): Promise<string> {
 
 /**
  * Compute the canonical hash from actual_bom_line rows fetched from DB.
- * Mirrors the server-side computation: JSON of selected fields per line,
- * concatenated with commas, ordered by actual_bom_line_id.
+ * Mirrors the server-side computation: uses canonical_jsonb (alphabetical key
+ * ordering) over the same field set from actual_bom_line rows, concatenated
+ * with commas, ordered by actual_bom_line_id.
  */
 async function computeHashFromLines(lines: Record<string, unknown>[]): Promise<string> {
-  // Build canonical representation matching server-side row_to_json output.
-  // Select the same columns used in the server-side hash computation.
+  // Build canonical representation matching server-side computation.
+  // Server selects from actual_bom_line: actual_bom_line_id, sku_id,
+  // product_type, quantity, required_quantity, waste_quantity,
+  // unit_of_measure, resolved_dimensions, component_id AS source_zone_id,
+  // and a constructed source_trace jsonb object.
+  // canonical_jsonb sorts keys alphabetically at every level.
   const canonicalParts = lines.map((line) => {
     const subset = {
       actual_bom_line_id: line.actual_bom_line_id,
-      sku_id: line.sku_id,
-      sku_code: line.sku_code,
       product_type: line.product_type,
       quantity: line.quantity,
       required_quantity: line.required_quantity,
-      waste_quantity: line.waste_quantity,
-      unit_of_measure: line.unit_of_measure,
       resolved_dimensions: line.resolved_dimensions,
-      source_zone_id: line.source_zone_id ?? line.component_id,
+      sku_id: line.sku_id,
       source_trace: {
-        snapshot_id: line.snapshot_id ?? null,
-        configuration_id: line.configuration_id ?? null,
         actual_bom_id: line.actual_bom_id,
         actual_bom_line_id: line.actual_bom_line_id,
+        configuration_id: line.configuration_id ?? null,
         rule_set_id: line.rule_set_id ?? null,
+        snapshot_id: line.snapshot_id ?? null,
         zone_id: line.component_id,
       },
+      source_zone_id: line.component_id,
+      unit_of_measure: line.unit_of_measure,
+      waste_quantity: line.waste_quantity,
     };
     return JSON.stringify(sortKeysDeep(subset));
   });

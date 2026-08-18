@@ -428,4 +428,6 @@ REVOKE ALL ON FUNCTION perfecity.canonical_jsonb(JSONB) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION perfecity.canonical_jsonb(JSONB) TO authenticated;
 
 REVOKE ALL ON FUNCTION perfecity.build_template_snapshot(UUID, UUID) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION perfecity.build_template_snapshot(UUID, UUID) TO authenticated;
+-- No direct grant to authenticated: build_template_snapshot is only called
+-- internally by create_project (which runs as SECURITY DEFINER), so direct
+-- access by end users is unnecessary and exposes template data.

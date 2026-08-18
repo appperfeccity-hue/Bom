@@ -202,6 +202,14 @@ BEGIN
          WHERE h ->> 'sku_id' IS NOT NULL;
     END IF;
 
+    -- Also include SKUs from trims
+    IF v_snapshot.snapshot_data -> 'trims' IS NOT NULL THEN
+        SELECT COALESCE(v_sku_set, '[]'::jsonb) || COALESCE(jsonb_agg(DISTINCT t ->> 'sku_id'), '[]'::jsonb)
+          INTO v_sku_set
+          FROM jsonb_array_elements(v_snapshot.snapshot_data -> 'trims') t
+         WHERE t ->> 'sku_id' IS NOT NULL;
+    END IF;
+
     -- Validate each BOM line
     FOR v_line IN SELECT * FROM jsonb_array_elements(p_bom_lines)
     LOOP
