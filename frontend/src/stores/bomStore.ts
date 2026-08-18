@@ -9,7 +9,8 @@ import type {
   ReconciliationLine,
 } from '@/types/database';
 import { ReconciliationResultType } from '@/types/database';
-import { fromTable } from '@/lib/supabase';
+import { fromTable, supabase } from '@/lib/supabase';
+import { useAuthStore } from '@/stores/authStore';
 import { calculateWallPanels } from '@/engines/wallPanelEngine';
 import { calculateLights } from '@/engines/lightEngine';
 import { calculateFurniture } from '@/engines/furnitureEngine';
@@ -36,6 +37,8 @@ import {
   mapCompatibilityV1,
   mapRuleSetV1,
 } from '@/lib/snapshotMapper';
+import { BOM_ENGINE_VERSION } from '@/lib/bomEngine/version';
+import { computeInputHash } from '@/lib/inputHash';
 
 export interface BomState {
   masterBom: MasterBom | null;
@@ -56,6 +59,8 @@ export interface BomState {
   pipelineWarnings: PipelineError[];
   pipelineProgress: string | null;
   pipelineOutputLines: BomOutputLine[];
+  isSaving: boolean;
+  saveError: string | null;
 }
 
 export interface BomActions {
@@ -66,6 +71,7 @@ export interface BomActions {
   /** @deprecated Use runPipeline instead */
   generateActualBom: (input: GenerateActualBomInput) => GenerateActualBomOutput;
   runPipeline: (projectId: string, snapshotId: string) => Promise<void>;
+  saveBomToServer: (projectId: string, snapshotHash: string) => Promise<string>;
   resetPipeline: () => void;
   openBomPanel: () => void;
   closeBomPanel: () => void;
@@ -123,6 +129,8 @@ const initialState: BomState = {
   pipelineWarnings: [],
   pipelineProgress: null,
   pipelineOutputLines: [],
+  isSaving: false,
+  saveError: null,
 };
 
 export const useBomStore = create<BomStore>((set, get) => ({
@@ -465,6 +473,94 @@ export const useBomStore = create<BomStore>((set, get) => ({
       pipelineProgress: null,
       pipelineOutputLines: [],
     });
+  },
+
+  saveBomToServer: async (projectId: string, snapshotHash: string): Promise<string> => {
+    set({ isSaving: true, saveError: null });
+
+    try {
+      const userId = useAuthStore.getState().user?.id;
+      if (!userId) {
+        throw new Error('User not authenticated');
+      }
+
+      const { pipelineStatus, pipelineOutputLines } = get();
+      if (pipelineStatus !== 'success') {
+        throw new Error('Pipeline must complete successfully before saving');
+      }
+
+      // Generate idempotency key
+      const idempotencyKey = crypto.randomUUID();
+
+      // Get configuration from the latest project_configuration
+      const { data: configData } = await fromTable('project_configuration')
+        .select('*')
+        .eq('project_id', projectId)
+        .order('configuration_version', { ascending: false })
+        .limit(1)
+        .single();
+
+      const configurationData = (configData as Record<string, unknown>)?.configuration_data ?? {};
+
+      // Get measurements
+      const { data: measurementData } = await fromTable('project_measurement')
+        .select('*')
+        .eq('project_id', projectId)
+        .single();
+
+      const measurements = (measurementData ?? {}) as Record<string, unknown>;
+
+      // Compute input_hash = sha256(canonical({snapshotHash, measurements, configuration}))
+      const inputHash = await computeInputHash(
+        snapshotHash,
+        measurements,
+        configurationData as Record<string, unknown>,
+      );
+
+      // Map pipeline output lines to the JSONB format expected by the RPC
+      const bomLines = pipelineOutputLines.map((line) => ({
+        component_id: line.componentId,
+        sku_id: line.skuId,
+        quantity: line.quantity,
+        required_quantity: line.requiredQuantity,
+        waste_quantity: line.wasteQuantity,
+        unit_of_measure: line.unitOfMeasure,
+        calculation_rule: line.calculationRule,
+        waste_factor: line.wasteQuantity > 0 && line.requiredQuantity > 0
+          ? Math.round((line.wasteQuantity / line.requiredQuantity) * 100) / 100
+          : 0,
+        resolved_dimensions: {},
+        calculation_inputs: {},
+      }));
+
+      // Call the RPC
+      const { data, error } = await supabase.rpc('save_actual_bom', {
+        p_project_id: projectId,
+        p_user_id: userId,
+        p_idempotency_key: idempotencyKey,
+        p_configuration_data: configurationData,
+        p_bom_lines: bomLines,
+        p_engine_version: BOM_ENGINE_VERSION,
+        p_input_hash: inputHash,
+      });
+
+      if (error) {
+        // Surface DB validation errors verbatim
+        throw new Error(error.message);
+      }
+
+      const actualBomId = data as string;
+
+      // Refresh actual BOM state
+      await get().fetchActualBom(projectId);
+
+      set({ isSaving: false, saveError: null });
+      return actualBomId;
+    } catch (err) {
+      const errorMessage = (err as Error).message;
+      set({ isSaving: false, saveError: errorMessage });
+      throw err;
+    }
   },
 
   runPipeline: async (projectId: string, snapshotId: string) => {

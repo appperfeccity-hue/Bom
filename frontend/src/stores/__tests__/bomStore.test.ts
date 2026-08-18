@@ -27,10 +27,29 @@ vi.mock('@/lib/supabase', () => {
   };
   return {
     fromTable: vi.fn(() => ({ ...mockQueryBuilder })),
-    supabase: {},
+    supabase: {
+      rpc: vi.fn().mockResolvedValue({ data: null, error: null }),
+    },
     isSupabaseConfigured: false,
   };
 });
+
+// Mock authStore
+vi.mock('@/stores/authStore', async () => {
+  const { create } = await import('zustand');
+  const useAuthStore = create(() => ({
+    user: { id: 'user-1' } as never,
+    role: 'CONSULTANT',
+    isAuthenticated: true,
+    isLoading: false,
+  }));
+  return { useAuthStore };
+});
+
+// Mock inputHash
+vi.mock('@/lib/inputHash', () => ({
+  computeInputHash: vi.fn().mockResolvedValue('a'.repeat(64)),
+}));
 
 describe('bomStore', () => {
   beforeEach(() => {
@@ -53,6 +72,8 @@ describe('bomStore', () => {
       pipelineWarnings: [],
       pipelineProgress: null,
       pipelineOutputLines: [],
+      isSaving: false,
+      saveError: null,
     });
   });
 
@@ -901,6 +922,273 @@ describe('bomStore', () => {
       expect(state.pipelineStatus).toBe('idle');
       expect(state.isBomPanelOpen).toBe(true);
       expect(state.error).toBe('some error');
+    });
+  });
+
+  describe('saveBomToServer', () => {
+    beforeEach(async () => {
+      // Reset auth store mock
+      const { useAuthStore } = await import('../authStore');
+      useAuthStore.setState({
+        user: { id: 'user-1' } as never,
+        role: 'CONSULTANT',
+        isAuthenticated: true,
+        isLoading: false,
+      });
+    });
+
+    it('should call save_actual_bom RPC with correct arguments', async () => {
+      const { useAuthStore } = await import('../authStore');
+      useAuthStore.setState({
+        user: { id: 'user-1' } as never,
+        role: 'CONSULTANT',
+        isAuthenticated: true,
+        isLoading: false,
+      });
+
+      // Set pipeline to success with output lines
+      useBomStore.setState({
+        pipelineStatus: 'success',
+        pipelineOutputLines: [
+          {
+            lineId: 'l1',
+            componentId: 'comp-1',
+            skuId: 'sku-1',
+            quantity: 5,
+            requiredQuantity: 5,
+            wasteQuantity: 0,
+            unitOfMeasure: 'PCS',
+            calculationRule: 'FIXED',
+          },
+        ],
+      });
+
+      const { fromTable } = await import('@/lib/supabase');
+      const mockedFromTable = vi.mocked(fromTable);
+      const { supabase } = await import('@/lib/supabase');
+      const mockedRpc = vi.fn().mockResolvedValue({ data: 'new-bom-id', error: null });
+      (supabase as unknown as { rpc: typeof mockedRpc }).rpc = mockedRpc;
+
+      let callCount = 0;
+      mockedFromTable.mockImplementation(() => {
+        callCount++;
+        if (callCount === 1) {
+          // project_configuration query
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            order: vi.fn().mockReturnThis(),
+            limit: vi.fn().mockReturnThis(),
+            single: vi.fn().mockResolvedValue({
+              data: { configuration_data: { wallColor: 'white' } },
+              error: null,
+            }),
+          } as unknown as ReturnType<typeof fromTable>;
+        } else if (callCount === 2) {
+          // project_measurement query
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            single: vi.fn().mockResolvedValue({
+              data: { wall_width_mm: 3000, wall_height_mm: 2400 },
+              error: null,
+            }),
+          } as unknown as ReturnType<typeof fromTable>;
+        } else {
+          // fetchActualBom query chain
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            neq: vi.fn().mockReturnThis(),
+            order: vi.fn().mockReturnThis(),
+            limit: vi.fn().mockReturnThis(),
+            single: vi.fn().mockResolvedValue({ data: null, error: null }),
+          } as unknown as ReturnType<typeof fromTable>;
+        }
+      });
+
+      const result = await useBomStore.getState().saveBomToServer('proj-1', 'snap-hash-123');
+
+      expect(result).toBe('new-bom-id');
+      expect(mockedRpc).toHaveBeenCalledWith('save_actual_bom', expect.objectContaining({
+        p_project_id: 'proj-1',
+        p_user_id: 'user-1',
+        p_configuration_data: { wallColor: 'white' },
+        p_engine_version: '1.0.0',
+      }));
+
+      // Verify p_bom_lines format
+      const rpcArgs = mockedRpc.mock.calls[0][1];
+      expect(rpcArgs.p_bom_lines).toEqual([
+        expect.objectContaining({
+          component_id: 'comp-1',
+          sku_id: 'sku-1',
+          quantity: 5,
+          required_quantity: 5,
+          waste_quantity: 0,
+          unit_of_measure: 'PCS',
+          calculation_rule: 'FIXED',
+        }),
+      ]);
+
+      // Verify input_hash is a hex string
+      expect(rpcArgs.p_input_hash).toMatch(/^[a-f0-9]{64}$/);
+
+      // Verify idempotency_key is a UUID
+      expect(rpcArgs.p_idempotency_key).toMatch(
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
+      );
+
+      // State should not be saving
+      expect(useBomStore.getState().isSaving).toBe(false);
+      expect(useBomStore.getState().saveError).toBeNull();
+    });
+
+    it('should surface DB validation errors verbatim', async () => {
+      const { useAuthStore } = await import('../authStore');
+      useAuthStore.setState({
+        user: { id: 'user-1' } as never,
+        role: 'CONSULTANT',
+        isAuthenticated: true,
+        isLoading: false,
+      });
+
+      useBomStore.setState({
+        pipelineStatus: 'success',
+        pipelineOutputLines: [
+          {
+            lineId: 'l1',
+            componentId: 'comp-1',
+            skuId: 'sku-1',
+            quantity: 5,
+            requiredQuantity: 5,
+            wasteQuantity: 0,
+            unitOfMeasure: 'PCS',
+            calculationRule: 'FIXED',
+          },
+        ],
+      });
+
+      const { fromTable } = await import('@/lib/supabase');
+      const mockedFromTable = vi.mocked(fromTable);
+      const { supabase } = await import('@/lib/supabase');
+      const mockedRpc = vi.fn().mockResolvedValue({
+        data: null,
+        error: { message: 'SKU sku-1 not present in project snapshot' },
+      });
+      (supabase as unknown as { rpc: typeof mockedRpc }).rpc = mockedRpc;
+
+      mockedFromTable.mockImplementation(() => {
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          neq: vi.fn().mockReturnThis(),
+          order: vi.fn().mockReturnThis(),
+          limit: vi.fn().mockReturnThis(),
+          single: vi.fn().mockResolvedValue({ data: null, error: null }),
+        } as unknown as ReturnType<typeof fromTable>;
+      });
+
+      await expect(
+        useBomStore.getState().saveBomToServer('proj-1', 'snap-hash-123'),
+      ).rejects.toThrow('SKU sku-1 not present in project snapshot');
+
+      expect(useBomStore.getState().isSaving).toBe(false);
+      expect(useBomStore.getState().saveError).toBe('SKU sku-1 not present in project snapshot');
+    });
+
+    it('should throw if user is not authenticated', async () => {
+      const { useAuthStore } = await import('../authStore');
+      useAuthStore.setState({
+        user: null,
+        role: null,
+        isAuthenticated: false,
+        isLoading: false,
+      });
+
+      useBomStore.setState({
+        pipelineStatus: 'success',
+        pipelineOutputLines: [],
+      });
+
+      await expect(
+        useBomStore.getState().saveBomToServer('proj-1', 'snap-hash-123'),
+      ).rejects.toThrow('User not authenticated');
+
+      expect(useBomStore.getState().saveError).toBe('User not authenticated');
+    });
+
+    it('should throw if pipeline has not succeeded', async () => {
+      const { useAuthStore } = await import('../authStore');
+      useAuthStore.setState({
+        user: { id: 'user-1' } as never,
+        role: 'CONSULTANT',
+        isAuthenticated: true,
+        isLoading: false,
+      });
+
+      useBomStore.setState({
+        pipelineStatus: 'idle',
+        pipelineOutputLines: [],
+      });
+
+      await expect(
+        useBomStore.getState().saveBomToServer('proj-1', 'snap-hash-123'),
+      ).rejects.toThrow('Pipeline must complete successfully before saving');
+
+      expect(useBomStore.getState().saveError).toBe('Pipeline must complete successfully before saving');
+    });
+
+    it('should pass BOM_ENGINE_VERSION from version.ts', async () => {
+      const { useAuthStore } = await import('../authStore');
+      useAuthStore.setState({
+        user: { id: 'user-1' } as never,
+        role: 'CONSULTANT',
+        isAuthenticated: true,
+        isLoading: false,
+      });
+
+      useBomStore.setState({
+        pipelineStatus: 'success',
+        pipelineOutputLines: [
+          {
+            lineId: 'l1',
+            componentId: 'comp-1',
+            skuId: 'sku-1',
+            quantity: 2,
+            requiredQuantity: 2,
+            wasteQuantity: 0,
+            unitOfMeasure: 'PCS',
+            calculationRule: 'FIXED',
+          },
+        ],
+      });
+
+      const { fromTable } = await import('@/lib/supabase');
+      const mockedFromTable = vi.mocked(fromTable);
+      const { supabase } = await import('@/lib/supabase');
+      const mockedRpc = vi.fn().mockResolvedValue({ data: 'bom-id-2', error: null });
+      (supabase as unknown as { rpc: typeof mockedRpc }).rpc = mockedRpc;
+
+      mockedFromTable.mockImplementation(() => {
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          neq: vi.fn().mockReturnThis(),
+          order: vi.fn().mockReturnThis(),
+          limit: vi.fn().mockReturnThis(),
+          single: vi.fn().mockResolvedValue({ data: null, error: null }),
+        } as unknown as ReturnType<typeof fromTable>;
+      });
+
+      await useBomStore.getState().saveBomToServer('proj-1', 'snap-hash-456');
+
+      expect(mockedRpc).toHaveBeenCalledWith(
+        'save_actual_bom',
+        expect.objectContaining({
+          p_engine_version: '1.0.0',
+        }),
+      );
     });
   });
 });
