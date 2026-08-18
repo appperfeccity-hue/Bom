@@ -2,7 +2,7 @@
   "id": "FEAT-003",
   "type": "feat",
   "description": "Phase 2 - Project isolation: Create migration v1.1.9 with project_update_consultant WITH CHECK tightening and trg_project_status_guard trigger. Rewire projectStore to stop writing template_* tables and instead work with project-scoped data (measurements upsert, wall config persistence, obstructions CRUD). Consultant edits are checked against snapshot permissions.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "Create migrations/v1.1.9_project_isolation.sql with: (a) ALTER POLICY project_update_consultant to add WITH CHECK (created_by = auth.uid()), (b) CREATE FUNCTION trg_project_status_guard_fn() that rejects UPDATE to status, snapshot_id, template_id, current_actual_bom_id, current_configuration_id, finalized_at on the project table EXCEPT when pg_trigger_depth() > 1 OR current_setting('perfecity.internal_bom_write', true) = 'true' OR (transition is VALIDATED->FINALIZED AND a final_bom row exists for the project), (c) CREATE TRIGGER trg_project_status_guard BEFORE UPDATE ON project FOR EACH ROW EXECUTE FUNCTION trg_project_status_guard_fn().",
     "Update frontend/src/stores/projectStore.ts: (a) Change updateZone to work in-memory only (update zones state array) - remove the fromTable('template_zone').update() call. Zone changes will be persisted as part of project_configuration via Phase 4's save_actual_bom. (b) Change addZone/removeZone similarly to in-memory only operations - remove template_zone insert/delete calls. (c) Change assignSku/removeSku to in-memory operations - remove template_zone_sku upsert/delete calls. Store SKU assignments in zoneSku Map in memory. (d) Change updateMeasurements to use .upsert() with onConflict: 'project_id' instead of .update() (the row may not exist yet). (e) Add actions for wall config persistence: saveWallConfig() that upserts to project_wall_configuration table. (f) Add CRUD actions for obstructions: loadObstructions(), addObstruction(), updateObstruction(), removeObstruction() operating on project_obstruction table. (g) Add a permission check helper: checkPermission(parameterKey, value) that validates against currentSnapshot.snapshot_data.consultant_permissions before allowing edits.",
@@ -24,5 +24,5 @@
     "cd frontend && npx tsc --noEmit"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All 1283 vitest tests pass (24 new + rewritten removeSku rollback test). TypeScript passes with only 2 pre-existing TS6133 warnings. The removeSku.test.ts 'rolls back on database error' test was rewritten since removeSku is now purely in-memory (no DB call, no rollback needed). The autosave debouncer (createDebouncedSave) and canvasStore import were removed from projectStore since zone updates no longer persist to DB. The assignSku action resolves SKU data from snapshot zones.primary_sku or alternatives; if not found, creates a minimal placeholder object. checkPermission validates LOCKED/RESTRICTED/FREE modes with min_value, max_value, and allowed_values constraints. ProjectWallConfiguration and ProjectObstruction types already existed from Amendment 001 - no changes needed to database.ts."
 }
