@@ -1,0 +1,29 @@
+{
+  "id": "FEAT-004",
+  "type": "feat",
+  "description": "Phase 3 - Repair the BOM pipeline inputs: Create snapshotMapper.ts with v1/v2 mappers that convert DB snake_case snapshot data to camelCase BomPipelineInput format. Rewrite bomStore.runPipeline to use mappers instead of querying non-existent tables (permission_rule, compatibility_rule). Add BOM_ENGINE_VERSION constant. Create comprehensive unit tests for mappers.",
+  "status": "pending",
+  "steps": [
+    "Create frontend/src/lib/bomEngine/version.ts with export const BOM_ENGINE_VERSION = '1.0.0' (per spec Decision 3: one constant, never derived from package.json).",
+    "Create frontend/src/lib/snapshotMapper.ts with four exported functions: (a) mapSnapshotToPipeline(s: SnapshotDataV2): maps snapshot zones to BomPipelineInput.snapshotData format (zone_id->zoneId, x_mm->x, y_mm->y, width_mm->width, height_mm->height, primary_sku.sku_id->skuId, primary_sku.width_mm->panelWidth, primary_sku.height_mm->panelHeight, primary_sku.gh_mm->gapHorizontal, primary_sku.gv_mm->gapVertical, width_strategy mapping: FIXED|PROPORTIONAL->RESIZABLE, LOCKED->LOCKED, height_strategy->heightMode, lighting/furniture/hidden_components mapped per spec 3.1 field mapping), (b) mapPermissions(s: SnapshotDataV2): PermissionRule[] from consultant_permissions array, (c) mapCompatibility(s: SnapshotDataV2): CompatibilityRule[] from sku_compatibility array, (d) mapRuleSet(s: SnapshotDataV2): BomRuleSet from rule_set field. Also create a legacy v1 mapper that handles old client-built snapshots (no alternatives, no hidden_components, no consultant_permissions, no frozen sku_compatibility).",
+    "Create frontend/src/lib/__tests__/snapshotMapper.test.ts with comprehensive unit tests: (a) Test per-zone field mapping (all fields), (b) Test width_strategy mapping (FIXED->RESIZABLE, PROPORTIONAL->RESIZABLE, LOCKED->LOCKED), (c) Test lighting mapping (lighting_id->componentId, mounting_type->mountingType, etc.), (d) Test furniture mapping, (e) Test hidden_components mapping, (f) Test permissions mapping from consultant_permissions array, (g) Test compatibility mapping from sku_compatibility array, (h) Test rule_set mapping, (i) Test v1 legacy mapper (missing fields degrade gracefully), (j) Test that missing/null primary_sku is handled.",
+    "Rewrite frontend/src/stores/bomStore.ts runPipeline method: (a) Fetch project_snapshot by snapshotId, (b) Fetch project_measurement by projectId, (c) Fetch project_wall_configuration by projectId (optional), (d) Fetch project_obstruction rows by projectId, (e) Determine snapshot_version (2 or undefined/1), (f) Use v2 mapper or v1 legacy mapper accordingly, (g) Build measurements from project_measurement: wall_width_mm->wallWidth, wall_height_mm->wallHeight, snapshot_data.base_dimensions.width_mm->templateWallWidth, snapshot_data.base_dimensions.height_mm->templateWallHeight, (h) Build configuration from project_configuration (latest version) or empty, (i) Get permissions from mapPermissions(snapshot_data) - DELETE the fromTable('permission_rule') query, (j) Get compatibilityRules from mapCompatibility(snapshot_data) - DELETE the fromTable('compatibility_rule') query, (k) Get ruleSet from mapRuleSet(snapshot_data), (l) Add project_obstruction rows to wall-config input, (m) Run the pipeline, (n) After SUCCESS, do NOT persist yet (Phase 4 handles that).",
+    "Update existing bomStore tests (frontend/src/stores/__tests__/bomStore.test.ts and bomStoreIntegration.test.ts) to reflect the new data flow: mock supabase responses for snapshot/measurement/config fetches instead of permission_rule/compatibility_rule fetches."
+  ],
+  "acceptance_criteria": [
+    "frontend/src/lib/snapshotMapper.ts exists with all 4 exported functions plus v1 legacy mapper",
+    "frontend/src/lib/bomEngine/version.ts exists with BOM_ENGINE_VERSION constant",
+    "bomStore.runPipeline no longer queries permission_rule or compatibility_rule tables",
+    "bomStore.runPipeline uses snapshot_data.base_dimensions for templateWallWidth/templateWallHeight (not measurement.template_wall_width which does not exist)",
+    "bomStore.runPipeline uses wall_width_mm/wall_height_mm from project_measurement (correct column names)",
+    "Snapshot mapper tests cover all component types and both v1/v2 paths",
+    "All vitest tests pass",
+    "TypeScript type-checking passes"
+  ],
+  "verification": [
+    "cd frontend && npx vitest run",
+    "cd frontend && npx tsc --noEmit"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

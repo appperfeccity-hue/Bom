@@ -1,0 +1,7 @@
+{
+  "task_id": "task-db-architecture-connection",
+  "task_description": "Connect the PERFECCITY frontend application to the existing DB architecture via server-side RPCs. Implements 6 phases: (1) server-side snapshot creation, (2) project isolation, (3) BOM pipeline input repair, (4) save_actual_bom write path, (5) finalization integrity, (6) real master BOM generation. Each phase produces a migration + frontend rewiring.",
+  "status": "in_progress",
+  "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003", "FEAT-004", "FEAT-005", "FEAT-006", "FEAT-007"],
+  "blocked_reason": null
+}

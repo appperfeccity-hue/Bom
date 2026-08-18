@@ -1,0 +1,32 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "Phase 1 - Server-side snapshot: Create migration v1.1.8 with the new create_project RPC (5-arg), helper functions (canonical_jsonb, build_template_snapshot), and rewire the frontend projectCreationStore and snapshotBuilder to use the new server-side snapshot creation.",
+  "status": "pending",
+  "steps": [
+    "Create migrations/v1.1.8_server_side_snapshot.sql with: (a) canonical_jsonb(JSONB) IMMUTABLE function that recursively sorts JSON keys, (b) build_template_snapshot(UUID, UUID) STABLE SECURITY DEFINER function that assembles the v2 snapshot JSON from template_zone, template_zone_sku, template_zone_alternative, template_lighting, template_furniture, template_trim, template_hidden_component, template_consultant_permission, template_wall_configuration, sku_compatibility, and sku_master tables with the exact key structure from spec section 1.2 (snapshot_version=2, template, wall_geometry, base_dimensions, zones with alternatives, lighting, furniture, trims, hidden_components, consultant_permissions, template_wall_configuration, sku_compatibility, rule_set, calculation_parameters), (c) New 5-arg create_project(UUID,UUID,TEXT,TEXT,TEXT) SECURITY DEFINER function with the ordered body from spec 1.1 (auth check, role check, advisory lock, idempotency, template FOR SHARE, eligibility check, ACTIVE rule_set resolution, build_template_snapshot call, sha256 hash via pg_catalog.sha256+encode, project/snapshot/idempotency inserts, audit_event insert), (d) DROP FUNCTION of the old 6-arg signature, (e) REVOKE/GRANT on the new function.",
+    "Update frontend/src/stores/projectCreationStore.ts: Remove all template data pre-fetching (zones, lighting, furniture, trims, zone SKU loading), remove buildSnapshotData and computeSnapshotHash calls, remove snapshotBuilder import. The createProject action should now call supabase.rpc('create_project', { p_template_id, p_user_id, p_idempotency_key, p_customer_reference: customerReference || null, p_site_reference: siteReference || null }). Keep fetchAvailableTemplates, selectTemplate, customer/site reference setters.",
+    "Update frontend/src/lib/snapshotBuilder.ts: Keep the SnapshotData and SnapshotZone interfaces (they are the read type). Extend SnapshotData with snapshot_version, template, consultant_permissions (as array of permission objects), sku_compatibility, rule_set fields per spec 1.2. Remove generated_panel_frames and project_wall_configuration from SnapshotData (they are project-scoped per spec). Export the sortKeysDeep function (needed by other modules). Delete buildSnapshotData function and computeSnapshotHash function.",
+    "Update frontend/src/lib/__tests__/snapshotBuilder.test.ts: Remove tests for buildSnapshotData and computeSnapshotHash since those functions are deleted. Add tests verifying the SnapshotData type structure is importable and the sortKeysDeep export works correctly.",
+    "Update frontend/src/stores/projectStore.ts loadProject method: After fetching the project, fetch project_snapshot by project.snapshot_id, then fetch project_measurement, project_wall_configuration, and project_obstruction. Hydrate zones/lighting/furniture/trims from snapshot_data (not from template tables). Set currentSnapshot in state. Keep loadTemplate() for Designer mode only.",
+    "Update frontend/src/types/database.ts: Ensure ProjectSnapshot interface snapshot_data field is typed as SnapshotData | Record<string,unknown> to allow both v1 and v2 reading. Add any missing types referenced by the new snapshot shape (e.g., TemplateConsultantPermission with parameter_key, parameter_type, edit_mode, min_value, max_value, allowed_values, source_component_id; SkuCompatibility already exists).",
+    "Update frontend/src/stores/__tests__/projectCreationStore.test.ts: Update mocks to reflect the new RPC call signature (5 args, no snapshot data). Remove any assertions about snapshot building.",
+    "Add SQL test file tests/regression_v1.1.8.sql with basic structural assertions: the new 5-arg function exists, the old 6-arg function is dropped, canonical_jsonb and build_template_snapshot exist, verify the function signatures."
+  ],
+  "acceptance_criteria": [
+    "migrations/v1.1.8_server_side_snapshot.sql is syntactically valid SQL (no syntax errors)",
+    "The new create_project function signature takes (UUID, UUID, TEXT, TEXT, TEXT) - template_id, user_id, idempotency_key, customer_reference, site_reference",
+    "projectCreationStore no longer imports buildSnapshotData or computeSnapshotHash",
+    "projectCreationStore.createProject calls supabase.rpc with the 5 new parameters only",
+    "snapshotBuilder.ts exports SnapshotData (extended with v2 fields) and sortKeysDeep, but NOT buildSnapshotData or computeSnapshotHash",
+    "projectStore.loadProject fetches snapshot by snapshot_id and hydrates from snapshot_data",
+    "All vitest tests pass (npx vitest run)",
+    "TypeScript type-checking passes (npx tsc --noEmit)"
+  ],
+  "verification": [
+    "cd frontend && npx vitest run",
+    "cd frontend && npx tsc --noEmit"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}
