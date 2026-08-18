@@ -8,17 +8,24 @@ import type {
   Project,
   ProjectSnapshot,
   ProjectMeasurement,
+  ProjectWallConfiguration,
+  ProjectObstruction,
   SkuMaster,
   WallGeometry,
   WallGeometryType,
+  TemplateConsultantPermission,
 } from '@/types/database';
 import type { WallConfigInput, PanelFrame } from '@/engines/types';
 import { fromTable } from '@/lib/supabase';
-import { createDebouncedSave } from '@/lib/autosave';
-import type { SaveStatus } from '@/types/canvas';
-import { useCanvasStore } from '@/stores/canvasStore';
 import { assignSegment } from '@/canvas/utils/segmentAssignment';
 import { ZoneWidthStrategy, ZoneHeightStrategy, ZonePositionStrategy } from '@/types/database';
+
+// --- Permission checking types ---
+
+export interface PermissionCheckResult {
+  allowed: boolean;
+  reason?: string;
+}
 
 export interface ProjectState {
   currentTemplate: Template | null;
@@ -30,6 +37,7 @@ export interface ProjectState {
   furniture: TemplateFurniture[];
   trims: TemplateTrim[];
   measurements: ProjectMeasurement | null;
+  obstructions: ProjectObstruction[];
   wallGeometry: WallGeometryType;
   /** Wall configuration from Amendment 001 */
   wallConfig: WallConfigInput | null;
@@ -48,6 +56,18 @@ export interface ProjectActions {
   assignSku: (zoneId: string, skuId: string) => Promise<void>;
   removeSku: (zoneId: string) => Promise<void>;
   updateMeasurements: (measurements: Partial<ProjectMeasurement>) => Promise<void>;
+  /** Save wall configuration to project_wall_configuration table */
+  saveWallConfig: (config: Omit<ProjectWallConfiguration, 'project_wall_config_id' | 'created_at' | 'updated_at'>) => Promise<void>;
+  /** Load obstructions for the current project */
+  loadObstructions: (projectId: string) => Promise<void>;
+  /** Add an obstruction */
+  addObstruction: (obstruction: Omit<ProjectObstruction, 'obstruction_id' | 'created_at'>) => Promise<void>;
+  /** Update an existing obstruction */
+  updateObstruction: (obstruction: ProjectObstruction) => Promise<void>;
+  /** Remove an obstruction */
+  removeObstruction: (obstructionId: string) => Promise<void>;
+  /** Check consultant permission for a parameter */
+  checkPermission: (parameterKey: string, value: unknown) => PermissionCheckResult;
   /** Set wall config and generated panel frames; populates zones from frames */
   setWallConfigAndFrames: (config: WallConfigInput, frames: PanelFrame[]) => void;
   /** Populate the zones array from generated panel frames (each frame becomes a read-only zone) */
@@ -67,37 +87,13 @@ const initialState: ProjectState = {
   furniture: [],
   trims: [],
   measurements: null,
+  obstructions: [],
   wallGeometry: 'STRAIGHT',
   wallConfig: null,
   panelFrames: [],
   isLoading: false,
   error: null,
 };
-
-/**
- * Module-level autosave debouncer instance, created lazily.
- * Wraps zone-persistence calls with debounce and save-status transitions.
- * Uses a Map keyed by zone ID so that concurrent zone updates within the
- * debounce window are all persisted when the debounce fires.
- */
-let autosaver: ReturnType<typeof createDebouncedSave> | null = null;
-const pendingZoneUpdates = new Map<string, () => Promise<void>>();
-
-function getAutosaver(onStatusChange: (status: SaveStatus) => void): ReturnType<typeof createDebouncedSave> {
-  if (!autosaver) {
-    autosaver = createDebouncedSave(
-      async (version: number) => {
-        const entries = Array.from(pendingZoneUpdates.values());
-        pendingZoneUpdates.clear();
-        await Promise.all(entries.map((fn) => fn()));
-        return { version: version + 1 };
-      },
-      onStatusChange,
-      2000,
-    );
-  }
-  return autosaver;
-}
 
 export const useProjectStore = create<ProjectStore>((set, get) => ({
   ...initialState,
@@ -255,113 +251,86 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       zone = { ...zone, segment: null };
     }
 
-    // Optimistic update
-    const prevZones = get().zones;
+    // In-memory only update (project-scoped, no template_zone writes).
+    // Zone changes are persisted via Phase 4's save_actual_bom as part of configuration_data.
     set({
-      zones: prevZones.map((z) => (z.zone_id === zone.zone_id ? zone : z)),
+      zones: get().zones.map((z) => (z.zone_id === zone.zone_id ? zone : z)),
     });
-
-    // Schedule debounced persistence with save-status transitions.
-    // Each zone update is stored by zone ID so concurrent updates within
-    // the debounce window are all persisted (not just the last one).
-    const saver = getAutosaver((status) => useCanvasStore.getState().setSaveStatus(status));
-    pendingZoneUpdates.set(zone.zone_id, async () => {
-      const { error } = await fromTable('template_zone')
-        .update({
-          x_mm: zone.x_mm,
-          y_mm: zone.y_mm,
-          width_mm: zone.width_mm,
-          height_mm: zone.height_mm,
-          width_strategy: zone.width_strategy,
-          height_strategy: zone.height_strategy,
-          position_strategy: zone.position_strategy,
-        })
-        .eq('zone_id', zone.zone_id);
-      if (error) {
-        // Rollback on failure
-        set({ zones: prevZones, error: error.message });
-        throw error;
-      }
-    });
-    saver.debouncedSave(useCanvasStore.getState().version);
   },
 
   addZone: async (zone) => {
     // Guard: prevent mutations on a finalized project
     if (get().currentProject?.status === 'FINALIZED') return;
 
-    try {
-      const { data, error } = await fromTable('template_zone')
-        .insert(zone)
-        .select()
-        .single();
-      if (error) throw error;
-      set({ zones: [...get().zones, data as TemplateZone] });
-    } catch (err) {
-      set({ error: (err as Error).message });
-    }
+    // In-memory only (project-scoped, no template_zone writes).
+    // Zone changes are persisted via Phase 4's save_actual_bom as part of configuration_data.
+    const newZone: TemplateZone = {
+      ...zone,
+      zone_id: crypto.randomUUID(),
+      created_at: new Date().toISOString(),
+    };
+    set({ zones: [...get().zones, newZone] });
   },
 
   removeZone: async (zoneId: string) => {
     // Guard: prevent mutations on a finalized project
     if (get().currentProject?.status === 'FINALIZED') return;
 
-    const prevZones = get().zones;
-    set({ zones: prevZones.filter((z) => z.zone_id !== zoneId) });
-
-    try {
-      const { error } = await fromTable('template_zone').delete().eq('zone_id', zoneId);
-      if (error) throw error;
-      // Also remove the SKU mapping
-      const newSkuMap = new Map(get().zoneSku);
-      newSkuMap.delete(zoneId);
-      set({ zoneSku: newSkuMap });
-    } catch (err) {
-      set({ zones: prevZones, error: (err as Error).message });
-    }
+    // In-memory only (project-scoped, no template_zone writes).
+    set({ zones: get().zones.filter((z) => z.zone_id !== zoneId) });
+    // Also remove the SKU mapping
+    const newSkuMap = new Map(get().zoneSku);
+    newSkuMap.delete(zoneId);
+    set({ zoneSku: newSkuMap });
   },
 
   assignSku: async (zoneId: string, skuId: string) => {
     // Guard: prevent mutations on a finalized project
     if (get().currentProject?.status === 'FINALIZED') return;
 
-    try {
-      // Upsert zone-sku mapping
-      const { error: zsErr } = await fromTable('template_zone_sku')
-        .upsert({ zone_id: zoneId, sku_id: skuId }, { onConflict: 'zone_id' });
-      if (zsErr) throw zsErr;
+    // In-memory only (project-scoped, no template_zone_sku writes).
+    // SKU substitutions are persisted via Phase 4's save_actual_bom as part of configuration_data.
+    // Look up SKU data from snapshot sku_compatibility or zones alternatives
+    const snapshotPayload = get().currentSnapshot?.snapshot_data as Record<string, unknown> | undefined;
+    let skuData: SkuMaster | null = null;
 
-      // Fetch the SKU data
-      const { data: sku, error: sErr } = await fromTable('sku_master')
-        .select('*')
-        .eq('sku_id', skuId)
-        .single();
-      if (sErr) throw sErr;
-
-      const newSkuMap = new Map(get().zoneSku);
-      newSkuMap.set(zoneId, sku as SkuMaster);
-      set({ zoneSku: newSkuMap });
-    } catch (err) {
-      set({ error: (err as Error).message });
+    // Try to find SKU from snapshot zones primary_sku or alternatives
+    if (snapshotPayload) {
+      const rawZones = (snapshotPayload.zones as Array<Record<string, unknown>>) ?? [];
+      for (const z of rawZones) {
+        if ((z.primary_sku as Record<string, unknown>)?.sku_id === skuId) {
+          skuData = z.primary_sku as unknown as SkuMaster;
+          break;
+        }
+        const alternatives = (z.alternatives as Array<Record<string, unknown>>) ?? [];
+        for (const alt of alternatives) {
+          if (alt.sku_id === skuId) {
+            skuData = alt as unknown as SkuMaster;
+            break;
+          }
+        }
+        if (skuData) break;
+      }
     }
+
+    // If not found in snapshot, create a minimal placeholder (will be resolved by BOM pipeline)
+    if (!skuData) {
+      skuData = { sku_id: skuId } as SkuMaster;
+    }
+
+    const newSkuMap = new Map(get().zoneSku);
+    newSkuMap.set(zoneId, skuData);
+    set({ zoneSku: newSkuMap });
   },
 
   removeSku: async (zoneId: string) => {
     // Guard: prevent mutations on a finalized project
     if (get().currentProject?.status === 'FINALIZED') return;
 
-    const prevSkuMap = get().zoneSku;
-    const newSkuMap = new Map(prevSkuMap);
+    // In-memory only (project-scoped, no template_zone_sku writes).
+    const newSkuMap = new Map(get().zoneSku);
     newSkuMap.delete(zoneId);
     set({ zoneSku: newSkuMap });
-
-    try {
-      const { error } = await fromTable('template_zone_sku').delete().eq('zone_id', zoneId);
-      if (error) throw error;
-    } catch (err) {
-      // Rollback on failure
-      set({ zoneSku: prevSkuMap, error: (err as Error).message });
-    }
   },
 
   updateMeasurements: async (measurements: Partial<ProjectMeasurement>) => {
@@ -369,17 +338,177 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
     if (get().currentProject?.status === 'FINALIZED') return;
 
     const prev = get().measurements;
-    const updated = { ...prev, ...measurements } as ProjectMeasurement;
+    const projectId = get().currentProject?.project_id;
+    if (!projectId) return;
+
+    const updated = { ...prev, ...measurements, project_id: projectId } as ProjectMeasurement;
     set({ measurements: updated });
 
     try {
+      // Use upsert with onConflict on project_id since the row may not exist yet
       const { error } = await fromTable('project_measurement')
-        .update(measurements)
-        .eq('project_id', updated.project_id);
+        .upsert(
+          {
+            ...measurements,
+            project_id: projectId,
+          },
+          { onConflict: 'project_id' },
+        );
       if (error) throw error;
     } catch (err) {
       set({ measurements: prev, error: (err as Error).message });
     }
+  },
+
+  saveWallConfig: async (config) => {
+    // Guard: prevent mutations on a finalized project
+    if (get().currentProject?.status === 'FINALIZED') return;
+
+    const projectId = get().currentProject?.project_id;
+    if (!projectId) return;
+
+    try {
+      const { error } = await fromTable('project_wall_configuration')
+        .upsert(
+          {
+            ...config,
+            project_id: projectId,
+          },
+          { onConflict: 'project_id' },
+        );
+      if (error) throw error;
+    } catch (err) {
+      set({ error: (err as Error).message });
+    }
+  },
+
+  loadObstructions: async (projectId: string) => {
+    try {
+      const { data, error } = await fromTable('project_obstruction')
+        .select('*')
+        .eq('project_id', projectId);
+      if (error) throw error;
+      set({ obstructions: (data ?? []) as ProjectObstruction[] });
+    } catch (err) {
+      set({ error: (err as Error).message });
+    }
+  },
+
+  addObstruction: async (obstruction) => {
+    // Guard: prevent mutations on a finalized project
+    if (get().currentProject?.status === 'FINALIZED') return;
+
+    try {
+      const { data, error } = await fromTable('project_obstruction')
+        .insert(obstruction)
+        .select()
+        .single();
+      if (error) throw error;
+      set({ obstructions: [...get().obstructions, data as ProjectObstruction] });
+    } catch (err) {
+      set({ error: (err as Error).message });
+    }
+  },
+
+  updateObstruction: async (obstruction: ProjectObstruction) => {
+    // Guard: prevent mutations on a finalized project
+    if (get().currentProject?.status === 'FINALIZED') return;
+
+    const prev = get().obstructions;
+    set({
+      obstructions: prev.map((o) =>
+        o.obstruction_id === obstruction.obstruction_id ? obstruction : o,
+      ),
+    });
+
+    try {
+      const { error } = await fromTable('project_obstruction')
+        .update({
+          x_mm: obstruction.x_mm,
+          y_mm: obstruction.y_mm,
+          width_mm: obstruction.width_mm,
+          height_mm: obstruction.height_mm,
+          obstruction_type: obstruction.obstruction_type,
+          label: obstruction.label,
+        })
+        .eq('obstruction_id', obstruction.obstruction_id);
+      if (error) throw error;
+    } catch (err) {
+      set({ obstructions: prev, error: (err as Error).message });
+    }
+  },
+
+  removeObstruction: async (obstructionId: string) => {
+    // Guard: prevent mutations on a finalized project
+    if (get().currentProject?.status === 'FINALIZED') return;
+
+    const prev = get().obstructions;
+    set({ obstructions: prev.filter((o) => o.obstruction_id !== obstructionId) });
+
+    try {
+      const { error } = await fromTable('project_obstruction')
+        .delete()
+        .eq('obstruction_id', obstructionId);
+      if (error) throw error;
+    } catch (err) {
+      set({ obstructions: prev, error: (err as Error).message });
+    }
+  },
+
+  checkPermission: (parameterKey: string, value: unknown): PermissionCheckResult => {
+    const snapshot = get().currentSnapshot;
+    if (!snapshot) {
+      return { allowed: true };
+    }
+
+    const snapshotPayload = snapshot.snapshot_data as Record<string, unknown> | undefined;
+    if (!snapshotPayload) {
+      return { allowed: true };
+    }
+
+    const permissions = (snapshotPayload.consultant_permissions as TemplateConsultantPermission[]) ?? [];
+    const permission = permissions.find((p) => p.parameter_key === parameterKey);
+
+    // If no permission record exists for this parameter, default to allowed
+    if (!permission) {
+      return { allowed: true };
+    }
+
+    // Check edit_mode
+    if (permission.edit_mode === 'LOCKED') {
+      return { allowed: false, reason: `Parameter "${parameterKey}" is locked by the designer.` };
+    }
+
+    if (permission.edit_mode === 'RESTRICTED') {
+      // Check allowed_values constraint
+      if (permission.allowed_values && Array.isArray(permission.allowed_values)) {
+        if (!permission.allowed_values.includes(value)) {
+          return {
+            allowed: false,
+            reason: `Value for "${parameterKey}" must be one of: ${permission.allowed_values.join(', ')}`,
+          };
+        }
+      }
+
+      // Check min/max range constraint for numeric values
+      if (typeof value === 'number') {
+        if (permission.min_value != null && value < permission.min_value) {
+          return {
+            allowed: false,
+            reason: `Value for "${parameterKey}" must be >= ${permission.min_value}`,
+          };
+        }
+        if (permission.max_value != null && value > permission.max_value) {
+          return {
+            allowed: false,
+            reason: `Value for "${parameterKey}" must be <= ${permission.max_value}`,
+          };
+        }
+      }
+    }
+
+    // edit_mode === 'FREE' or RESTRICTED with valid value
+    return { allowed: true };
   },
 
   reset: () => set(initialState),
