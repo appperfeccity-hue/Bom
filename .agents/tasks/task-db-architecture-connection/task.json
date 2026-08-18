@@ -9,6 +9,6 @@
     "tests": "pass",
     "test_quality": "pass",
     "docker_build": "skipped",
-    "summary": "All 1357 vitest tests pass (90 test files). TypeScript has only 2 pre-existing errors (ValidationOverlayLayer.tsx unused var, publishStore.ts unused var) that existed before this work. Vite build succeeds (347 modules). No regressions."
+    "summary": "All 1357 vitest tests pass (90 test files). TypeScript has only 2 pre-existing errors (ValidationOverlayLayer.tsx unused var, publishStore.ts unused var) that existed before this work. Vite build succeeds (347 modules). No regressions. v2 review fixes applied: DECIMAL hash mismatch, missing product_type, sha256 consistency."
   }
 }
