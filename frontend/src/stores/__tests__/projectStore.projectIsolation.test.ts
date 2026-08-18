@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useProjectStore } from '@/stores/projectStore';
-import type { ProjectSnapshot, TemplateZone, ProjectMeasurement, ProjectObstruction } from '@/types/database';
+import type { ProjectSnapshot, TemplateZone, ProjectObstruction } from '@/types/database';
 import { ProjectStatus, ZoneWidthStrategy, ZoneHeightStrategy, ZonePositionStrategy } from '@/types/database';
 
 // Track fromTable calls to verify no template_zone/template_zone_sku writes
