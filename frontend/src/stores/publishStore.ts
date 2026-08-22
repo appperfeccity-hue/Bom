@@ -316,7 +316,7 @@ export const usePublishStore = create<PublishStore>((set) => ({
     try {
       const userId = useAuthStore.getState().user?.id;
 
-      const { data, error } = await supabase.rpc('publish_template', {
+      const { error } = await supabase.rpc('publish_template', {
         p_template_id: templateId,
         p_user_id: userId,
       });

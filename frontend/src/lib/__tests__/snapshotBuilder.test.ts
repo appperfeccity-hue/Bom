@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { sortKeysDeep } from '../snapshotBuilder';
 import type { SnapshotData, SnapshotZone } from '../snapshotBuilder';
+import type { WallConfigInput } from '@/engines/types';
 
 describe('snapshotBuilder', () => {
   describe('sortKeysDeep', () => {
@@ -169,6 +170,34 @@ describe('snapshotBuilder', () => {
       expect(zone.zone_id).toBe('zone-1');
       expect(zone.primary_sku).toBeNull();
       expect(zone.alternatives).toEqual([]);
+    });
+  });
+
+  describe('installation area freezing', () => {
+    it('freezes the installation area with the wall configuration', () => {
+      const wallConfiguration: WallConfigInput = {
+        wall_type: 'L_SHAPE',
+        total_width_mm: 3500,
+        total_height_mm: 2400,
+        rows: 2,
+        columns: 4,
+        panel_gap_mm: 3,
+        fit_algorithm: 'EQUAL',
+        fit_intensity_percent: 0,
+        mounting_type: 'DIRECT',
+        obstructions: [],
+        segment_a_width_mm: 2000,
+        segment_b_width_mm: 1500,
+        installation_area: {
+          coverage: 'PARTIAL',
+          outerEdge: { x_mm: 100, y_mm: 200, width_mm: 3000, height_mm: 2000 },
+        },
+      };
+
+      const frozen = sortKeysDeep(wallConfiguration) as WallConfigInput;
+      expect(frozen.installation_area).toEqual(wallConfiguration.installation_area);
+      expect(frozen.segment_a_width_mm).toBe(2000);
+      expect(frozen.wall_type).toBe('L_SHAPE');
     });
   });
 });

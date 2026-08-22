@@ -267,6 +267,8 @@ export interface WallConfigInput {
   segment_a_width_mm?: number;
   /** Segment B width for L_SHAPE walls (optional) */
   segment_b_width_mm?: number;
+  /** Installation area bounding zones (optional; absent means FULL wall coverage) */
+  installation_area?: InstallationArea | null;
   /** Left edge margin in mm (space between wall left edge and first panel) */
   edge_margin_left_mm?: number;
   /** Right edge margin in mm (space between last panel and wall right edge) */

@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { useDesignLibraryStore } from '../designLibraryStore';
-import { useProjectCreationStore } from '../projectCreationStore';
+import { useProjectCreationStore, CreationStep } from '../projectCreationStore';
 import { useProjectStore } from '../projectStore';
 import { useAuthStore } from '../authStore';
 import { useCanvasStore } from '../canvasStore';
@@ -264,7 +264,7 @@ describe('Design Library -> Project Boundary Isolation', () => {
       const template = makeTemplate();
       useProjectCreationStore.setState({
         selectedTemplate: template,
-        step: 2, // PROJECT_DETAILS
+        step: CreationStep.PROJECT_DETAILS,
         customerReference: 'CUST-BOUNDARY',
         siteReference: 'SITE-BOUNDARY',
       });
