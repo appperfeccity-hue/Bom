@@ -106,9 +106,9 @@ describe('snapshotBuilder', () => {
         consultant_permissions: [
           {
             permission_id: 'perm-1',
-            parameter_key: 'wall_width',
+            parameter_key: 'WALL_WIDTH',
             parameter_type: 'DIMENSION',
-            edit_mode: 'ALLOWED',
+            edit_mode: 'RESTRICTED',
             min_value: 1000,
             max_value: 5000,
             allowed_values: null,

@@ -1,18 +1,14 @@
 import { useState } from 'react';
 import { fromTable } from '@/lib/supabase';
-import { useAuthStore } from '@/stores/authStore';
-
-const PARAMETER_NAMES = [
-  'zone_width',
-  'zone_height',
-  'sku_selection',
-  'quantity',
-  'gap_horizontal',
-  'gap_vertical',
-] as const;
-
-type ParameterName = typeof PARAMETER_NAMES[number];
-type PermissionType = 'LOCKED' | 'RANGE' | 'SELECTION';
+import {
+  PARAMETER_TYPE_BY_KEY,
+  PERMISSION_EDIT_MODES,
+  PERMISSION_PARAMETER_KEYS,
+} from '@/lib/measurementModel';
+import type {
+  PermissionEditMode,
+  PermissionParameterKey,
+} from '@/lib/measurementModel';
 
 interface AddPermissionDialogProps {
   templateId: string;
@@ -21,18 +17,18 @@ interface AddPermissionDialogProps {
 }
 
 /**
- * Dialog to add a consultant permission with controlled vocabulary.
- * parameter_name dropdown, permission_type selector, and constraint fields
- * that change based on the selected type.
+ * Dialog to add a consultant permission using the authoritative baseline
+ * vocabulary: UPPERCASE parameter_key, derived parameter_type, and
+ * edit_mode (LOCKED | RESTRICTED | FREE). Bounds (min/max/allowed values)
+ * only apply to RESTRICTED.
  */
 export function AddPermissionDialog({
   templateId,
   onClose,
   onAdded,
 }: AddPermissionDialogProps) {
-  const user = useAuthStore((s) => s.user);
-  const [parameterName, setParameterName] = useState<ParameterName | ''>('');
-  const [permissionType, setPermissionType] = useState<PermissionType>('LOCKED');
+  const [parameterKey, setParameterKey] = useState<PermissionParameterKey | ''>('');
+  const [editMode, setEditMode] = useState<PermissionEditMode>('LOCKED');
   const [minValue, setMinValue] = useState('');
   const [maxValue, setMaxValue] = useState('');
   const [allowedValues, setAllowedValues] = useState('');
@@ -40,32 +36,27 @@ export function AddPermissionDialog({
   const [isSaving, setIsSaving] = useState(false);
 
   const handleConfirm = async () => {
-    if (!parameterName) return;
+    if (!parameterKey) return;
 
     setWriteError(null);
     setIsSaving(true);
 
-    let constraints: Record<string, unknown> = {};
-    if (permissionType === 'RANGE') {
-      constraints = {
-        min_value: minValue ? Number(minValue) : null,
-        max_value: maxValue ? Number(maxValue) : null,
-      };
-    } else if (permissionType === 'SELECTION') {
-      constraints = {
-        allowed_values: allowedValues
-          .split(',')
-          .map((v) => v.trim())
-          .filter((v) => v.length > 0),
-      };
-    }
+    const parameterType = PARAMETER_TYPE_BY_KEY[parameterKey];
+    const isRestricted = editMode === 'RESTRICTED';
+    const parsedAllowedValues = allowedValues
+      .split(',')
+      .map((v) => v.trim())
+      .filter((v) => v.length > 0);
 
     const { error } = await fromTable('template_consultant_permission').insert({
       template_id: templateId,
-      parameter_name: parameterName,
-      permission_type: permissionType,
-      constraints,
-      created_by: user?.id ?? null,
+      parameter_key: parameterKey,
+      parameter_type: parameterType,
+      edit_mode: editMode,
+      min_value: isRestricted && minValue ? Number(minValue) : null,
+      max_value: isRestricted && maxValue ? Number(maxValue) : null,
+      allowed_values:
+        isRestricted && parsedAllowedValues.length > 0 ? parsedAllowedValues : null,
     });
 
     setIsSaving(false);
@@ -78,7 +69,7 @@ export function AddPermissionDialog({
     onAdded();
   };
 
-  const isValid = parameterName !== '';
+  const isValid = parameterKey !== '';
 
   return (
     <div
@@ -114,12 +105,12 @@ export function AddPermissionDialog({
           </label>
           <select
             data-testid="parameter-name-select"
-            value={parameterName}
-            onChange={(e) => setParameterName(e.target.value as ParameterName)}
+            value={parameterKey}
+            onChange={(e) => setParameterKey(e.target.value as PermissionParameterKey)}
             style={{ width: '100%', padding: '6px 8px', fontSize: '13px' }}
           >
             <option value="">Select parameter...</option>
-            {PARAMETER_NAMES.map((p) => (
+            {PERMISSION_PARAMETER_KEYS.map((p) => (
               <option key={p} value={p}>{p}</option>
             ))}
           </select>
@@ -127,21 +118,27 @@ export function AddPermissionDialog({
 
         <div style={{ marginBottom: '12px' }}>
           <label style={{ display: 'block', marginBottom: '4px', fontSize: '13px', fontWeight: 600 }}>
-            Permission Type
+            Edit Mode
           </label>
           <select
             data-testid="permission-type-select"
-            value={permissionType}
-            onChange={(e) => setPermissionType(e.target.value as PermissionType)}
+            value={editMode}
+            onChange={(e) => setEditMode(e.target.value as PermissionEditMode)}
             style={{ width: '100%', padding: '6px 8px', fontSize: '13px' }}
           >
-            <option value="LOCKED">LOCKED</option>
-            <option value="RANGE">RANGE</option>
-            <option value="SELECTION">SELECTION</option>
+            {PERMISSION_EDIT_MODES.map((m) => (
+              <option key={m} value={m}>{m}</option>
+            ))}
           </select>
         </div>
 
-        {permissionType === 'RANGE' && (
+        {parameterKey && (
+          <div data-testid="parameter-type-display" style={{ marginBottom: '12px', fontSize: '12px', color: '#666' }}>
+            Parameter type: {PARAMETER_TYPE_BY_KEY[parameterKey]}
+          </div>
+        )}
+
+        {editMode === 'RESTRICTED' && (
           <div style={{ marginBottom: '12px' }}>
             <div style={{ display: 'flex', gap: '8px' }}>
               <div style={{ flex: 1 }}>
@@ -172,7 +169,7 @@ export function AddPermissionDialog({
           </div>
         )}
 
-        {permissionType === 'SELECTION' && (
+        {editMode === 'RESTRICTED' && (
           <div style={{ marginBottom: '12px' }}>
             <label style={{ display: 'block', marginBottom: '4px', fontSize: '13px', fontWeight: 600 }}>
               Allowed Values (comma-separated)

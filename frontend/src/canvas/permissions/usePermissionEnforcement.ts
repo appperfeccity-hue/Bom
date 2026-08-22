@@ -3,6 +3,7 @@ import { useCanvasStore } from '@/stores/canvasStore';
 import { useProjectStore } from '@/stores/projectStore';
 import { CanvasMode } from '@/types/database';
 import type { WallParamPermissionMode } from '@/types/database';
+import { toPermissionKey } from '@/lib/measurementModel';
 
 export type EditMode = 'LOCKED' | 'RESTRICTED' | 'FREE';
 
@@ -94,9 +95,15 @@ export function usePermissionEnforcement(): PermissionEnforcement {
     return [];
   }, [mode, currentSnapshot]);
 
+  /**
+   * Resolve a lookup to the authoritative UPPERCASE parameter_key vocabulary.
+   * Callers may pass either a canonical key (WALL_WIDTH) or the
+   * project_measurement column it maps to (wall_width_mm).
+   */
   const getFieldPermission = useCallback(
     (parameterKey: string): SnapshotPermission | null => {
-      return permissions.find((p) => p.parameter_key === parameterKey) ?? null;
+      const canonicalKey = toPermissionKey(parameterKey) ?? parameterKey;
+      return permissions.find((p) => p.parameter_key === canonicalKey) ?? null;
     },
     [permissions],
   );

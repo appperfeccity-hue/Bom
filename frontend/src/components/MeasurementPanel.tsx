@@ -1,6 +1,13 @@
 import { useCallback, useState } from 'react';
 import { useProjectStore } from '@/stores/projectStore';
 import { usePermissionEnforcement } from '@/canvas/permissions/usePermissionEnforcement';
+import { isLShape } from '@/engines/wallType';
+import { toPermissionKey } from '@/lib/measurementModel';
+
+/** Resolve a project_measurement column to the canonical DB permission key. */
+function permissionKeyFor(column: string): string {
+  return toPermissionKey(column) ?? column;
+}
 
 /* --- Design system inline style constants --- */
 const LABEL_STYLE: React.CSSProperties = {
@@ -40,11 +47,13 @@ export function MeasurementPanel() {
       const numValue = parseInt(value, 10);
       if (isNaN(numValue)) return;
 
+      const canonicalKey = permissionKeyFor(field);
+
       // If field is locked, do not update
-      if (isFieldLocked(field)) return;
+      if (isFieldLocked(canonicalKey)) return;
 
       // Permission-specific validation takes priority over generic constraints
-      const permResult = validateField(field, numValue);
+      const permResult = validateField(canonicalKey, numValue);
       if (!permResult.valid) return;
 
       // Generic measurement constraints (applied AFTER permission validation)
@@ -61,7 +70,7 @@ export function MeasurementPanel() {
       const numValue = parseInt(value, 10);
       if (isNaN(numValue)) return;
 
-      const result = validateField(field, numValue);
+      const result = validateField(permissionKeyFor(field), numValue);
       setFieldErrors((prev) => ({
         ...prev,
         [field]: result.valid ? null : (result.error ?? null),
@@ -71,7 +80,7 @@ export function MeasurementPanel() {
   );
 
   const getFieldHint = (field: string): string | null => {
-    const permission = getFieldPermission(field);
+    const permission = getFieldPermission(permissionKeyFor(field));
     if (!permission) return null;
     if (permission.edit_mode === 'RESTRICTED') {
       if (permission.min_value !== null && permission.max_value !== null) {
@@ -154,7 +163,7 @@ export function MeasurementPanel() {
           </span>
         </label>
 
-        {wallGeometry === 'L_CORNER' && (
+        {isLShape(wallGeometry) && (
           <>
             <label style={LABEL_STYLE}>
               Segment A Width (mm)
