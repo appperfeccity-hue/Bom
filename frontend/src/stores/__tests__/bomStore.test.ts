@@ -1045,6 +1045,62 @@ describe('bomStore', () => {
       expect(useBomStore.getState().saveError).toBeNull();
     });
 
+    it('should carry every product_type through to the RPC payload', async () => {
+      const { useAuthStore } = await import('../authStore');
+      useAuthStore.setState({
+        user: { id: 'user-1' } as never,
+        role: 'CONSULTANT',
+        isAuthenticated: true,
+        isLoading: false,
+      });
+
+      const productTypes = [
+        'WALL_PANEL',
+        'LIGHT',
+        'FURNITURE',
+        'HIDDEN_COMPONENT',
+      ] as const;
+
+      useBomStore.setState({
+        pipelineStatus: 'success',
+        pipelineOutputLines: productTypes.map((productType, index) => ({
+          lineId: `l${index}`,
+          componentId: `comp-${index}`,
+          skuId: `sku-${index}`,
+          quantity: 1,
+          requiredQuantity: 1,
+          wasteQuantity: 0,
+          unitOfMeasure: 'PCS',
+          calculationRule: 'FIXED',
+          productType,
+        })),
+      });
+
+      const { fromTable, supabase } = await import('@/lib/supabase');
+      const mockedFromTable = vi.mocked(fromTable);
+      const mockedRpc = vi.fn().mockResolvedValue({ data: 'new-bom-id', error: null });
+      (supabase as unknown as { rpc: typeof mockedRpc }).rpc = mockedRpc;
+
+      mockedFromTable.mockImplementation(
+        () =>
+          ({
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            neq: vi.fn().mockReturnThis(),
+            order: vi.fn().mockReturnThis(),
+            limit: vi.fn().mockReturnThis(),
+            single: vi.fn().mockResolvedValue({ data: null, error: null }),
+          }) as unknown as ReturnType<typeof fromTable>,
+      );
+
+      await useBomStore.getState().saveBomToServer('proj-1', 'snap-hash-123');
+
+      const rpcArgs = mockedRpc.mock.calls[0][1];
+      expect(
+        (rpcArgs.p_bom_lines as Array<{ product_type: string }>).map((l) => l.product_type),
+      ).toEqual([...productTypes]);
+    });
+
     it('should surface DB validation errors verbatim', async () => {
       const { useAuthStore } = await import('../authStore');
       useAuthStore.setState({
