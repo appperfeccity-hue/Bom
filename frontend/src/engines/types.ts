@@ -86,6 +86,26 @@ export interface ZoneEdges {
 // --- Light Engine ---
 
 export type MountingType = 'DIRECT' | 'PROFILE' | 'COVE';
+
+/** Physical layers a light is installed between (spec sections 18-20). */
+export type LightingLayerElement = 'WALL' | 'STRUCTURE' | 'LIGHT' | 'PANEL';
+
+/** Surface the luminaire is physically fixed to. */
+export type LightingMountingSurface = 'WALL' | 'PANEL_FACE' | 'STRUCTURE';
+
+/** Installation geometry of a mounting type; distinct from its quantity offset. */
+export interface LightingInstallationGeometry {
+  mountingType: MountingType;
+  /** Front-to-back build-up, wall first. */
+  layerOrder: LightingLayerElement[];
+  mountingSurface: LightingMountingSurface;
+  /** COVE only: a structure creates the pocket the light sits in. */
+  requiresStructure: boolean;
+  /** True when the light occupies Z-depth between the wall and the panel. */
+  createsZDepthBetweenWallAndPanel: boolean;
+  /** Per-edge offset used by lightEngine quantity math. */
+  offsetMm: number;
+}
 export type LightMode = 'DISCRETE' | 'LINEAR';
 
 export interface LightEdge {

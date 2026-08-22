@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render } from '@testing-library/react';
 import React from 'react';
 import { useCanvasStore } from '@/stores/canvasStore';
 import { useProjectStore } from '@/stores/projectStore';
@@ -26,6 +26,8 @@ vi.mock('react-konva', () => ({
     React.createElement('div', { 'data-testid': 'konva-stage', ...props }, children),
   Layer: ({ children, ...props }: { children?: React.ReactNode; [key: string]: unknown }) =>
     React.createElement('div', { 'data-testid': 'konva-layer', ...props }, children),
+  Group: ({ children, ...props }: { children?: React.ReactNode; [key: string]: unknown }) =>
+    React.createElement('div', { 'data-testid': 'konva-group', ...props }, children),
   Rect: (props: Record<string, unknown>) =>
     React.createElement('div', { 'data-testid': 'konva-rect', ...props }),
   Line: (props: Record<string, unknown>) =>
@@ -82,9 +84,8 @@ describe('LightingLayer', () => {
       ],
     });
 
-    render(<LightingLayer wallHeight={2400} />);
-    const rects = screen.getAllByTestId('konva-rect');
-    expect(rects).toHaveLength(2);
+    const { container } = render(<LightingLayer wallHeight={2400} />);
+    expect(container.querySelectorAll('[name="light-body"]')).toHaveLength(2);
   });
 
   it('color-codes DIRECT mounting_type as #FFD700', () => {
@@ -92,9 +93,8 @@ describe('LightingLayer', () => {
       lighting: [makeLighting({ mounting_type: 'DIRECT' })],
     });
 
-    render(<LightingLayer wallHeight={2400} />);
-    const rect = screen.getByTestId('konva-rect');
-    expect(rect).toHaveAttribute('fill', '#FFD700');
+    const { container } = render(<LightingLayer wallHeight={2400} />);
+    expect(container.querySelector('[name="light-body"]')).toHaveAttribute('fill', '#FFD700');
   });
 
   it('color-codes PROFILE mounting_type as #87CEEB', () => {
@@ -102,9 +102,8 @@ describe('LightingLayer', () => {
       lighting: [makeLighting({ mounting_type: 'PROFILE' })],
     });
 
-    render(<LightingLayer wallHeight={2400} />);
-    const rect = screen.getByTestId('konva-rect');
-    expect(rect).toHaveAttribute('fill', '#87CEEB');
+    const { container } = render(<LightingLayer wallHeight={2400} />);
+    expect(container.querySelector('[name="light-body"]')).toHaveAttribute('fill', '#87CEEB');
   });
 
   it('color-codes COVE mounting_type as #4FC3F7', () => {
@@ -112,9 +111,8 @@ describe('LightingLayer', () => {
       lighting: [makeLighting({ mounting_type: 'COVE' })],
     });
 
-    render(<LightingLayer wallHeight={2400} />);
-    const rect = screen.getByTestId('konva-rect');
-    expect(rect).toHaveAttribute('fill', '#4FC3F7');
+    const { container } = render(<LightingLayer wallHeight={2400} />);
+    expect(container.querySelector('[name="light-body"]')).toHaveAttribute('fill', '#4FC3F7');
   });
 
   it('defaults to white for unknown mounting_type', () => {
@@ -122,9 +120,21 @@ describe('LightingLayer', () => {
       lighting: [makeLighting({ mounting_type: 'UNKNOWN' as any })],
     });
 
-    render(<LightingLayer wallHeight={2400} />);
-    const rect = screen.getByTestId('konva-rect');
-    expect(rect).toHaveAttribute('fill', '#FFFFFF');
+    const { container } = render(<LightingLayer wallHeight={2400} />);
+    expect(container.querySelector('[name="light-body"]')).toHaveAttribute('fill', '#FFFFFF');
+  });
+
+  it('draws COVE with a structure and a panel outline, PROFILE with neither structure', () => {
+    useProjectStore.setState({ lighting: [makeLighting({ mounting_type: 'COVE' })] });
+    const cove = render(<LightingLayer wallHeight={2400} />);
+    expect(cove.container.querySelector('[name="cove-structure"]')).not.toBeNull();
+    expect(cove.container.querySelector('[name="panel-outline"]')).not.toBeNull();
+    cove.unmount();
+
+    useProjectStore.setState({ lighting: [makeLighting({ mounting_type: 'PROFILE' })] });
+    const profile = render(<LightingLayer wallHeight={2400} />);
+    expect(profile.container.querySelector('[name="cove-structure"]')).toBeNull();
+    expect(profile.container.querySelector('[name="panel-outline"]')).not.toBeNull();
   });
 
   it('renders lighting items at sequential y positions', () => {
@@ -132,8 +142,7 @@ describe('LightingLayer', () => {
       lighting: [makeLighting()],
     });
 
-    render(<LightingLayer wallHeight={2400} />);
-    const rect = screen.getByTestId('konva-rect');
-    expect(rect).toHaveAttribute('y', '0');
+    const { container } = render(<LightingLayer wallHeight={2400} />);
+    expect(container.querySelector('[name="light-body"]')).toHaveAttribute('y', '0');
   });
 });
