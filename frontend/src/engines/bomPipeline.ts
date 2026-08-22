@@ -30,6 +30,8 @@ import {
   validateBom,
 } from './validationEngine';
 import { adaptZonesToSite } from './siteAdaptationEngine';
+import { calculateZoneCoverage, reconcileCoverage } from './zoneCoverageEngine';
+import type { ZoneCoverageInput } from './zoneCoverageEngine';
 import { calculateWallPanels } from './wallPanelEngine';
 import { calculateLights } from './lightEngine';
 import { calculateFurniture } from './furnitureEngine';
@@ -476,6 +478,38 @@ interface QuantityCalculationResult {
   warnings: PipelineError[];
 }
 
+/**
+ * Area-division coverage (spec sections 15-16) is an expected-coverage INPUT.
+ * The geometric fit result stays the BOM quantity; a divergence is surfaced as a
+ * warning rather than silently overriding either figure.
+ */
+function pushCoverageWarning(
+  warnings: PipelineError[],
+  coverageInput: ZoneCoverageInput,
+  geometricQuantity: number,
+  context: Record<string, unknown>,
+): void {
+  let coverage;
+  try {
+    coverage = calculateZoneCoverage(coverageInput);
+  } catch {
+    return;
+  }
+  const reconciliation = reconcileCoverage(coverage.panelQuantity, geometricQuantity);
+  if (!reconciliation.diverges) return;
+  warnings.push(
+    createPipelineError(ErrorCode.QTY_AREA_FIT_DIVERGENCE, {
+      ...context,
+      zoneArea: coverage.zoneArea,
+      skuActualArea: coverage.skuActualArea,
+      rawPanelQuantity: coverage.rawPanelQuantity,
+      expectedQuantity: reconciliation.expectedQuantity,
+      geometricQuantity: reconciliation.geometricQuantity,
+      difference: reconciliation.difference,
+    }),
+  );
+}
+
 function runQuantityCalculation(
   input: BomPipelineInput,
   adaptedZones: AdaptedZone[]
@@ -506,6 +540,12 @@ function runQuantityCalculation(
 
       try {
         const panelOutput = calculateWallPanels(panelInput);
+        pushCoverageWarning(
+          warnings,
+          { zoneWidth: frame.width, zoneHeight: frame.height, skuWidth: frame.panelWidth, skuHeight: frame.panelHeight },
+          panelOutput.requiredQuantity,
+          { frameId: frame.frameId },
+        );
         lines.push({
           lineId: `panel-${frame.frameId}`,
           componentId: frame.frameId,
@@ -546,6 +586,12 @@ function runQuantityCalculation(
 
       try {
         const panelOutput = calculateWallPanels(panelInput);
+        pushCoverageWarning(
+          warnings,
+          { zoneWidth: zone.width, zoneHeight: zone.height, skuWidth: zone.panelWidth, skuHeight: zone.panelHeight },
+          panelOutput.requiredQuantity,
+          { zoneId: zone.zoneId },
+        );
         lines.push({
           lineId: `panel-${zone.zoneId}`,
           componentId: zone.zoneId,
