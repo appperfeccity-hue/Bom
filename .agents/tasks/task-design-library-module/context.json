@@ -1,0 +1,32 @@
+{
+  "project_type": "React SPA with Zustand state management, Supabase backend",
+  "language": "TypeScript / React 18",
+  "build_system": "Vite 6 with npm, path alias @/ -> src/",
+  "test_framework": "vitest with @testing-library/react, jsdom environment, test-setup.ts for globals",
+  "build_command": "cd frontend && npm run build",
+  "test_command": "cd frontend && NODE_OPTIONS=\"\" npx vitest run",
+  "verification_instructions": "1) Run unit tests: cd frontend && NODE_OPTIONS=\"\" npx vitest run  2) Run typecheck: cd frontend && npm run typecheck  3) Run build: cd frontend && npm run build",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "cd frontend && npm install (already done - node_modules present)",
+  "environment_constraints": "Node v22.23.2, npm available, Supabase MCP available for DB inspection. E2E tests require env vars not present - skip those. All 1144 unit tests pass at baseline.",
+  "contribution_requirements": "Stores use zustand create(). Components use inline styles with CSS variables (--color-accent, --color-ink-primary, etc). Tests mock @/lib/supabase. Data-testid attributes on all interactive elements.",
+  "key_patterns": "Stores: zustand with separate State/Actions/Store types. Supabase queries via fromTable() helper. Components: functional with useEffect for data fetching on mount. Test files co-located in __tests__/ dirs. Templates have status DRAFT/ACTIVE/RETIRED. Design families in design_family_master table. ProjectCreation flow: BROWSE_TEMPLATES -> PROJECT_DETAILS -> CREATING -> CREATED.",
+  "relevant_files": [
+    "frontend/src/components/ProjectCreation/DesignLibrary.tsx",
+    "frontend/src/components/ProjectCreation/TemplateCard.tsx",
+    "frontend/src/components/ProjectCreation/ProjectCreationWizard.tsx",
+    "frontend/src/stores/projectCreationStore.ts",
+    "frontend/src/stores/templateManagementStore.ts",
+    "frontend/src/stores/publishStore.ts",
+    "frontend/src/stores/adminStore.ts",
+    "frontend/src/types/database.ts",
+    "frontend/src/lib/supabase.ts",
+    "frontend/src/components/TemplateManagement/TemplateFilters.tsx",
+    "frontend/src/components/TemplateManagement/TemplateListItem.tsx",
+    "frontend/src/components/Navigation/Navigation.tsx",
+    "frontend/src/App.tsx",
+    "frontend/src/components/ProjectCreation/__tests__/ProjectCreationWizard.test.tsx",
+    "frontend/src/stores/__tests__/projectCreationStore.test.ts"
+  ],
+  "directory_structure": "frontend/src/ -> App.tsx (root), components/ (feature folders with __tests__), stores/ (zustand stores with __tests__), types/database.ts, lib/supabase.ts, pages/ (route pages), canvas/ (Konva canvas). Build config in frontend/vite.config.ts."
+}

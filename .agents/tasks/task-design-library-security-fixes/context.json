@@ -1,0 +1,24 @@
+{
+  "project_type": "Full-stack app with Supabase PostgreSQL backend + React/Zustand frontend",
+  "language": "TypeScript (frontend), PL/pgSQL (database)",
+  "build_system": "Vite + npm (frontend), Supabase MCP for DB migrations",
+  "test_framework": "Vitest with vi.mock for Supabase mocking, zustand store unit tests",
+  "build_command": "cd /projects/sandbox/Bom/frontend && NODE_OPTIONS=\"\" npm run build",
+  "test_command": "cd /projects/sandbox/Bom/frontend && NODE_OPTIONS=\"\" npx vitest run",
+  "verification_instructions": "1. Run vitest to confirm all 1205+ unit tests pass. 2. Run vite build to confirm no type errors. 3. Execute SQL via Supabase MCP to verify database changes are live.",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "cd /projects/sandbox/Bom/frontend && npm install (already done)",
+  "environment_constraints": "Supabase MCP available for executing SQL on project fbiemsbykrmrbqcsobvh. No local psql access. E2E tests require env vars not available in sandbox.",
+  "contribution_requirements": "All SQL changes applied via Supabase MCP execute_sql. Frontend changes must pass vitest + vite build. Commit and push to feat/db-baseline-v1.1.5.",
+  "key_patterns": "Stores use zustand create(). Supabase accessed via fromTable() helper and supabase.rpc(). RPC calls use pattern supabase.rpc('function_name', {params}). publishStore.ts currently does direct UPDATE to template table for publishing. projectCreationStore.ts calls create_project RPC. All RLS policies are in perfecity schema. Functions use SECURITY DEFINER with SET search_path = 'perfecity'.",
+  "relevant_files": [
+    "frontend/src/stores/publishStore.ts",
+    "frontend/src/stores/projectCreationStore.ts",
+    "frontend/src/stores/__tests__/publishStore.test.ts",
+    "frontend/src/stores/__tests__/projectCreationStore.test.ts",
+    "frontend/src/lib/supabase.ts",
+    "migrations/v1.1.6_p0_fixes_grants_triggers_rpc.sql",
+    "migrations/v1.1.5_rls_policies.sql"
+  ],
+  "directory_structure": "Root: baseline/, migrations/, tests/, docs/, ci/, frontend/. Frontend: src/stores/ (zustand), src/lib/ (supabase client), src/types/ (database types), src/__tests__/ and src/stores/__tests__/"
+}

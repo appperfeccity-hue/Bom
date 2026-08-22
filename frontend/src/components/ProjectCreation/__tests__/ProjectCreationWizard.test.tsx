@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { useProjectCreationStore, CreationStep } from '@/stores/projectCreationStore';
+import { useDesignLibraryStore } from '@/stores/designLibraryStore';
+import type { TemplateWithAvailability } from '@/stores/designLibraryStore';
 import { useAuthStore } from '@/stores/authStore';
 import { TemplateStatus, AdaptationStrategy } from '@/types/database';
 import type { Template } from '@/types/database';
@@ -41,12 +43,25 @@ const makeTemplate = (overrides: Partial<Template> = {}): Template => ({
   ...overrides,
 });
 
+const makeTemplateWithAvailability = (overrides: Partial<TemplateWithAvailability> = {}): TemplateWithAvailability => ({
+  ...makeTemplate(overrides),
+  availability: 'AVAILABLE',
+  blockedReasons: [],
+  designFamilyName: null,
+  ...overrides,
+});
+
 describe('ProjectCreationWizard', () => {
   beforeEach(() => {
     useProjectCreationStore.getState().reset();
+    useDesignLibraryStore.getState().reset();
     // Override fetchAvailableTemplates so DesignLibrary does not trigger loading on mount
     useProjectCreationStore.setState({
       fetchAvailableTemplates: vi.fn() as unknown as () => Promise<void>,
+    });
+    // Override fetchTemplatesWithAvailability so DesignLibrary does not trigger real fetch
+    useDesignLibraryStore.setState({
+      fetchTemplatesWithAvailability: vi.fn() as unknown as () => Promise<void>,
     });
     useAuthStore.setState({
       user: { id: 'user-1' } as never,
@@ -138,19 +153,24 @@ describe('ProjectCreationWizard', () => {
 describe('DesignLibrary', () => {
   beforeEach(() => {
     useProjectCreationStore.getState().reset();
+    useDesignLibraryStore.getState().reset();
     // Override fetchAvailableTemplates so it does not reset isLoading on mount
     useProjectCreationStore.setState({
       fetchAvailableTemplates: vi.fn() as unknown as () => Promise<void>,
+    });
+    // Override fetchTemplatesWithAvailability so it does not trigger real fetch
+    useDesignLibraryStore.setState({
+      fetchTemplatesWithAvailability: vi.fn() as unknown as () => Promise<void>,
     });
   });
 
   it('displays template cards when templates are loaded', () => {
     const templates = [
-      makeTemplate({ template_id: 'tpl-1', name: 'Template One' }),
-      makeTemplate({ template_id: 'tpl-2', name: 'Template Two' }),
+      makeTemplateWithAvailability({ template_id: 'tpl-1', name: 'Template One' }),
+      makeTemplateWithAvailability({ template_id: 'tpl-2', name: 'Template Two' }),
     ];
-    useProjectCreationStore.setState({
-      availableTemplates: templates,
+    useDesignLibraryStore.setState({
+      filteredTemplates: templates,
       isLoading: false,
       error: null,
     });
@@ -163,30 +183,30 @@ describe('DesignLibrary', () => {
   });
 
   it('shows loading message when isLoading is true', () => {
-    useProjectCreationStore.setState({ isLoading: true, availableTemplates: [] });
+    useDesignLibraryStore.setState({ isLoading: true, filteredTemplates: [] });
     render(<DesignLibrary />);
     expect(screen.getByText('Loading templates...')).toBeInTheDocument();
   });
 
   it('shows error message when error is set', () => {
-    useProjectCreationStore.setState({ error: 'Failed to load', isLoading: false });
+    useDesignLibraryStore.setState({ error: 'Failed to load', isLoading: false });
     render(<DesignLibrary />);
     expect(screen.getByText('Failed to load')).toBeInTheDocument();
   });
 
   it('shows empty state when no templates available', () => {
-    useProjectCreationStore.setState({ availableTemplates: [], isLoading: false, error: null });
+    useDesignLibraryStore.setState({ filteredTemplates: [], isLoading: false, error: null });
     render(<DesignLibrary />);
     expect(screen.getByText('No templates available')).toBeInTheDocument();
   });
 
-  it('calls fetchAvailableTemplates on mount', () => {
+  it('calls fetchTemplatesWithAvailability on mount', () => {
     const mockFetch = vi.fn();
-    useProjectCreationStore.setState({
-      availableTemplates: [],
+    useDesignLibraryStore.setState({
+      filteredTemplates: [],
       isLoading: false,
       error: null,
-      fetchAvailableTemplates: mockFetch as unknown as () => Promise<void>,
+      fetchTemplatesWithAvailability: mockFetch as unknown as () => Promise<void>,
     });
 
     render(<DesignLibrary />);
@@ -195,9 +215,9 @@ describe('DesignLibrary', () => {
   });
 
   it('clicking Select on a template card advances to PROJECT_DETAILS', () => {
-    const template = makeTemplate({ template_id: 'tpl-1', name: 'Test Template' });
-    useProjectCreationStore.setState({
-      availableTemplates: [template],
+    const template = makeTemplateWithAvailability({ template_id: 'tpl-1', name: 'Test Template' });
+    useDesignLibraryStore.setState({
+      filteredTemplates: [template],
       isLoading: false,
       error: null,
     });

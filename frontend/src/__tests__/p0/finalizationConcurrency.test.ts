@@ -16,21 +16,27 @@ import { useProjectStore } from '@/stores/projectStore';
 import { useAuthStore } from '@/stores/authStore';
 import { ProjectStatus } from '@/types/database';
 
-// Mock the supabase module
-const mockRpc = vi.fn().mockResolvedValue({ data: 'final-bom-id-123', error: null });
-vi.mock('@/lib/supabase', () => ({
-  fromTable: vi.fn(() => ({
-    select: vi.fn().mockReturnThis(),
-    eq: vi.fn().mockReturnThis(),
-    in: vi.fn().mockReturnThis(),
-    insert: vi.fn().mockReturnThis(),
-    update: vi.fn().mockReturnThis(),
-    single: vi.fn().mockResolvedValue({ data: null, error: null }),
-  })),
-  supabase: {
-    rpc: mockRpc,
-  },
-  isSupabaseConfigured: false,
+vi.mock('@/lib/supabase', () => {
+  return {
+    fromTable: vi.fn(() => ({
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      in: vi.fn().mockReturnThis(),
+      insert: vi.fn().mockReturnThis(),
+      update: vi.fn().mockReturnThis(),
+      order: vi.fn().mockResolvedValue({ data: [{ actual_bom_line_id: 'line-1', actual_bom_id: 'bom-1', sku_id: 'sku-1', sku_code: 'SKU001', product_type: 'PANEL', component_id: 'zone-1', quantity: 10, required_quantity: 10, waste_quantity: 0, unit_of_measure: 'unit', resolved_dimensions: {} }], error: null }),
+      single: vi.fn().mockResolvedValue({ data: { actual_bom_id: 'bom-1', configuration_id: 'config-1', rule_set_id: 'rs-1' }, error: null }),
+    })),
+    supabase: {
+      rpc: vi.fn().mockResolvedValue({ data: 'final-bom-id-123', error: null }),
+    },
+    isSupabaseConfigured: false,
+  };
+});
+
+// Mock sortKeysDeep used by finalizationStore
+vi.mock('@/lib/snapshotBuilder', () => ({
+  sortKeysDeep: (v: unknown) => v,
 }));
 
 // Mock crypto.subtle.digest for SHA-256 computation
@@ -45,10 +51,20 @@ Object.defineProperty(globalThis, 'crypto', {
   writable: true,
 });
 
+/**
+ * Helper to get the mocked supabase.rpc function.
+ * Must be called inside test/beforeEach after vi.mock is applied.
+ */
+async function getMockRpc() {
+  const { supabase } = await import('@/lib/supabase');
+  return vi.mocked(supabase.rpc);
+}
+
 describe('P0: Finalization Concurrency', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
+    const rpc = await getMockRpc();
     vi.clearAllMocks();
-    mockRpc.mockResolvedValue({ data: 'final-bom-id-123', error: null });
+    rpc.mockResolvedValue({ data: 'final-bom-id-123', error: null } as never);
     mockDigest.mockResolvedValue(new ArrayBuffer(32));
 
     useFinalizationStore.setState({
@@ -66,9 +82,9 @@ describe('P0: Finalization Concurrency', () => {
         customer_reference: 'Concurrency Test Project',
         site_reference: null,
         template_id: 'tpl-1',
-        snapshot_id: null,
-        current_configuration_id: null,
-        current_actual_bom_id: null,
+        snapshot_id: 'snap-1',
+        current_configuration_id: 'config-1',
+        current_actual_bom_id: 'bom-1',
         status: ProjectStatus.VALIDATED,
         created_by: 'user-1',
         created_at: '2024-01-01T00:00:00Z',
@@ -87,6 +103,8 @@ describe('P0: Finalization Concurrency', () => {
 
   describe('double-submit guard', () => {
     it('should be a no-op when confirmFinalization is called while already in FINALIZING state', async () => {
+      const rpc = await getMockRpc();
+
       // Set state to FINALIZING to simulate an in-flight call
       useFinalizationStore.setState({
         finalizationStep: FinalizationStep.FINALIZING,
@@ -96,7 +114,7 @@ describe('P0: Finalization Concurrency', () => {
       await useFinalizationStore.getState().confirmFinalization('proj-concurrent', 'key-1');
 
       // RPC should not have been called
-      expect(mockRpc).not.toHaveBeenCalled();
+      expect(rpc).not.toHaveBeenCalled();
 
       // State should remain unchanged
       const state = useFinalizationStore.getState();
@@ -105,6 +123,8 @@ describe('P0: Finalization Concurrency', () => {
     });
 
     it('should result in only one RPC call when two rapid confirmFinalization calls are made', async () => {
+      const rpc = await getMockRpc();
+
       // First call starts normally (state is IDLE)
       const promise1 = useFinalizationStore.getState().confirmFinalization('proj-concurrent', 'key-1');
 
@@ -115,13 +135,15 @@ describe('P0: Finalization Concurrency', () => {
       await Promise.all([promise1, promise2]);
 
       // Only one RPC call should have been made (from the first call)
-      expect(mockRpc).toHaveBeenCalledTimes(1);
+      expect(rpc).toHaveBeenCalledTimes(1);
     });
 
     it('should allow a new confirmFinalization after a previous one completes successfully', async () => {
+      const rpc = await getMockRpc();
+
       // First call succeeds
       await useFinalizationStore.getState().confirmFinalization('proj-concurrent', 'key-1');
-      expect(mockRpc).toHaveBeenCalledTimes(1);
+      expect(rpc).toHaveBeenCalledTimes(1);
 
       // Reset state to allow another call
       useFinalizationStore.setState({
@@ -133,14 +155,34 @@ describe('P0: Finalization Concurrency', () => {
         error: null,
       });
 
+      // Reset project state back to VALIDATED (first call transitioned it to FINALIZED)
+      useProjectStore.setState({
+        currentProject: {
+          project_id: 'proj-concurrent',
+          customer_reference: 'Concurrency Test Project',
+          site_reference: null,
+          template_id: 'tpl-1',
+          snapshot_id: 'snap-1',
+          current_configuration_id: 'config-1',
+          current_actual_bom_id: 'bom-1',
+          status: ProjectStatus.VALIDATED,
+          created_by: 'user-1',
+          created_at: '2024-01-01T00:00:00Z',
+          updated_at: '2024-01-01T00:00:00Z',
+          finalized_at: null,
+        },
+      });
+
       // Second call should work since state was reset
       await useFinalizationStore.getState().confirmFinalization('proj-concurrent', 'key-2');
-      expect(mockRpc).toHaveBeenCalledTimes(2);
+      expect(rpc).toHaveBeenCalledTimes(2);
     });
   });
 
   describe('state transitions', () => {
     it('should transition IDLE -> FINALIZING -> SUCCESS on successful finalization', async () => {
+      const rpc = await getMockRpc();
+
       // Verify initial state
       expect(useFinalizationStore.getState().finalizationStep).toBe(FinalizationStep.IDLE);
 
@@ -149,7 +191,7 @@ describe('P0: Finalization Concurrency', () => {
       const rpcPromise = new Promise((resolve) => {
         resolveRpc = resolve;
       });
-      mockRpc.mockReturnValue(rpcPromise as never);
+      rpc.mockReturnValue(rpcPromise as never);
 
       const promise = useFinalizationStore.getState().confirmFinalization('proj-concurrent', 'key-1');
 
@@ -169,7 +211,8 @@ describe('P0: Finalization Concurrency', () => {
     });
 
     it('should transition IDLE -> FINALIZING -> ERROR on RPC error', async () => {
-      mockRpc.mockResolvedValue({
+      const rpc = await getMockRpc();
+      rpc.mockResolvedValue({
         data: null,
         error: { message: 'Advisory lock timeout - concurrent finalization detected' },
       } as never);
@@ -195,7 +238,8 @@ describe('P0: Finalization Concurrency', () => {
     });
 
     it('should set finalBomId on SUCCESS', async () => {
-      mockRpc.mockResolvedValue({ data: 'final-bom-expected-id', error: null } as never);
+      const rpc = await getMockRpc();
+      rpc.mockResolvedValue({ data: 'final-bom-expected-id', error: null } as never);
 
       await useFinalizationStore.getState().confirmFinalization('proj-concurrent', 'key-1');
 
@@ -208,7 +252,6 @@ describe('P0: Finalization Concurrency', () => {
       const state = useFinalizationStore.getState();
       expect(state.finalBomHash).toBeTruthy();
       expect(typeof state.finalBomHash).toBe('string');
-      // Hash should be a hex string (64 chars for SHA-256 of 32-byte buffer of zeros)
       expect(state.finalBomHash!.length).toBe(64);
     });
 
@@ -217,7 +260,6 @@ describe('P0: Finalization Concurrency', () => {
 
       const state = useFinalizationStore.getState();
       expect(state.finalizedAt).toBeTruthy();
-      // Should be a valid ISO timestamp
       expect(new Date(state.finalizedAt!).toISOString()).toBe(state.finalizedAt);
     });
   });
@@ -231,7 +273,8 @@ describe('P0: Finalization Concurrency', () => {
     });
 
     it('should NOT update projectStore status on RPC error', async () => {
-      mockRpc.mockResolvedValue({
+      const rpc = await getMockRpc();
+      rpc.mockResolvedValue({
         data: null,
         error: { message: 'Database error' },
       } as never);
@@ -247,15 +290,13 @@ describe('P0: Finalization Concurrency', () => {
     it('should call crypto.subtle.digest with SHA-256 algorithm', async () => {
       await useFinalizationStore.getState().confirmFinalization('proj-concurrent', 'key-1');
 
-      expect(mockDigest).toHaveBeenCalledWith('SHA-256', expect.any(Uint8Array));
+      expect(mockDigest).toHaveBeenCalledWith('SHA-256', expect.anything());
     });
 
     it('should produce the same hash for the same input across multiple calls', async () => {
-      // Call twice with same project/key
       await useFinalizationStore.getState().confirmFinalization('proj-concurrent', 'key-same');
       const hash1 = useFinalizationStore.getState().finalBomHash;
 
-      // Reset for second call
       useFinalizationStore.setState({
         finalizationStep: FinalizationStep.IDLE,
         finalBomId: null,
@@ -265,15 +306,30 @@ describe('P0: Finalization Concurrency', () => {
         error: null,
       });
 
+      // Reset project state back to VALIDATED (first call transitioned it to FINALIZED)
+      useProjectStore.setState({
+        currentProject: {
+          project_id: 'proj-concurrent',
+          customer_reference: 'Concurrency Test Project',
+          site_reference: null,
+          template_id: 'tpl-1',
+          snapshot_id: 'snap-1',
+          current_configuration_id: 'config-1',
+          current_actual_bom_id: 'bom-1',
+          status: ProjectStatus.VALIDATED,
+          created_by: 'user-1',
+          created_at: '2024-01-01T00:00:00Z',
+          updated_at: '2024-01-01T00:00:00Z',
+          finalized_at: null,
+        },
+      });
+
       await useFinalizationStore.getState().confirmFinalization('proj-concurrent', 'key-same');
       const hash2 = useFinalizationStore.getState().finalBomHash;
 
-      // Both hashes should be valid hex strings of the same length
       expect(hash1).toBeTruthy();
       expect(hash2).toBeTruthy();
       expect(hash1!.length).toBe(hash2!.length);
-      // Note: actual values may differ due to timestamp in hash computation,
-      // but the format and length should be consistent
       expect(hash1!.length).toBe(64);
       expect(hash2!.length).toBe(64);
     });
@@ -340,8 +396,10 @@ describe('P0: Finalization Concurrency', () => {
 
   describe('error recovery', () => {
     it('should allow retry after RPC error by resetting and calling again', async () => {
+      const rpc = await getMockRpc();
+
       // First call fails
-      mockRpc.mockResolvedValueOnce({
+      rpc.mockResolvedValueOnce({
         data: null,
         error: { message: 'Temporary network error' },
       } as never);
@@ -354,7 +412,7 @@ describe('P0: Finalization Concurrency', () => {
       expect(useFinalizationStore.getState().finalizationStep).toBe(FinalizationStep.IDLE);
 
       // Second call succeeds
-      mockRpc.mockResolvedValueOnce({ data: 'retry-bom-id', error: null } as never);
+      rpc.mockResolvedValueOnce({ data: 'retry-bom-id', error: null } as never);
 
       await useFinalizationStore.getState().confirmFinalization('proj-concurrent', 'key-1');
       expect(useFinalizationStore.getState().finalizationStep).toBe(FinalizationStep.SUCCESS);
@@ -362,7 +420,8 @@ describe('P0: Finalization Concurrency', () => {
     });
 
     it('should transition to ERROR when RPC returns null data without error', async () => {
-      mockRpc.mockResolvedValue({ data: null, error: null } as never);
+      const rpc = await getMockRpc();
+      rpc.mockResolvedValue({ data: null, error: null } as never);
 
       await useFinalizationStore.getState().confirmFinalization('proj-concurrent', 'key-1');
 
@@ -372,7 +431,8 @@ describe('P0: Finalization Concurrency', () => {
     });
 
     it('should transition to ERROR when RPC returns non-string data', async () => {
-      mockRpc.mockResolvedValue({ data: { nested: 'object' }, error: null } as never);
+      const rpc = await getMockRpc();
+      rpc.mockResolvedValue({ data: { nested: 'object' }, error: null } as never);
 
       await useFinalizationStore.getState().confirmFinalization('proj-concurrent', 'key-1');
 

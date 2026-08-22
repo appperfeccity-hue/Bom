@@ -5,6 +5,7 @@ import { fromTable } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/authStore';
 import { useProjectStore } from '@/stores/projectStore';
 import { useCanvasStore } from '@/stores/canvasStore';
+import { normalizeWallType } from '@/engines/wallType';
 
 // --- Filter types ---
 
@@ -40,6 +41,9 @@ export interface TemplateManagementActions {
     wall_geometry: WallGeometryType;
     base_width_mm: number;
     base_height_mm: number;
+    /** L_SHAPE segment defaults; frozen into the snapshot via wall_geometry. */
+    segment_a_width_mm?: number;
+    segment_b_width_mm?: number;
     adaptation_strategy: AdaptationStrategy;
     design_family_id: string;
     design_subfamily_id?: string;
@@ -93,7 +97,9 @@ function filterTemplates(templates: Template[], filters: TemplateFilters): Templ
   }
 
   if (filters.wallGeometry) {
-    result = result.filter((t) => t.wall_geometry.type === filters.wallGeometry);
+    // Compare through the canonical alias so L_SHAPE and legacy L_CORNER match
+    const target = normalizeWallType(filters.wallGeometry);
+    result = result.filter((t) => normalizeWallType(t.wall_geometry.type) === target);
   }
 
   return result;
@@ -167,6 +173,12 @@ export const useTemplateManagementStore = create<TemplateManagementStore>((set, 
             type: data.wall_geometry,
             base_width_mm: data.base_width_mm,
             base_height_mm: data.base_height_mm,
+            ...(data.segment_a_width_mm !== undefined
+              ? { segment_a_width_mm: data.segment_a_width_mm }
+              : {}),
+            ...(data.segment_b_width_mm !== undefined
+              ? { segment_b_width_mm: data.segment_b_width_mm }
+              : {}),
           },
           adaptation_strategy: data.adaptation_strategy,
           design_family_id: data.design_family_id,

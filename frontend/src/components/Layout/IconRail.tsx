@@ -13,7 +13,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: 'sku-master', label: 'SKU Master', path: '/admin/skus', icon: '◉' },
   { id: 'catalogue', label: 'Catalogue', path: '/admin/catalogue', icon: '☰' },
   { id: 'templates', label: 'Templates', path: '/canvas', icon: '◧' },
-  { id: 'design-library', label: 'Design Library', path: '/admin/design-families', icon: '◈' },
+  { id: 'design-library', label: 'Design Library', path: '/design-library', icon: '◈' },
   { id: 'projects', label: 'Projects', path: '/projects', icon: '▦' },
   { id: 'settings', label: 'Settings', path: '/admin', icon: '⚙' },
 ];

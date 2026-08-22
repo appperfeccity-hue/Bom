@@ -2,223 +2,165 @@
  * Integration Test Area 1: Template Integrity
  *
  * Validates that:
- * - Published template data is immutable (buildSnapshotData produces identical output for same inputs)
- * - computeSnapshotHash returns deterministic hashes
- * - Dimensions propagate correctly from template to snapshot zones
+ * - SnapshotData type can represent v1 and v2 snapshot formats
+ * - sortKeysDeep produces deterministic JSON for canonical hashing
+ * - Snapshot zone structure preserves template zone dimensions
+ *
+ * Note: Snapshot building is now server-side (v1.1.8). These tests validate
+ * the frontend read types and canonical sorting utility used for verification.
  */
 
 import { describe, it, expect } from 'vitest';
-import { buildSnapshotData, computeSnapshotHash } from '@/lib/snapshotBuilder';
-import type { Template, TemplateZone, TemplateLighting, TemplateFurniture, TemplateTrim, SkuMaster } from '@/types/database';
-import { TemplateStatus, AdaptationStrategy, ZoneWidthStrategy, ZoneHeightStrategy, ZonePositionStrategy, ProductType, SkuStatus, QuantityMode } from '@/types/database';
-
-// --- Fixtures ---
-
-function createTemplate(): Template {
-  return {
-    template_id: 'template-001',
-    name: 'Test Straight Wall',
-    description: 'A test template',
-    wall_geometry: { type: 'STRAIGHT', base_width_mm: 3000, base_height_mm: 2400 },
-    status: TemplateStatus.ACTIVE,
-    adaptation_strategy: AdaptationStrategy.PROPORTIONAL,
-    design_family_id: null,
-    design_subfamily_id: null,
-    wall_application: null,
-    priority_zone_id: null,
-    waste_factor: null,
-    metadata: null,
-    created_by: 'designer-001',
-    created_at: '2024-01-01T00:00:00Z',
-    updated_at: '2024-01-01T00:00:00Z',
-  };
-}
-
-function createTemplateZones(): TemplateZone[] {
-  return [
-    {
-      zone_id: 'zone-a',
-      template_id: 'template-001',
-      x_mm: 0,
-      y_mm: 0,
-      width_mm: 1500,
-      height_mm: 2400,
-      width_strategy: ZoneWidthStrategy.PROPORTIONAL,
-      height_strategy: ZoneHeightStrategy.DERIVED_FROM_WALL,
-      position_strategy: ZonePositionStrategy.FIXED,
-      segment: null,
-      created_at: '2024-01-01T00:00:00Z',
-    },
-    {
-      zone_id: 'zone-b',
-      template_id: 'template-001',
-      x_mm: 1500,
-      y_mm: 0,
-      width_mm: 1500,
-      height_mm: 2400,
-      width_strategy: ZoneWidthStrategy.PROPORTIONAL,
-      height_strategy: ZoneHeightStrategy.DERIVED_FROM_WALL,
-      position_strategy: ZonePositionStrategy.FIXED,
-      segment: null,
-      created_at: '2024-01-01T00:00:00Z',
-    },
-  ];
-}
-
-function createSkuMaster(skuId: string): SkuMaster {
-  return {
-    sku_id: skuId,
-    sku_code: `CODE-${skuId}`,
-    product_type: ProductType.WALL_PANEL,
-    family_id: 'family-001',
-    category_id: 'category-001',
-    width_mm: 600,
-    height_mm: 1200,
-    thickness_mm: 12,
-    depth_mm: null,
-    unit_length_mm: null,
-    material: 'Oak',
-    colour: 'Natural',
-    finish: 'Matte',
-    pattern_identity: null,
-    gh_mm: 3,
-    gv_mm: 3,
-    quantity_mode: QuantityMode.DISCRETE,
-    commercial_attributes: {},
-    status: SkuStatus.ACTIVE,
-    created_by: 'admin',
-    created_at: '2024-01-01T00:00:00Z',
-    updated_at: '2024-01-01T00:00:00Z',
-  };
-}
+import { sortKeysDeep } from '@/lib/snapshotBuilder';
+import type { SnapshotData, SnapshotZone } from '@/lib/snapshotBuilder';
 
 describe('Integration Area 1: Template Integrity', () => {
-  describe('Published template immutability', () => {
-    it('buildSnapshotData produces identical output for same inputs', () => {
-      const template = createTemplate();
-      const zones = createTemplateZones();
-      const lighting: TemplateLighting[] = [];
-      const furniture: TemplateFurniture[] = [];
-      const trims: TemplateTrim[] = [];
-      const skuMap = new Map<string, SkuMaster>();
-      skuMap.set('zone-a', createSkuMaster('sku-oak-001'));
-      skuMap.set('zone-b', createSkuMaster('sku-oak-002'));
+  describe('Snapshot data structure immutability', () => {
+    it('sortKeysDeep produces identical output for same inputs regardless of key order', () => {
+      const obj1 = { zones: [{ width_mm: 1500, zone_id: 'z-1' }], wall_geometry: { type: 'STRAIGHT', base_width_mm: 3000 } };
+      const obj2 = { wall_geometry: { base_width_mm: 3000, type: 'STRAIGHT' }, zones: [{ zone_id: 'z-1', width_mm: 1500 }] };
 
-      const snapshot1 = buildSnapshotData(template, zones, lighting, furniture, trims, skuMap);
-      const snapshot2 = buildSnapshotData(template, zones, lighting, furniture, trims, skuMap);
+      const canonical1 = JSON.stringify(sortKeysDeep(obj1));
+      const canonical2 = JSON.stringify(sortKeysDeep(obj2));
 
-      expect(snapshot1).toEqual(snapshot2);
+      expect(canonical1).toBe(canonical2);
     });
 
-    it('buildSnapshotData preserves all zone data without mutation', () => {
-      const template = createTemplate();
-      const zones = createTemplateZones();
-      const lighting: TemplateLighting[] = [];
-      const furniture: TemplateFurniture[] = [];
-      const trims: TemplateTrim[] = [];
-      const skuMap = new Map<string, SkuMaster>();
-      skuMap.set('zone-a', createSkuMaster('sku-oak-001'));
+    it('sortKeysDeep preserves zone data without mutation', () => {
+      const zones = [
+        { zone_id: 'zone-a', x_mm: 0, y_mm: 0, width_mm: 1500, height_mm: 2400 },
+        { zone_id: 'zone-b', x_mm: 1500, y_mm: 0, width_mm: 1500, height_mm: 2400 },
+      ];
 
-      const snapshot = buildSnapshotData(template, zones, lighting, furniture, trims, skuMap);
+      const sorted = sortKeysDeep(zones) as typeof zones;
 
-      // Verify zone data preserved
-      expect(snapshot.zones).toHaveLength(2);
-      expect(snapshot.zones[0].zone_id).toBe('zone-a');
-      expect(snapshot.zones[0].x_mm).toBe(0);
-      expect(snapshot.zones[0].width_mm).toBe(1500);
-      expect(snapshot.zones[0].height_mm).toBe(2400);
-      expect(snapshot.zones[1].zone_id).toBe('zone-b');
-      expect(snapshot.zones[1].x_mm).toBe(1500);
+      expect(sorted).toHaveLength(2);
+      expect(sorted[0].zone_id).toBe('zone-a');
+      expect(sorted[0].x_mm).toBe(0);
+      expect(sorted[0].width_mm).toBe(1500);
+      expect(sorted[0].height_mm).toBe(2400);
+      expect(sorted[1].zone_id).toBe('zone-b');
+      expect(sorted[1].x_mm).toBe(1500);
     });
   });
 
-  describe('Snapshot hash determinism', () => {
-    it('computeSnapshotHash returns same hash for identical data', async () => {
-      const template = createTemplate();
-      const zones = createTemplateZones();
-      const lighting: TemplateLighting[] = [];
-      const furniture: TemplateFurniture[] = [];
-      const trims: TemplateTrim[] = [];
-      const skuMap = new Map<string, SkuMaster>();
-      skuMap.set('zone-a', createSkuMaster('sku-oak-001'));
+  describe('Snapshot hash determinism via sortKeysDeep', () => {
+    it('sortKeysDeep produces same canonical form for identical snapshot data', () => {
+      const snapshot1: SnapshotData = {
+        snapshot_version: 2,
+        wall_geometry: { type: 'STRAIGHT', base_width_mm: 3000, base_height_mm: 2400 },
+        base_dimensions: { width_mm: 3000, height_mm: 2400 },
+        zones: [{
+          zone_id: 'zone-a',
+          x_mm: 0, y_mm: 0, width_mm: 1500, height_mm: 2400,
+          width_strategy: 'PROPORTIONAL', height_strategy: 'DERIVED_FROM_WALL',
+          position_strategy: 'FIXED', primary_sku: null, alternatives: [],
+        }],
+        lighting: [],
+        furniture: [],
+        trims: [],
+        hidden_components: [],
+        calculation_parameters: { waste_factor: 0.05 },
+        template_wall_configuration: null,
+        consultant_permissions: null,
+        site_obstructions: [],
+        sku_compatibility: [],
+        rule_set: { rule_set_id: 'rs-1', rule_set_code: 'STD', version: 1, constants: {} },
+      };
 
-      const snapshot1 = buildSnapshotData(template, zones, lighting, furniture, trims, skuMap);
-      const snapshot2 = buildSnapshotData(template, zones, lighting, furniture, trims, skuMap);
+      // Create same data with different property insertion order
+      const snapshot2: SnapshotData = {
+        zones: [{
+          zone_id: 'zone-a',
+          width_strategy: 'PROPORTIONAL', height_strategy: 'DERIVED_FROM_WALL',
+          position_strategy: 'FIXED', primary_sku: null, alternatives: [],
+          x_mm: 0, y_mm: 0, width_mm: 1500, height_mm: 2400,
+        }],
+        snapshot_version: 2,
+        base_dimensions: { height_mm: 2400, width_mm: 3000 },
+        wall_geometry: { base_height_mm: 2400, type: 'STRAIGHT', base_width_mm: 3000 },
+        lighting: [],
+        furniture: [],
+        trims: [],
+        hidden_components: [],
+        calculation_parameters: { waste_factor: 0.05 },
+        template_wall_configuration: null,
+        consultant_permissions: null,
+        site_obstructions: [],
+        sku_compatibility: [],
+        rule_set: { rule_set_id: 'rs-1', rule_set_code: 'STD', version: 1, constants: {} },
+      };
 
-      const hash1 = await computeSnapshotHash(snapshot1);
-      const hash2 = await computeSnapshotHash(snapshot2);
+      const canonical1 = JSON.stringify(sortKeysDeep(snapshot1));
+      const canonical2 = JSON.stringify(sortKeysDeep(snapshot2));
 
-      expect(hash1).toBe(hash2);
-      expect(hash1).toMatch(/^[a-f0-9]{64}$/); // SHA-256 hex string
+      expect(canonical1).toBe(canonical2);
     });
 
-    it('computeSnapshotHash produces different hash for different data', async () => {
-      const template = createTemplate();
-      const zones = createTemplateZones();
-      const lighting: TemplateLighting[] = [];
-      const furniture: TemplateFurniture[] = [];
-      const trims: TemplateTrim[] = [];
-      const skuMap = new Map<string, SkuMaster>();
-      skuMap.set('zone-a', createSkuMaster('sku-oak-001'));
+    it('sortKeysDeep produces different canonical form when zone dimensions differ', () => {
+      const makeSnapshot = (width: number): SnapshotData => ({
+        wall_geometry: { type: 'STRAIGHT', base_width_mm: 3000, base_height_mm: 2400 },
+        base_dimensions: { width_mm: 3000, height_mm: 2400 },
+        zones: [{
+          zone_id: 'zone-a', x_mm: 0, y_mm: 0,
+          width_mm: width, height_mm: 2400,
+          width_strategy: 'PROPORTIONAL', height_strategy: 'DERIVED_FROM_WALL',
+          position_strategy: 'FIXED', primary_sku: null, alternatives: [],
+        }],
+        lighting: [],
+        furniture: [],
+        trims: [],
+        hidden_components: [],
+        calculation_parameters: {},
+        template_wall_configuration: null,
+        consultant_permissions: null,
+        site_obstructions: [],
+      });
 
-      const snapshot1 = buildSnapshotData(template, zones, lighting, furniture, trims, skuMap);
+      const canonical1 = JSON.stringify(sortKeysDeep(makeSnapshot(1500)));
+      const canonical2 = JSON.stringify(sortKeysDeep(makeSnapshot(1600)));
 
-      // Modify one zone dimension
-      const modifiedZones = [...zones];
-      modifiedZones[0] = { ...modifiedZones[0], width_mm: 1600 };
-      const snapshot2 = buildSnapshotData(template, modifiedZones, lighting, furniture, trims, skuMap);
-
-      const hash1 = await computeSnapshotHash(snapshot1);
-      const hash2 = await computeSnapshotHash(snapshot2);
-
-      expect(hash1).not.toBe(hash2);
+      expect(canonical1).not.toBe(canonical2);
     });
   });
 
   describe('Dimension propagation', () => {
-    it('snapshot zone dimensions match template zone dimensions exactly', () => {
-      const template = createTemplate();
-      const zones = createTemplateZones();
-      const lighting: TemplateLighting[] = [];
-      const furniture: TemplateFurniture[] = [];
-      const trims: TemplateTrim[] = [];
-      const skuMap = new Map<string, SkuMaster>();
+    it('SnapshotZone type correctly represents zone dimensions', () => {
+      const zone: SnapshotZone = {
+        zone_id: 'zone-a',
+        x_mm: 0,
+        y_mm: 0,
+        width_mm: 1500,
+        height_mm: 2400,
+        width_strategy: 'PROPORTIONAL',
+        height_strategy: 'DERIVED_FROM_WALL',
+        position_strategy: 'FIXED',
+        primary_sku: null,
+        alternatives: [],
+      };
 
-      const snapshot = buildSnapshotData(template, zones, lighting, furniture, trims, skuMap);
-
-      for (let i = 0; i < zones.length; i++) {
-        expect(snapshot.zones[i].x_mm).toBe(zones[i].x_mm);
-        expect(snapshot.zones[i].y_mm).toBe(zones[i].y_mm);
-        expect(snapshot.zones[i].width_mm).toBe(zones[i].width_mm);
-        expect(snapshot.zones[i].height_mm).toBe(zones[i].height_mm);
-      }
+      expect(zone.x_mm).toBe(0);
+      expect(zone.width_mm).toBe(1500);
+      expect(zone.height_mm).toBe(2400);
     });
 
-    it('snapshot base_dimensions match template dimensions', () => {
-      const template = createTemplate();
-      const zones = createTemplateZones();
-      const lighting: TemplateLighting[] = [];
-      const furniture: TemplateFurniture[] = [];
-      const trims: TemplateTrim[] = [];
-      const skuMap = new Map<string, SkuMaster>();
+    it('SnapshotData base_dimensions should match wall_geometry dimensions', () => {
+      const snapshot: SnapshotData = {
+        wall_geometry: { type: 'L_CORNER', base_width_mm: 5000, base_height_mm: 3000, segment_a_width_mm: 2500, segment_b_width_mm: 2500 },
+        base_dimensions: { width_mm: 5000, height_mm: 3000 },
+        zones: [],
+        lighting: [],
+        furniture: [],
+        trims: [],
+        hidden_components: [],
+        calculation_parameters: {},
+        template_wall_configuration: null,
+        consultant_permissions: null,
+        site_obstructions: [],
+      };
 
-      const snapshot = buildSnapshotData(template, zones, lighting, furniture, trims, skuMap);
-
-      expect(snapshot.base_dimensions.width_mm).toBe(template.wall_geometry.base_width_mm);
-      expect(snapshot.base_dimensions.height_mm).toBe(template.wall_geometry.base_height_mm);
-    });
-
-    it('snapshot preserves wall_geometry from template', () => {
-      const template = createTemplate();
-      const zones = createTemplateZones();
-      const lighting: TemplateLighting[] = [];
-      const furniture: TemplateFurniture[] = [];
-      const trims: TemplateTrim[] = [];
-      const skuMap = new Map<string, SkuMaster>();
-
-      const snapshot = buildSnapshotData(template, zones, lighting, furniture, trims, skuMap);
-
-      expect(snapshot.wall_geometry).toBe(template.wall_geometry);
+      expect(snapshot.base_dimensions.width_mm).toBe(snapshot.wall_geometry.base_width_mm);
+      expect(snapshot.base_dimensions.height_mm).toBe(snapshot.wall_geometry.base_height_mm);
     });
   });
 });

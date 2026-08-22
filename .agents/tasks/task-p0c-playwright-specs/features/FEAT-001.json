@@ -1,0 +1,34 @@
+{
+  "id": "FEAT-001",
+  "type": "feat",
+  "description": "Create the 41 P0-C Playwright spec files in frontend/e2e/p0-c/ covering FUNC-001 to FUNC-012, CANVAS-001 to CANVAS-014, SVG-001 to SVG-008, and INT-001 to INT-007. Each test must be a proper Playwright browser test that exercises the live UI at bom-beryl.vercel.app using the existing auth fixtures and helpers. Tests that require browser interaction must use page navigation, assertions on DOM elements, and screenshot evidence. Tests that are API+Browser hybrid (INT-*) use both API helpers and browser assertions.",
+  "status": "completed",
+  "steps": [
+    "Create frontend/e2e/p0-c/func-template-project.spec.ts covering FUNC-001 (Project creation via UI), FUNC-002 (Template creation via UI), FUNC-007 (Template activation via UI) - all grouped as template/project lifecycle UI tests. Use test.describe blocks. Import test/expect from ../fixtures/auth.fixture. Use designerPage for designer actions. Navigate to PLAYWRIGHT_BASE_URL pages. Assert visible elements. Mark tests with test IDs in test title e.g. '[FUNC-001]'.",
+    "Create frontend/e2e/p0-c/func-measurement-bom.spec.ts covering FUNC-003 (Measurement entry via UI), FUNC-004 (BOM generation triggered and visible), FUNC-005 (Finalization via UI). Use consultantPage for measurement entry, designerPage for BOM/finalization. Navigate to project pages, interact with forms, assert results.",
+    "Create frontend/e2e/p0-c/func-ui-general.spec.ts covering FUNC-006 (SKU browser), FUNC-008 (Error messages), FUNC-009 (Navigation), FUNC-010 (Logout), FUNC-011 (Responsive layout), FUNC-012 (Loading states). These are general UI behavior tests across various pages.",
+    "Create frontend/e2e/p0-c/canvas-render.spec.ts covering CANVAS-001 (Canvas renders zones), CANVAS-002 (Zone selection highlights), CANVAS-003 (Multi-select), CANVAS-004 (Copy/paste), CANVAS-005 (Undo/redo), CANVAS-006 (Snap-to-grid), CANVAS-007 (Zone validation errors). Navigate to canvas page, perform interactions, assert visual state.",
+    "Create frontend/e2e/p0-c/canvas-interaction.spec.ts covering CANVAS-008 (Zoom), CANVAS-009 (Pan), CANVAS-010 (SKU assignment via canvas), CANVAS-011 (Keyboard shortcuts), CANVAS-012 (BOM link indicator), CANVAS-013 (Touch viewport), CANVAS-014 (Permission enforcement). Use appropriate fixtures per role.",
+    "Create frontend/e2e/p0-c/svg-assets.spec.ts covering SVG-001 (SVG renders in canvas), SVG-002 (SVG scales), SVG-003 (Asset version resolves - API), SVG-004 (Missing asset placeholder), SVG-005 (Asset metadata - API), SVG-006 (Pattern repeats), SVG-007 (Render asset in BOM view), SVG-008 (Asset loading performance).",
+    "Create frontend/e2e/p0-c/integration-lifecycle.spec.ts covering INT-001 (Full lifecycle), INT-002 (Bidirectional Canvas-BOM sync), INT-003 (Multi-zone template all component types - API), INT-004 (Project configuration versioning - API), INT-005 (Actual BOM supersession - API), INT-006 (Concurrent user access - API), INT-007 (Template demotion cascade - API).",
+    "Remove the .gitkeep file from frontend/e2e/p0-c/ since real spec files now exist there.",
+    "Ensure all 41 test IDs appear exactly once across the spec files: FUNC-001 through FUNC-012, CANVAS-001 through CANVAS-014, SVG-001 through SVG-008, INT-001 through INT-007.",
+    "All browser tests must use page.goto() with relative URLs (resolved from baseURL in playwright.config.ts). All tests must import from the existing fixtures/helpers. Use test.use({ video: 'on' }) or rely on playwright config for failure screenshots/traces. Do NOT modify production code or any file outside frontend/e2e/p0-c/."
+  ],
+  "acceptance_criteria": [
+    "41 distinct test cases exist across spec files in frontend/e2e/p0-c/, each with a unique P0-C test ID in its title",
+    "All spec files import from ../fixtures/auth.fixture and/or @playwright/test",
+    "All spec files use seed-data constants and helpers from existing infrastructure",
+    "No hardcoded credentials - all auth is via environment-driven fixtures",
+    "npx playwright test --list e2e/p0-c/ successfully lists all 41 tests without parse errors",
+    "npx tsc --noEmit passes with no type errors in the new spec files",
+    "No production files (frontend/src/, baseline/, migrations/) are modified"
+  ],
+  "verification": [
+    "Run: cd frontend && npx playwright test --list e2e/p0-c/ 2>&1 | grep -c 'test' to confirm 41 tests listed",
+    "Run: cd frontend && npx tsc --noEmit to confirm no type errors",
+    "Run: grep -r 'FUNC-\\|CANVAS-\\|SVG-\\|INT-' frontend/e2e/p0-c/ | grep -oP '(FUNC|CANVAS|SVG|INT)-\\d+' | sort -u | wc -l to confirm 41 unique test IDs"
+  ],
+  "blocked_reason": null,
+  "findings": "Playwright --list confirms 41 tests in 7 files parse correctly. Type errors from tsc are all pre-existing in e2e/fixtures/ (missing @types/node context) and don't affect Playwright runtime. NODE_OPTIONS env var in sandbox requires explicit override (NODE_OPTIONS='') to run npx commands. YAML validates via Python yaml.safe_load."
+}

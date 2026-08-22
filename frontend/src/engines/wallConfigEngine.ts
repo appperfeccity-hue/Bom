@@ -18,6 +18,7 @@ import type {
   WallSegment,
 } from './types';
 import { EngineError } from './types';
+import { isLShape } from './wallType';
 
 /** Minimum panel frame dimension in mm (Rule 69) */
 const MIN_PANEL_DIMENSION = 50;
@@ -83,7 +84,7 @@ function validateInput(config: WallConfigInput): void {
     );
   }
 
-  if (config.wall_type === 'L_CORNER') {
+  if (isLShape(config.wall_type)) {
     if (
       config.segment_a_width_mm == null ||
       config.segment_b_width_mm == null ||
@@ -91,7 +92,7 @@ function validateInput(config: WallConfigInput): void {
       config.segment_b_width_mm <= 0
     ) {
       throw new EngineError(
-        'L_CORNER wall requires positive segment_a_width_mm and segment_b_width_mm [E-WALL-002]',
+        'L_SHAPE (legacy L_CORNER) wall requires positive segment_a_width_mm and segment_b_width_mm [E-WALL-002]',
       );
     }
   }
@@ -436,7 +437,7 @@ function overlapsObstruction(
 }
 
 /**
- * Determine which segment a panel belongs to for L_CORNER walls.
+ * Determine which segment a panel belongs to for L_SHAPE walls.
  */
 function getSegment(
   x: number,
@@ -524,10 +525,9 @@ export function generatePanelFrames(config: WallConfigInput): PanelFrame[] {
         const isEdge =
           row === 0 || row === rows - 1 || col === 0 || col === columns - 1;
 
-        const segment =
-          config.wall_type === 'L_CORNER'
-            ? getSegment(x, width, config.segment_a_width_mm)
-            : null;
+        const segment = isLShape(config.wall_type)
+          ? getSegment(x, width, config.segment_a_width_mm)
+          : null;
 
         frames.push({
           frame_id: generateFrameId(row, col, configHash),

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import type { MasterBom, MasterBomLine, Template } from '@/types/database';
-import { fromTable } from '@/lib/supabase';
+import { fromTable, supabase } from '@/lib/supabase';
 import { useProjectStore } from '@/stores/projectStore';
 import { useAuthStore } from '@/stores/authStore';
 import {
@@ -230,25 +230,34 @@ export const usePublishStore = create<PublishStore>((set) => ({
     set({ currentStep: PublishStep.GENERATING_BOM, isLoading: true, error: null });
 
     try {
-      const { data, error } = await fromTable('master_bom')
-        .insert({
-          template_id: templateId,
-          status: 'GENERATED',
-          engine_version: '1.0',
-          rule_set_id: 'default',
-          generated_at: new Date().toISOString(),
-        })
-        .select()
-        .single();
+      const userId = useAuthStore.getState().user?.id;
+
+      const { data: bomId, error } = await supabase.rpc('generate_master_bom', {
+        p_template_id: templateId,
+        p_user_id: userId,
+      });
 
       if (error) throw error;
 
-      const masterBom = data as unknown as MasterBom;
+      // Fetch the generated BOM header
+      const { data: bomData, error: fetchError } = await fromTable('master_bom')
+        .select()
+        .eq('master_bom_id', bomId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Fetch the generated BOM lines
+      const { data: linesData, error: linesError } = await fromTable('master_bom_line')
+        .select()
+        .eq('master_bom_id', bomId);
+
+      if (linesError) throw linesError;
 
       set({
         currentStep: PublishStep.BOM_GENERATED,
-        generatedBom: masterBom,
-        generatedBomLines: [],
+        generatedBom: bomData as unknown as MasterBom,
+        generatedBomLines: (linesData ?? []) as unknown as MasterBomLine[],
         isLoading: false,
       });
     } catch (err) {
@@ -305,9 +314,12 @@ export const usePublishStore = create<PublishStore>((set) => ({
     set({ currentStep: PublishStep.PUBLISHING, isLoading: true, error: null });
 
     try {
-      const { error } = await fromTable('template')
-        .update({ status: 'ACTIVE' })
-        .eq('template_id', templateId);
+      const userId = useAuthStore.getState().user?.id;
+
+      const { error } = await supabase.rpc('publish_template', {
+        p_template_id: templateId,
+        p_user_id: userId,
+      });
 
       if (error) {
         set({

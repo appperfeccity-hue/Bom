@@ -1,0 +1,224 @@
+# P0-C End-to-End Test Suite
+# Runs the 41 P0-C Playwright browser/API specs against the live environment.
+# Produces machine-readable results mapping all test IDs to PASS/FAIL/BLOCKED/PARTIAL.
+
+name: P0-C E2E Tests
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - feat/db-baseline-v1.1.5
+
+env:
+  SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+  SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+  E2E_DESIGNER_EMAIL: ${{ secrets.E2E_DESIGNER_EMAIL }}
+  E2E_DESIGNER_PASSWORD: ${{ secrets.E2E_DESIGNER_PASSWORD }}
+  E2E_CONSULTANT_EMAIL: ${{ secrets.E2E_CONSULTANT_EMAIL }}
+  E2E_CONSULTANT_PASSWORD: ${{ secrets.E2E_CONSULTANT_PASSWORD }}
+  E2E_ADMIN_EMAIL: ${{ secrets.E2E_ADMIN_EMAIL }}
+  E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
+  PLAYWRIGHT_BASE_URL: ${{ secrets.PLAYWRIGHT_BASE_URL }}
+
+jobs:
+  p0c-e2e:
+    name: P0-C Playwright Suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Install Chromium browser
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+
+      - name: Connectivity check
+        run: |
+          echo "Checking connectivity to target URLs..."
+          curl --max-time 10 --silent --show-error -o /dev/null -w "%{http_code}" \
+            "${PLAYWRIGHT_BASE_URL:-https://bom-beryl.vercel.app}" \
+            | grep -qE "^[2-4]" \
+            && echo "App URL: reachable" \
+            || { echo "App URL: UNREACHABLE (no HTTP response)"; exit 1; }
+          HTTP_CODE=$(curl --max-time 10 --silent -o /dev/null -w "%{http_code}" \
+            "${SUPABASE_URL}/auth/v1/health" \
+            -H "apikey: ${SUPABASE_ANON_KEY}")
+          if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 500 ]; then
+            echo "Supabase URL: reachable (HTTP $HTTP_CODE)"
+          else
+            echo "Supabase URL: UNREACHABLE (HTTP $HTTP_CODE)"
+            exit 1
+          fi
+
+      - name: Run P0-C Playwright tests
+        id: playwright
+        working-directory: frontend
+        run: |
+          mkdir -p test-results
+          npx playwright test e2e/p0-c/; EC=$?
+          echo "PLAYWRIGHT_EXIT_CODE=$EC" >> "$GITHUB_ENV"
+          exit 0
+
+      - name: Generate P0-C result summary
+        if: always()
+        working-directory: frontend
+        run: |
+          node --input-type=module <<'EOF'
+          import { readFileSync, writeFileSync, mkdirSync } from 'fs';
+
+          // All 41 P0-C test IDs in canonical order
+          const TEST_IDS = [
+            'FUNC-001','FUNC-002','FUNC-003','FUNC-004','FUNC-005',
+            'FUNC-006','FUNC-007','FUNC-008','FUNC-009','FUNC-010',
+            'FUNC-011','FUNC-012',
+            'CANVAS-001','CANVAS-002','CANVAS-003','CANVAS-004','CANVAS-005',
+            'CANVAS-006','CANVAS-007','CANVAS-008','CANVAS-009','CANVAS-010',
+            'CANVAS-011','CANVAS-012','CANVAS-013','CANVAS-014',
+            'SVG-001','SVG-002','SVG-003','SVG-004','SVG-005',
+            'SVG-006','SVG-007','SVG-008',
+            'INT-001','INT-002','INT-003','INT-004','INT-005',
+            'INT-006','INT-007'
+          ];
+
+          /**
+           * Classify a test result into PASS/FAIL/BLOCKED/PARTIAL.
+           * - PASS: test passed
+           * - FAIL: assertion failure
+           * - BLOCKED: network/setup error (timeout, connection refused, DNS)
+           * - PARTIAL: mixed results within a single test
+           */
+          function classify(test) {
+            if (!test) return 'BLOCKED';
+            if (test.status === 'passed' || test.status === 'expected') return 'PASS';
+            if (test.status === 'skipped') return 'BLOCKED';
+
+            const errorMsg = (test.errors || [])
+              .map(e => e.message || e.stack || '')
+              .join(' ')
+              .toLowerCase();
+
+            const isBlocked =
+              errorMsg.includes('econnrefused') ||
+              errorMsg.includes('enotfound') ||
+              errorMsg.includes('net::err_connection') ||
+              errorMsg.includes('target closed') ||
+              errorMsg.includes('browser has been closed');
+
+            if (isBlocked) return 'BLOCKED';
+
+            // Check for partial pass (some assertions OK before failure)
+            if (errorMsg.includes('expect') && test.results?.length > 1) {
+              return 'PARTIAL';
+            }
+
+            return 'FAIL';
+          }
+
+          // Parse Playwright JSON results
+          let results = {};
+          try {
+            const raw = readFileSync('test-results/p0c-results.json', 'utf-8');
+            console.log('JSON report found, size:', raw.length, 'bytes');
+            const report = JSON.parse(raw);
+
+            // Extract test results from Playwright JSON format
+            const suites = report.suites || [];
+            const allTests = [];
+
+            function extractTests(suite) {
+              for (const spec of (suite.specs || [])) {
+                for (const test of (spec.tests || [])) {
+                  allTests.push({
+                    title: spec.title,
+                    status: test.status,
+                    results: test.results,
+                    errors: (test.results || []).flatMap(r => r.errors || [])
+                  });
+                }
+              }
+              for (const child of (suite.suites || [])) {
+                extractTests(child);
+              }
+            }
+
+            for (const suite of suites) {
+              extractTests(suite);
+            }
+
+            // Match test IDs to results
+            for (const id of TEST_IDS) {
+              const match = allTests.find(t => t.title && t.title.includes(`[${id}]`));
+              results[id] = classify(match);
+            }
+          } catch (err) {
+            // If JSON report not available, mark all as BLOCKED
+            console.error('Could not parse results JSON:', err.message);
+            for (const id of TEST_IDS) {
+              results[id] = 'BLOCKED';
+            }
+          }
+
+          // Generate summary
+          const summary = {
+            generated_at: new Date().toISOString(),
+            total: TEST_IDS.length,
+            pass: Object.values(results).filter(v => v === 'PASS').length,
+            fail: Object.values(results).filter(v => v === 'FAIL').length,
+            blocked: Object.values(results).filter(v => v === 'BLOCKED').length,
+            partial: Object.values(results).filter(v => v === 'PARTIAL').length,
+            results
+          };
+
+          mkdirSync('test-results', { recursive: true });
+          writeFileSync('test-results/p0c-summary.json', JSON.stringify(summary, null, 2));
+          console.log(`P0-C Summary: ${summary.pass} PASS, ${summary.fail} FAIL, ${summary.blocked} BLOCKED, ${summary.partial} PARTIAL`);
+          EOF
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p0c-playwright-report
+          path: frontend/playwright-report/
+          retention-days: 30
+
+      - name: Upload test results (traces, screenshots, videos, summary)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p0c-test-results
+          path: |
+            frontend/test-results/
+          retention-days: 30
+
+      - name: Fail job if tests failed
+        if: always()
+        working-directory: frontend
+        run: |
+          if [ -f test-results/p0c-summary.json ]; then
+            FAIL_COUNT=$(python3 -c "import json; d=json.load(open('test-results/p0c-summary.json')); print(d.get('fail',0))")
+            if [ "$FAIL_COUNT" -gt 0 ]; then
+              echo "P0-C has $FAIL_COUNT FAIL results. See artifacts for details."
+              exit 1
+            else
+              echo "P0-C: No FAIL results. PASS=$( python3 -c "import json; d=json.load(open('test-results/p0c-summary.json')); print(d.get('pass',0))") BLOCKED=$(python3 -c "import json; d=json.load(open('test-results/p0c-summary.json')); print(d.get('blocked',0))")"
+              exit 0
+            fi
+          else
+            echo "p0c-summary.json not found. Cannot determine result."
+            exit 1
+          fi

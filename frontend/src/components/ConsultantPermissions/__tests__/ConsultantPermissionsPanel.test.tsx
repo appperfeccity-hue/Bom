@@ -43,28 +43,34 @@ describe('ConsultantPermissionsPanel', () => {
       eq: vi.fn().mockResolvedValue({
         data: [
           {
-            id: 'perm-1',
+            permission_id: 'perm-1',
             template_id: 'tpl-1',
-            parameter_name: 'zone_width',
-            permission_type: 'RANGE',
-            constraints: { min_value: 200, max_value: 3000 },
-            created_by: 'user-1',
+            parameter_key: 'ZONE_WIDTH',
+            parameter_type: 'DIMENSION',
+            edit_mode: 'RESTRICTED',
+            min_value: 200,
+            max_value: 3000,
+            allowed_values: null,
           },
           {
-            id: 'perm-2',
+            permission_id: 'perm-2',
             template_id: 'tpl-1',
-            parameter_name: 'sku_selection',
-            permission_type: 'LOCKED',
-            constraints: {},
-            created_by: 'user-1',
+            parameter_key: 'ZONE_PRIMARY_SKU',
+            parameter_type: 'SKU_SELECTION',
+            edit_mode: 'LOCKED',
+            min_value: null,
+            max_value: null,
+            allowed_values: null,
           },
           {
-            id: 'perm-3',
+            permission_id: 'perm-3',
             template_id: 'tpl-1',
-            parameter_name: 'quantity',
-            permission_type: 'SELECTION',
-            constraints: { allowed_values: ['1', '2', '4'] },
-            created_by: 'user-1',
+            parameter_key: 'LIGHT_MOUNTING_TYPE',
+            parameter_type: 'OPTION',
+            edit_mode: 'RESTRICTED',
+            min_value: null,
+            max_value: null,
+            allowed_values: ['DIRECT', 'PROFILE', 'COVE'],
           },
         ],
         error: null,
@@ -94,18 +100,29 @@ describe('ConsultantPermissionsPanel', () => {
     expect(screen.getByTestId('permission-item-perm-3')).toBeInTheDocument();
   });
 
-  it('displays permission types correctly', async () => {
+  it('displays canonical UPPERCASE parameter keys', async () => {
     render(<ConsultantPermissionsPanel templateId="tpl-1" />);
 
     await waitFor(() => {
-      expect(screen.getByTestId('permission-type-perm-1')).toHaveTextContent('RANGE');
+      expect(screen.getByText('ZONE_WIDTH')).toBeInTheDocument();
+    });
+
+    expect(screen.getByText('ZONE_PRIMARY_SKU')).toBeInTheDocument();
+    expect(screen.getByText('LIGHT_MOUNTING_TYPE')).toBeInTheDocument();
+  });
+
+  it('displays edit modes correctly', async () => {
+    render(<ConsultantPermissionsPanel templateId="tpl-1" />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('permission-type-perm-1')).toHaveTextContent('RESTRICTED');
     });
 
     expect(screen.getByTestId('permission-type-perm-2')).toHaveTextContent('LOCKED');
-    expect(screen.getByTestId('permission-type-perm-3')).toHaveTextContent('SELECTION');
+    expect(screen.getByTestId('permission-type-perm-3')).toHaveTextContent('RESTRICTED');
   });
 
-  it('displays constraint info for RANGE type', async () => {
+  it('displays min/max bounds for RESTRICTED dimensions', async () => {
     render(<ConsultantPermissionsPanel templateId="tpl-1" />);
 
     await waitFor(() => {
@@ -121,11 +138,11 @@ describe('ConsultantPermissionsPanel', () => {
     });
   });
 
-  it('displays constraint info for SELECTION type', async () => {
+  it('displays allowed values for RESTRICTED option fields', async () => {
     render(<ConsultantPermissionsPanel templateId="tpl-1" />);
 
     await waitFor(() => {
-      expect(screen.getByText(/Values: 1, 2, 4/)).toBeInTheDocument();
+      expect(screen.getByText(/Values: DIRECT, PROFILE, COVE/)).toBeInTheDocument();
     });
   });
 

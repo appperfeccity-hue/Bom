@@ -1,0 +1,16 @@
+{
+  "project_type": "Supabase PostgreSQL database with RLS policies (FROZEN architecture)",
+  "language": "SQL/PostgreSQL",
+  "build_system": "Supabase hosted - no local build",
+  "test_framework": "Live SQL execution via Supabase MCP execute_sql",
+  "build_command": "N/A - architecture FROZEN",
+  "test_command": "execute_sql via Supabase MCP (project: fbiemsbykrmrbqcsobvh)",
+  "verification_instructions": "Execute SQL tests with SET LOCAL role authenticated + SET LOCAL request.jwt.claims, verify expected outcomes, ROLLBACK all mutations",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "Activate supabase-hosted power, use execute_sql tool with project_id fbiemsbykrmrbqcsobvh",
+  "environment_constraints": "Architecture FROZEN - no production code changes. All tests must use BEGIN/ROLLBACK to avoid data pollution.",
+  "contribution_requirements": "No modifications to released baseline. Tests only.",
+  "key_patterns": "RLS policies use perfecity.current_user_role() helper and auth.uid(). 165 policies across 38 tables. SECURITY DEFINER functions for create_project and finalize_project.",
+  "relevant_files": ["migrations/v1.1.5_rls_policies.sql", "migrations/v1.1.6_p0_fixes_grants_triggers_rpc.sql", "docs/qa/p0-remaining-backlog.md"],
+  "directory_structure": "migrations/ - SQL migration files, docs/qa/ - test backlog, frontend/ - React app (not relevant)"
+}

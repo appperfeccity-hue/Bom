@@ -3,16 +3,20 @@ import { useCanvasStore } from '@/stores/canvasStore';
 import { CanvasMode } from '@/types/database';
 import { fromTable } from '@/lib/supabase';
 import { AddPermissionDialog } from './AddPermissionDialog';
-
-export type PermissionType = 'LOCKED' | 'RANGE' | 'SELECTION';
+import type {
+  PermissionEditMode,
+  PermissionParameterType,
+} from '@/lib/measurementModel';
 
 export interface ConsultantPermission {
-  id: string;
+  permission_id: string;
   template_id: string;
-  parameter_name: string;
-  permission_type: PermissionType;
-  constraints: Record<string, unknown>;
-  created_by: string;
+  parameter_key: string;
+  parameter_type: PermissionParameterType;
+  edit_mode: PermissionEditMode;
+  min_value: number | null;
+  max_value: number | null;
+  allowed_values: unknown[] | null;
 }
 
 interface ConsultantPermissionsPanelProps {
@@ -21,8 +25,8 @@ interface ConsultantPermissionsPanelProps {
 
 /**
  * Panel showing per-template consultant permissions.
- * Lists existing permissions with parameter_name, permission_type, and constraints.
- * Only visible in DESIGNER mode.
+ * Lists existing permissions with the baseline vocabulary: parameter_key,
+ * edit_mode, and the RESTRICTED bounds. Only visible in DESIGNER mode.
  */
 export function ConsultantPermissionsPanel({ templateId }: ConsultantPermissionsPanelProps) {
   const mode = useCanvasStore((s) => s.mode);
@@ -47,19 +51,15 @@ export function ConsultantPermissionsPanel({ templateId }: ConsultantPermissions
     return null;
   }
 
-  const formatConstraints = (type: PermissionType, constraints: Record<string, unknown>): string => {
-    if (type === 'LOCKED') return 'No changes allowed';
-    if (type === 'RANGE') {
-      const min = constraints.min_value ?? '-';
-      const max = constraints.max_value ?? '-';
-      return `Range: ${min} - ${max}`;
+  const formatConstraints = (perm: ConsultantPermission): string => {
+    if (perm.edit_mode === 'LOCKED') return 'No changes allowed';
+    if (perm.edit_mode === 'FREE') return 'Unrestricted within DB safety bounds';
+    if (Array.isArray(perm.allowed_values) && perm.allowed_values.length > 0) {
+      return `Values: ${perm.allowed_values.join(', ')}`;
     }
-    if (type === 'SELECTION') {
-      const values = constraints.allowed_values;
-      if (Array.isArray(values)) return `Values: ${values.join(', ')}`;
-      return 'Values: (none)';
-    }
-    return '';
+    const min = perm.min_value ?? '-';
+    const max = perm.max_value ?? '-';
+    return `Range: ${min} - ${max}`;
   };
 
   return (
@@ -100,8 +100,8 @@ export function ConsultantPermissionsPanel({ templateId }: ConsultantPermissions
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           {permissions.map((perm) => (
             <div
-              key={perm.id}
-              data-testid={`permission-item-${perm.id}`}
+              key={perm.permission_id}
+              data-testid={`permission-item-${perm.permission_id}`}
               style={{
                 padding: '8px 12px',
                 backgroundColor: '#fff',
@@ -111,27 +111,27 @@ export function ConsultantPermissionsPanel({ templateId }: ConsultantPermissions
               }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <strong>{perm.parameter_name}</strong>
+                <strong>{perm.parameter_key}</strong>
                 <span
-                  data-testid={`permission-type-${perm.id}`}
+                  data-testid={`permission-type-${perm.permission_id}`}
                   style={{
                     padding: '2px 8px',
                     fontSize: '11px',
                     borderRadius: '3px',
                     backgroundColor:
-                      perm.permission_type === 'LOCKED'
+                      perm.edit_mode === 'LOCKED'
                         ? '#ffcdd2'
-                        : perm.permission_type === 'RANGE'
+                        : perm.edit_mode === 'RESTRICTED'
                           ? '#c8e6c9'
                           : '#bbdefb',
                     color: '#333',
                   }}
                 >
-                  {perm.permission_type}
+                  {perm.edit_mode}
                 </span>
               </div>
               <div style={{ marginTop: '4px', fontSize: '12px', color: '#666' }}>
-                {formatConstraints(perm.permission_type, perm.constraints)}
+                {formatConstraints(perm)}
               </div>
             </div>
           ))}

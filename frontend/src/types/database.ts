@@ -47,7 +47,13 @@ export enum AdaptationStrategy {
   FIXED = 'FIXED',
 }
 
-export type WallGeometryType = 'STRAIGHT' | 'L_CORNER';
+/**
+ * Wall geometry type.
+ * L_SHAPE is the canonical value; L_CORNER is the legacy value preserved in
+ * frozen snapshots and pre-existing rows. Readers must accept both
+ * (see engines/wallType.ts).
+ */
+export type WallGeometryType = 'STRAIGHT' | 'L_CORNER' | 'L_SHAPE';
 
 export interface WallGeometry {
   type: WallGeometryType;
@@ -89,6 +95,24 @@ export interface TemplateZone {
   height_strategy: ZoneHeightStrategy;
   position_strategy: ZonePositionStrategy;
   created_at: string;
+}
+
+/**
+ * Installation-area coverage frozen with the wall configuration.
+ * FULL spans the whole wall; PARTIAL uses the authored outer edge.
+ */
+export type InstallationAreaCoverage = 'FULL' | 'PARTIAL';
+
+/**
+ * Installation area authored on a wall configuration. The outer edge is the
+ * parent boundary for zones (zones are bounded by it, not by the full wall).
+ */
+export interface InstallationAreaConfig {
+  coverage: InstallationAreaCoverage;
+  outer_edge_x_mm: number;
+  outer_edge_y_mm: number;
+  outer_edge_width_mm: number;
+  outer_edge_height_mm: number;
 }
 
 export interface TemplateZoneSku {
@@ -165,6 +189,23 @@ export interface ProjectMeasurement {
   measurement_source: 'MANUAL' | 'LASER' | 'TAPE';
   measurement_status: 'DRAFT' | 'CONFIRMED';
   notes: string | null;
+}
+
+/**
+ * Derived projection of one adaptable measurement.
+ *
+ * This is NOT a source of truth and is never persisted: `default` comes from the
+ * designer geometry frozen in the project snapshot (wall_geometry), `minimum`/
+ * `maximum` come from the frozen consultant permission for the canonical
+ * parameter_key, and `actual` is the only value authored at the project layer
+ * (project_measurement). Derived quantities such as segment length or area do
+ * NOT receive this bundle.
+ */
+export interface PermanentMeasurement {
+  default: number | null;
+  actual: number;
+  minimum: number | null;
+  maximum: number | null;
 }
 
 export interface ProjectConfiguration {
@@ -485,6 +526,22 @@ export interface ConsultantWallPermission {
   updated_at: string;
 }
 
+/**
+ * Template consultant permission record (v1.1.8 snapshot shape).
+ */
+export interface TemplateConsultantPermission {
+  permission_id: string;
+  template_id: string;
+  parameter_key: string;
+  parameter_type: string;
+  edit_mode: string;
+  min_value: number | null;
+  max_value: number | null;
+  allowed_values: unknown[] | null;
+  source_component_id: string | null;
+  created_at: string;
+}
+
 // --- Wall Configuration Tables (Amendment 001) ---
 
 /**
@@ -493,7 +550,7 @@ export interface ConsultantWallPermission {
 export interface TemplateWallConfiguration {
   wall_config_id: string;
   template_id: string;
-  wall_type: 'STRAIGHT' | 'L_CORNER';
+  wall_type: WallGeometryType;
   total_width_mm: number;
   total_height_mm: number;
   rows: number;
@@ -502,6 +559,12 @@ export interface TemplateWallConfiguration {
   fit_algorithm: string;
   fit_intensity_percent: number;
   mounting_type: string;
+  /** Installation area (nullable; absent means FULL wall coverage). */
+  installation_coverage?: InstallationAreaCoverage | null;
+  installation_outer_edge_x_mm?: number | null;
+  installation_outer_edge_y_mm?: number | null;
+  installation_outer_edge_width_mm?: number | null;
+  installation_outer_edge_height_mm?: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -512,7 +575,7 @@ export interface TemplateWallConfiguration {
 export interface ProjectWallConfiguration {
   project_wall_config_id: string;
   project_id: string;
-  wall_type: 'STRAIGHT' | 'L_CORNER';
+  wall_type: WallGeometryType;
   total_width_mm: number;
   total_height_mm: number;
   rows: number;
@@ -521,6 +584,12 @@ export interface ProjectWallConfiguration {
   fit_algorithm: string;
   fit_intensity_percent: number;
   mounting_type: string;
+  /** Installation area (nullable; absent means FULL wall coverage). */
+  installation_coverage?: InstallationAreaCoverage | null;
+  installation_outer_edge_x_mm?: number | null;
+  installation_outer_edge_y_mm?: number | null;
+  installation_outer_edge_width_mm?: number | null;
+  installation_outer_edge_height_mm?: number | null;
   consultant_overrides: Record<string, unknown> | null;
   created_at: string;
   updated_at: string;

@@ -1,0 +1,37 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "Redesign ZonePropertiesPanel.tsx for professional CAD/CPQ-style clarity with organized sections (Identity, Dimensions, Constraints, SKU Assignment, Actions), consistent design tokens, inline validation, and improved UX while preserving all existing data-testid attributes and business logic",
+  "status": "completed",
+  "steps": [
+    "Refactor frontend/src/components/ZonePropertiesPanel.tsx inline styles to use CSS custom properties from design-system.css. Replace hard-coded colors (#e0e0e0, #e3f2fd, #1565c0, #fbe9e7, #f44336, etc.) with the project's design tokens (--color-hairline, --color-error, --color-surface, --color-canvas, --color-ink-primary, --color-ink-secondary, --color-success).",
+    "Restructure the panel into clear sections with progressive disclosure: (1) Panel header 'Zone Properties'. (2) Zone Identity section - zone ID (read-only), segment badge for L-Corner walls. (3) Position section - X/Y coordinates in a compact 2-column row with 'mm' units. (4) Dimensions section - Width/Height in a compact 2-column row with 'mm' units. (5) Strategy section - Width Strategy and Height Strategy selects. (6) Validation section - inline errors near affected fields or in a compact alert at top. (7) SKU Assignment section - assigned SKU info or 'No SKU assigned' state, Assign/Remove actions. (8) Multi-selection state with clear count indicator.",
+    "Improve section headers: use consistent uppercase 12px --color-ink-secondary label style (matching WallConfigPanel's SECTION_HEADER_STYLE pattern).",
+    "Improve form controls: (a) All inputs/selects consistent 32px height with proper padding. (b) Use the same INPUT_STYLE, INPUT_READONLY_STYLE patterns as WallConfigPanel for visual consistency between the two panels. (c) Numeric inputs for position/dimensions should be compact with clear 'mm' labeling. (d) Focus states with --color-accent ring.",
+    "Improve validation errors display: (a) Use --color-error token for the error container background/border. (b) More compact error messages - no bullet list if only one error. (c) Position errors near the top of the panel but do not overwhelm the editing area. (d) Use concise actionable messages.",
+    "Improve SKU assignment section: (a) Use subtle --color-canvas background card style. (b) Clear typography hierarchy: SKU code in semibold, material/colour in regular weight below. (c) 'No SKU assigned' state with muted text and clear CTA. (d) Assign SKU button as primary action (btn-primary style). (e) Remove SKU as a subtle destructive action (--color-error text, no fill).",
+    "Improve the multi-selection state display: use the design system info color scheme and show a clear count with relevant messaging.",
+    "Improve the segment badge for L-Corner walls: use design system colors for SEGMENT_A (--color-success tints) and SEGMENT_B (accent tints) with consistent badge styling.",
+    "Preserve ALL existing data-testid attributes: zone-properties-panel, multi-select-info, zone-validation-errors, input-zone-name, segment-badge, input-zone-x, input-zone-y, input-zone-width, input-zone-height, select-width-strategy, select-height-strategy, assign-sku-btn, remove-sku-btn.",
+    "Ensure responsive behavior at 280px panel width - compact 2-col layouts for position/dimension fields should stack or shrink gracefully."
+  ],
+  "acceptance_criteria": [
+    "All existing data-testid attributes are preserved with identical names",
+    "TypeScript type check passes (npm run typecheck)",
+    "Build succeeds (npm run build)",
+    "All existing tests pass: ZonePropertiesPanel.validation.test.tsx",
+    "No business logic changes - handleFieldChange callback with clampDimensions, constrainToWall, hasOverlap all remain unchanged",
+    "Panel uses design system tokens consistently",
+    "Section hierarchy matches the structured organization (Identity, Position, Dimensions, Strategy, Validation, SKU)",
+    "Validation errors are displayed using design system error tokens",
+    "SKU section has clear assigned/unassigned states",
+    "Visual consistency between WallConfigPanel and ZonePropertiesPanel (same input heights, label styles, spacing)"
+  ],
+  "verification": [
+    "cd /projects/sandbox/Bom/frontend && npm run typecheck",
+    "cd /projects/sandbox/Bom/frontend && npm run build",
+    "cd /projects/sandbox/Bom/frontend && NODE_OPTIONS=\"\" npx vitest run src/components/__tests__/ZonePropertiesPanel.validation.test.tsx"
+  ],
+  "blocked_reason": null,
+  "findings": "All 1144 unit/component tests pass including ZonePropertiesPanel.validation.test.tsx (6 tests). Build succeeds cleanly. Pre-existing typecheck error in ValidationOverlayLayer.tsx (TS6133 unused var) unchanged. 8 e2e suites fail due to missing SUPABASE_URL env var (pre-existing). Design system tokens used consistently throughout with matching WallConfigPanel patterns."
+}

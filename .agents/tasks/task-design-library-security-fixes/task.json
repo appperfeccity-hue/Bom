@@ -1,0 +1,14 @@
+{
+  "task_id": "task-design-library-security-fixes",
+  "task_description": "Fix Design Library security gaps: P0 create_project RPC must call check_template_eligible, P0 create atomic publish_template RPC, P1 tighten template RLS for Consultant role, update frontend to use new RPC. Commit and push.",
+  "status": "completed",
+  "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003", "FEAT-004"],
+  "blocked_reason": null,
+  "verification": {
+    "build": "pass",
+    "tests": "pass",
+    "test_quality": "pass",
+    "docker_build": "skipped",
+    "summary": "All 1205 unit tests pass. Production build succeeds. publishStore tests cover the new RPC call path (success, error, projectStore sync). 8 e2e suite failures are pre-existing (missing SUPABASE_URL env). Database changes verified live via Supabase MCP. Pushed to origin."
+  }
+}

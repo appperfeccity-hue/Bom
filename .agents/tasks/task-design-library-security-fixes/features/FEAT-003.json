@@ -1,0 +1,25 @@
+{
+  "id": "FEAT-003",
+  "type": "feat",
+  "description": "Update frontend publishStore.ts to call the new publish_template RPC instead of doing a direct UPDATE to the template table. Update the corresponding test file to mock supabase.rpc('publish_template') instead of fromTable('template').update(). Run tests and build to confirm everything passes.",
+  "status": "completed",
+  "steps": [
+    "In frontend/src/stores/publishStore.ts, replace the publishTemplate method body: instead of fromTable('template').update({status:'ACTIVE'}).eq('template_id', templateId), call supabase.rpc('publish_template', { p_template_id: templateId, p_user_id: userId }) where userId comes from useAuthStore.getState().user?.id. Keep the projectStore sync and error handling.",
+    "In frontend/src/stores/__tests__/publishStore.test.ts, update the publishTemplate test cases to mock supabase.rpc instead of fromTable('template').update(). The mock should return { data: templateId, error: null } on success. Update the DB trigger error test to use the rpc mock returning an error.",
+    "Run: cd /projects/sandbox/Bom/frontend && NODE_OPTIONS='' npx vitest run src/stores/__tests__/publishStore.test.ts -- confirm all pass",
+    "Run: cd /projects/sandbox/Bom/frontend && NODE_OPTIONS='' npx vitest run -- confirm full suite passes",
+    "Run: cd /projects/sandbox/Bom/frontend && NODE_OPTIONS='' npm run build -- confirm production build succeeds"
+  ],
+  "acceptance_criteria": [
+    "publishStore.publishTemplate calls supabase.rpc('publish_template', { p_template_id, p_user_id }) instead of direct table update",
+    "All existing publishStore tests pass with updated mocks",
+    "Full test suite (1205+ tests) passes",
+    "Production build succeeds with no type errors"
+  ],
+  "verification": [
+    "cd /projects/sandbox/Bom/frontend && NODE_OPTIONS='' npx vitest run",
+    "cd /projects/sandbox/Bom/frontend && NODE_OPTIONS='' npm run build"
+  ],
+  "blocked_reason": null,
+  "findings": "All 1205 unit/integration tests pass. 8 e2e test suites fail due to missing SUPABASE_URL env var (pre-existing, requires live Supabase instance). Production build succeeds with no type errors. The publishTemplate method now calls supabase.rpc('publish_template') with p_template_id and p_user_id params."
+}

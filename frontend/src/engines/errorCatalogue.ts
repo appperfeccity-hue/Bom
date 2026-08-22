@@ -39,8 +39,9 @@ export enum ErrorCode {
   PERM_LOCKED_PARAMETER = 'PERM_LOCKED_PARAMETER',
   PERM_VALUE_OUT_OF_RANGE = 'PERM_VALUE_OUT_OF_RANGE',
   PERM_INVALID_SKU_SELECTION = 'PERM_INVALID_SKU_SELECTION',
-  // Quantity errors (1)
+  // Quantity errors (2)
   QTY_PANEL_NO_VALID_ARRANGEMENT = 'QTY_PANEL_NO_VALID_ARRANGEMENT',
+  QTY_AREA_FIT_DIVERGENCE = 'QTY_AREA_FIT_DIVERGENCE',
   // Wall Configuration errors (3)
   E_WALL_NO_DIMENSIONS = 'E-WALL-001',
   E_WALL_INVALID_GEOMETRY = 'E-WALL-002',
@@ -227,6 +228,12 @@ export const ERROR_DEFINITIONS: Record<ErrorCode, ErrorDefinition> = {
     category: ErrorCategory.QUANTITY,
     messageTemplate: 'No valid panel arrangement found for the given dimensions',
   },
+  [ErrorCode.QTY_AREA_FIT_DIVERGENCE]: {
+    severity: ErrorSeverity.WARNING,
+    category: ErrorCategory.QUANTITY,
+    messageTemplate:
+      'Area-division coverage differs from the geometric panel fit; the geometric fit is authoritative',
+  },
   // Wall Configuration
   [ErrorCode.E_WALL_NO_DIMENSIONS]: {
     severity: ErrorSeverity.BLOCKING,
@@ -236,7 +243,7 @@ export const ERROR_DEFINITIONS: Record<ErrorCode, ErrorDefinition> = {
   [ErrorCode.E_WALL_INVALID_GEOMETRY]: {
     severity: ErrorSeverity.BLOCKING,
     category: ErrorCategory.GEOMETRY,
-    messageTemplate: 'Wall geometry is invalid (negative dimensions or invalid L_CORNER segments)',
+    messageTemplate: 'Wall geometry is invalid (negative dimensions or invalid L_SHAPE segments)',
   },
   [ErrorCode.E_WALL_GAP_EXCEEDS_SPACE]: {
     severity: ErrorSeverity.BLOCKING,

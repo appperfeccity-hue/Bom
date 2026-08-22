@@ -32,7 +32,6 @@ export function ValidationOverlayLayer({ wallHeight }: ValidationOverlayLayerPro
         const validation = validationMap.get(zone.zone_id);
         if (!validation) return null;
 
-        const errorCount = validation.errors.length;
         // Position badge at top-right corner of the zone (in screen coords)
         const screenY = wallHeight - zone.y_mm - zone.height_mm;
         const badgeX = zone.x_mm + zone.width_mm - 12 / zoom;

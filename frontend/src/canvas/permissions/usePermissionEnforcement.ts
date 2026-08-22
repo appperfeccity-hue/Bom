@@ -3,6 +3,7 @@ import { useCanvasStore } from '@/stores/canvasStore';
 import { useProjectStore } from '@/stores/projectStore';
 import { CanvasMode } from '@/types/database';
 import type { WallParamPermissionMode } from '@/types/database';
+import { isAdaptableMeasurementKey, toPermissionKey } from '@/lib/measurementModel';
 
 export type EditMode = 'LOCKED' | 'RESTRICTED' | 'FREE';
 
@@ -94,20 +95,34 @@ export function usePermissionEnforcement(): PermissionEnforcement {
     return [];
   }, [mode, currentSnapshot]);
 
+  /**
+   * Resolve a lookup to the authoritative UPPERCASE parameter_key vocabulary.
+   * Callers may pass either a canonical key (WALL_WIDTH) or the
+   * project_measurement column it maps to (wall_width_mm).
+   */
   const getFieldPermission = useCallback(
     (parameterKey: string): SnapshotPermission | null => {
-      return permissions.find((p) => p.parameter_key === parameterKey) ?? null;
+      const canonicalKey = toPermissionKey(parameterKey) ?? parameterKey;
+      return permissions.find((p) => p.parameter_key === canonicalKey) ?? null;
     },
     [permissions],
   );
 
+  /**
+   * Permission completeness: an adaptable measurement with no frozen permission
+   * is treated as LOCKED rather than silently editable. Other parameters keep the
+   * previous permissive default.
+   */
   const isFieldLocked = useCallback(
     (parameterKey: string): boolean => {
       const permission = getFieldPermission(parameterKey);
-      if (!permission) return false;
+      if (!permission) {
+        const canonicalKey = toPermissionKey(parameterKey) ?? parameterKey;
+        return permissions.length > 0 && isAdaptableMeasurementKey(canonicalKey);
+      }
       return permission.edit_mode === 'LOCKED';
     },
-    [getFieldPermission],
+    [getFieldPermission, permissions],
   );
 
   /**
@@ -123,8 +138,20 @@ export function usePermissionEnforcement(): PermissionEnforcement {
     (parameterKey: string, value: unknown): ValidationResult => {
       const permission = getFieldPermission(parameterKey);
 
-      // No permission or FREE - always valid
-      if (!permission || permission.edit_mode === 'FREE') {
+      // Adaptable measurement without a frozen permission: not editable
+      if (!permission) {
+        const canonicalKey = toPermissionKey(parameterKey) ?? parameterKey;
+        if (permissions.length > 0 && isAdaptableMeasurementKey(canonicalKey)) {
+          return {
+            valid: false,
+            error: 'No consultant permission was frozen for this field; it is locked',
+          };
+        }
+        return { valid: true };
+      }
+
+      // FREE - always valid
+      if (permission.edit_mode === 'FREE') {
         return { valid: true };
       }
 
@@ -172,7 +199,7 @@ export function usePermissionEnforcement(): PermissionEnforcement {
 
       return { valid: true };
     },
-    [getFieldPermission],
+    [getFieldPermission, permissions],
   );
 
   const canEditZone = useCallback(

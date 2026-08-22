@@ -2,137 +2,59 @@
  * Integration Test Area 9: Persistence
  *
  * Validates that:
- * - buildSnapshotData -> computeSnapshotHash -> same inputs -> identical hash (save/reload)
+ * - sortKeysDeep produces deterministic canonical form (save/reload hash stability)
  * - Snapshot -> runBomPipeline is reproducible (same snapshot always yields same BOM)
  * - Undo does not corrupt state (push two states, undo, verify previous state matches)
+ *
+ * Note: Snapshot building moved server-side in v1.1.8. Hash determinism is tested
+ * via sortKeysDeep (the canonical sorting utility) rather than computeSnapshotHash.
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
-import { buildSnapshotData, computeSnapshotHash } from '@/lib/snapshotBuilder';
+import { sortKeysDeep } from '@/lib/snapshotBuilder';
 import { runBomPipeline } from '@/engines/bomPipeline';
 import { useHistory, resetHistory } from '@/canvas/history/useHistory';
-import type { Template, TemplateZone, TemplateLighting, TemplateFurniture, TemplateTrim, SkuMaster } from '@/types/database';
-import { TemplateStatus, AdaptationStrategy, ZoneWidthStrategy, ZoneHeightStrategy, ZonePositionStrategy, ProductType, SkuStatus, QuantityMode } from '@/types/database';
+import type { TemplateZone } from '@/types/database';
+import { ZoneWidthStrategy, ZoneHeightStrategy, ZonePositionStrategy } from '@/types/database';
 import { createStraightWallPipelineInput, createMultiZoneMultiSkuPipelineInput } from './helpers/fixtures';
 
-// --- Fixtures ---
-
-function createTemplate(): Template {
-  return {
-    template_id: 'tmpl-persist-001',
-    name: 'Persistence Test Template',
-    description: null,
-    wall_geometry: { type: 'STRAIGHT', base_width_mm: 3000, base_height_mm: 2400 },
-    status: TemplateStatus.ACTIVE,
-    adaptation_strategy: AdaptationStrategy.PROPORTIONAL,
-    design_family_id: null,
-    design_subfamily_id: null,
-    wall_application: null,
-    priority_zone_id: null,
-    waste_factor: null,
-    metadata: null,
-    created_by: 'designer-001',
-    created_at: '2024-01-01T00:00:00Z',
-    updated_at: '2024-01-01T00:00:00Z',
-  };
-}
-
-function createZones(): TemplateZone[] {
-  return [
-    {
-      zone_id: 'z-persist-1',
-      template_id: 'tmpl-persist-001',
-      x_mm: 0,
-      y_mm: 0,
-      width_mm: 1500,
-      height_mm: 2400,
-      width_strategy: ZoneWidthStrategy.PROPORTIONAL,
-      height_strategy: ZoneHeightStrategy.DERIVED_FROM_WALL,
-      position_strategy: ZonePositionStrategy.FIXED,
-      segment: null,
-      created_at: '2024-01-01T00:00:00Z',
-    },
-    {
-      zone_id: 'z-persist-2',
-      template_id: 'tmpl-persist-001',
-      x_mm: 1500,
-      y_mm: 0,
-      width_mm: 1500,
-      height_mm: 2400,
-      width_strategy: ZoneWidthStrategy.PROPORTIONAL,
-      height_strategy: ZoneHeightStrategy.DERIVED_FROM_WALL,
-      position_strategy: ZonePositionStrategy.FIXED,
-      segment: null,
-      created_at: '2024-01-01T00:00:00Z',
-    },
-  ];
-}
-
-function createSkuMaster(id: string): SkuMaster {
-  return {
-    sku_id: id,
-    sku_code: `CODE-${id}`,
-    product_type: ProductType.WALL_PANEL,
-    family_id: 'family-001',
-    category_id: 'category-001',
-    width_mm: 600,
-    height_mm: 1200,
-    thickness_mm: 12,
-    depth_mm: null,
-    unit_length_mm: null,
-    material: 'Walnut',
-    colour: 'Dark',
-    finish: 'Satin',
-    pattern_identity: null,
-    gh_mm: 3,
-    gv_mm: 3,
-    quantity_mode: QuantityMode.DISCRETE,
-    commercial_attributes: {},
-    status: SkuStatus.ACTIVE,
-    created_by: 'admin',
-    created_at: '2024-01-01T00:00:00Z',
-    updated_at: '2024-01-01T00:00:00Z',
-  };
-}
-
 describe('Integration Area 9: Persistence', () => {
-  describe('Save -> Reload produces identical hash', () => {
-    it('buildSnapshotData -> computeSnapshotHash -> repeat -> identical hash', async () => {
-      const template = createTemplate();
-      const zones = createZones();
-      const lighting: TemplateLighting[] = [];
-      const furniture: TemplateFurniture[] = [];
-      const trims: TemplateTrim[] = [];
-      const skuMap = new Map<string, SkuMaster>();
-      skuMap.set('z-persist-1', createSkuMaster('sku-walnut-001'));
-      skuMap.set('z-persist-2', createSkuMaster('sku-walnut-002'));
+  describe('Save -> Reload produces identical canonical form', () => {
+    it('sortKeysDeep -> JSON.stringify -> repeat -> identical string', () => {
+      const snapshotData = {
+        wall_geometry: { type: 'STRAIGHT', base_width_mm: 3000, base_height_mm: 2400 },
+        base_dimensions: { width_mm: 3000, height_mm: 2400 },
+        zones: [
+          { zone_id: 'z-persist-1', x_mm: 0, width_mm: 1500, primary_sku: { sku_id: 'sku-walnut-001', material: 'Walnut' } },
+          { zone_id: 'z-persist-2', x_mm: 1500, width_mm: 1500, primary_sku: { sku_id: 'sku-walnut-002', material: 'Walnut' } },
+        ],
+        lighting: [],
+        furniture: [],
+        trims: [],
+        hidden_components: [],
+        calculation_parameters: {},
+      };
 
-      // Simulate "save"
-      const snapshot1 = buildSnapshotData(template, zones, lighting, furniture, trims, skuMap);
-      const hash1 = await computeSnapshotHash(snapshot1);
+      // Simulate "save": canonical form
+      const canonical1 = JSON.stringify(sortKeysDeep(snapshotData));
 
-      // Simulate "reload" (build from same inputs)
-      const snapshot2 = buildSnapshotData(template, zones, lighting, furniture, trims, skuMap);
-      const hash2 = await computeSnapshotHash(snapshot2);
+      // Simulate "reload": same data, produce canonical form again
+      const canonical2 = JSON.stringify(sortKeysDeep(snapshotData));
 
-      expect(hash1).toBe(hash2);
+      expect(canonical1).toBe(canonical2);
     });
 
-    it('hash is stable across multiple computations of same snapshot', async () => {
-      const template = createTemplate();
-      const zones = createZones();
-      const skuMap = new Map<string, SkuMaster>();
-      skuMap.set('z-persist-1', createSkuMaster('sku-walnut-001'));
+    it('canonical form is stable regardless of key insertion order', () => {
+      const data1 = { zones: [{ width_mm: 1500, zone_id: 'z-1' }], wall_geometry: { type: 'STRAIGHT', base_width_mm: 3000 } };
+      const data2 = { wall_geometry: { base_width_mm: 3000, type: 'STRAIGHT' }, zones: [{ zone_id: 'z-1', width_mm: 1500 }] };
 
-      const snapshot = buildSnapshotData(template, zones, [], [], [], skuMap);
+      const canonical1 = JSON.stringify(sortKeysDeep(data1));
+      const canonical2 = JSON.stringify(sortKeysDeep(data2));
+      const canonical3 = JSON.stringify(sortKeysDeep(data1));
 
-      const hash1 = await computeSnapshotHash(snapshot);
-      const hash2 = await computeSnapshotHash(snapshot);
-      const hash3 = await computeSnapshotHash(snapshot);
-
-      expect(hash1).toBe(hash2);
-      expect(hash2).toBe(hash3);
+      expect(canonical1).toBe(canonical2);
+      expect(canonical2).toBe(canonical3);
     });
   });
 

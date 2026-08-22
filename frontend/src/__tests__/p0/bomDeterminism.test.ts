@@ -404,6 +404,7 @@ describe('P0: BOM Determinism', () => {
           wallWidth: 3200,
           wallHeight: 2700,
           templateWallWidth: 3000,
+          templateWallHeight: 2700,
         },
         snapshotData: {
           zones: [
@@ -423,7 +424,7 @@ describe('P0: BOM Determinism', () => {
             },
             {
               zoneId: 'zone-adapt-2',
-              x: 1500,
+              x: 1600,
               y: 0,
               width: 1500,
               height: 900,
@@ -477,7 +478,7 @@ describe('P0: BOM Determinism', () => {
               zoneId: 'zone-x',
               x: 0,
               y: 0,
-              width: 1500,
+              width: 3000,
               height: 900,
               skuId: 'sku-panel-x',
               panelWidth: 300,
@@ -501,7 +502,7 @@ describe('P0: BOM Determinism', () => {
 
       const adapted = runBomPipeline({
         ...baseInput,
-        measurements: { wallWidth: 3500, wallHeight: 2700, templateWallWidth: 3000 },
+        measurements: { wallWidth: 3500, wallHeight: 2700, templateWallWidth: 3000, templateWallHeight: 2700 },
       });
 
       // Adaptation changes zone widths, which changes panel quantities

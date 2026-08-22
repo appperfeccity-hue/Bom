@@ -8,6 +8,7 @@ dist/
 .env
 .env.local
 .env.*.local
+.env.e2e
 
 # IDE
 .vscode/
@@ -15,3 +16,8 @@ dist/
 
 # OS
 .DS_Store
+
+# Playwright
+e2e/.auth/
+test-results/
+playwright-report/

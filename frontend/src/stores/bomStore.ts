@@ -9,7 +9,8 @@ import type {
   ReconciliationLine,
 } from '@/types/database';
 import { ReconciliationResultType } from '@/types/database';
-import { fromTable } from '@/lib/supabase';
+import { fromTable, supabase } from '@/lib/supabase';
+import { useAuthStore } from '@/stores/authStore';
 import { calculateWallPanels } from '@/engines/wallPanelEngine';
 import { calculateLights } from '@/engines/lightEngine';
 import { calculateFurniture } from '@/engines/furnitureEngine';
@@ -24,7 +25,21 @@ import type {
 import type { PipelineError } from '@/engines/errorCatalogue';
 import { ErrorCode, ErrorSeverity, ErrorCategory } from '@/engines/errorCatalogue';
 import { runBomPipeline } from '@/engines/bomPipeline';
+import { MAX_ZONES_PER_WALL } from '@/engines/installationArea';
 import type { BomPipelineInput, BomOutputLine } from '@/engines/bomPipeline';
+import type { SnapshotData } from '@/lib/snapshotBuilder';
+import {
+  mapSnapshotToPipeline,
+  mapPermissions,
+  mapCompatibility,
+  mapRuleSet,
+  mapSnapshotV1ToPipeline,
+  mapPermissionsV1,
+  mapCompatibilityV1,
+  mapRuleSetV1,
+} from '@/lib/snapshotMapper';
+import { BOM_ENGINE_VERSION } from '@/lib/bomEngine/version';
+import { computeInputHash } from '@/lib/inputHash';
 
 export interface BomState {
   masterBom: MasterBom | null;
@@ -45,6 +60,8 @@ export interface BomState {
   pipelineWarnings: PipelineError[];
   pipelineProgress: string | null;
   pipelineOutputLines: BomOutputLine[];
+  isSaving: boolean;
+  saveError: string | null;
 }
 
 export interface BomActions {
@@ -55,6 +72,7 @@ export interface BomActions {
   /** @deprecated Use runPipeline instead */
   generateActualBom: (input: GenerateActualBomInput) => GenerateActualBomOutput;
   runPipeline: (projectId: string, snapshotId: string) => Promise<void>;
+  saveBomToServer: (projectId: string, snapshotHash: string) => Promise<string>;
   resetPipeline: () => void;
   openBomPanel: () => void;
   closeBomPanel: () => void;
@@ -112,6 +130,8 @@ const initialState: BomState = {
   pipelineWarnings: [],
   pipelineProgress: null,
   pipelineOutputLines: [],
+  isSaving: false,
+  saveError: null,
 };
 
 export const useBomStore = create<BomStore>((set, get) => ({
@@ -456,6 +476,95 @@ export const useBomStore = create<BomStore>((set, get) => ({
     });
   },
 
+  saveBomToServer: async (projectId: string, snapshotHash: string): Promise<string> => {
+    set({ isSaving: true, saveError: null });
+
+    try {
+      const userId = useAuthStore.getState().user?.id;
+      if (!userId) {
+        throw new Error('User not authenticated');
+      }
+
+      const { pipelineStatus, pipelineOutputLines } = get();
+      if (pipelineStatus !== 'success') {
+        throw new Error('Pipeline must complete successfully before saving');
+      }
+
+      // Generate idempotency key
+      const idempotencyKey = crypto.randomUUID();
+
+      // Get configuration from the latest project_configuration
+      const { data: configData } = await fromTable('project_configuration')
+        .select('*')
+        .eq('project_id', projectId)
+        .order('configuration_version', { ascending: false })
+        .limit(1)
+        .single();
+
+      const configurationData = (configData as Record<string, unknown>)?.configuration_data ?? {};
+
+      // Get measurements
+      const { data: measurementData } = await fromTable('project_measurement')
+        .select('*')
+        .eq('project_id', projectId)
+        .single();
+
+      const measurements = (measurementData ?? {}) as Record<string, unknown>;
+
+      // Compute input_hash = sha256(canonical({snapshotHash, measurements, configuration}))
+      const inputHash = await computeInputHash(
+        snapshotHash,
+        measurements,
+        configurationData as Record<string, unknown>,
+      );
+
+      // Map pipeline output lines to the JSONB format expected by the RPC
+      const bomLines = pipelineOutputLines.map((line) => ({
+        component_id: line.componentId,
+        sku_id: line.skuId,
+        product_type: line.productType,
+        quantity: line.quantity,
+        required_quantity: line.requiredQuantity,
+        waste_quantity: line.wasteQuantity,
+        unit_of_measure: line.unitOfMeasure,
+        calculation_rule: line.calculationRule,
+        waste_factor: line.wasteQuantity > 0 && line.requiredQuantity > 0
+          ? Math.round((line.wasteQuantity / line.requiredQuantity) * 100) / 100
+          : 0,
+        resolved_dimensions: {},
+        calculation_inputs: {},
+      }));
+
+      // Call the RPC
+      const { data, error } = await supabase.rpc('save_actual_bom', {
+        p_project_id: projectId,
+        p_user_id: userId,
+        p_idempotency_key: idempotencyKey,
+        p_configuration_data: configurationData,
+        p_bom_lines: bomLines,
+        p_engine_version: BOM_ENGINE_VERSION,
+        p_input_hash: inputHash,
+      });
+
+      if (error) {
+        // Surface DB validation errors verbatim
+        throw new Error(error.message);
+      }
+
+      const actualBomId = data as string;
+
+      // Refresh actual BOM state
+      await get().fetchActualBom(projectId);
+
+      set({ isSaving: false, saveError: null });
+      return actualBomId;
+    } catch (err) {
+      const errorMessage = (err as Error).message;
+      set({ isSaving: false, saveError: errorMessage });
+      throw err;
+    }
+  },
+
   runPipeline: async (projectId: string, snapshotId: string) => {
     set({ pipelineStatus: 'running', pipelineErrors: [], pipelineWarnings: [], pipelineProgress: 'Fetching data', pipelineOutputLines: [] });
 
@@ -479,39 +588,82 @@ export const useBomStore = create<BomStore>((set, get) => ({
 
       if (measErr) throw new Error(measErr.message ?? 'Failed to fetch measurements');
 
-      // Fetch permissions
-      set({ pipelineProgress: 'Loading permissions' });
-      const { data: permissionsData, error: permErr } = await fromTable('permission_rule')
+      // Fetch project configuration (latest version)
+      set({ pipelineProgress: 'Loading configuration' });
+      const { data: configData } = await fromTable('project_configuration')
+        .select('*')
+        .eq('project_id', projectId)
+        .order('configuration_version', { ascending: false })
+        .limit(1)
+        .single();
+
+      // Fetch project obstructions
+      set({ pipelineProgress: 'Loading obstructions' });
+      await fromTable('project_obstruction')
         .select('*')
         .eq('project_id', projectId);
-
-      if (permErr) throw new Error(permErr.message ?? 'Failed to fetch permissions');
-
-      // Fetch compatibility rules
-      set({ pipelineProgress: 'Loading compatibility rules' });
-      const { data: compatData, error: compatErr } = await fromTable('compatibility_rule')
-        .select('*')
-        .eq('project_id', projectId);
-
-      if (compatErr) throw new Error(compatErr.message ?? 'Failed to fetch compatibility rules');
 
       // Build pipeline input
       set({ pipelineProgress: 'Running pipeline' });
       const snapshot = snapshotData as Record<string, unknown>;
       const measurement = measurementData as Record<string, unknown>;
+      const snapshotDataObj = (snapshot?.snapshot_data ?? { zones: [] }) as Record<string, unknown>;
+      const snapshotVersion = (snapshotDataObj?.snapshot_version as number) ?? undefined;
+
+      // Determine measurements using correct DB column names
+      const wallWidthMm = (measurement?.wall_width_mm as number) ?? 0;
+      const wallHeightMm = (measurement?.wall_height_mm as number) ?? 0;
+
+      // Template dimensions come from snapshot_data.base_dimensions
+      const baseDimensions = (snapshotDataObj?.base_dimensions as Record<string, unknown>) ?? {};
+      const templateWallWidth = (baseDimensions?.width_mm as number) ?? wallWidthMm;
+      const templateWallHeight = (baseDimensions?.height_mm as number) ?? undefined;
+
+      // Version branch: v2 mapper or v1 legacy mapper
+      let pipelineSnapshotData: BomPipelineInput['snapshotData'];
+      let permissions: BomPipelineInput['permissions'];
+      let compatibilityRules: BomPipelineInput['compatibilityRules'];
+      let ruleSet: BomPipelineInput['ruleSet'];
+
+      if (snapshotVersion === 2) {
+        const typedSnapshot = snapshotDataObj as unknown as SnapshotData;
+        pipelineSnapshotData = mapSnapshotToPipeline(typedSnapshot);
+        permissions = mapPermissions(typedSnapshot);
+        compatibilityRules = mapCompatibility(typedSnapshot);
+        ruleSet = mapRuleSet(typedSnapshot);
+      } else {
+        // V1 legacy path
+        pipelineSnapshotData = mapSnapshotV1ToPipeline(snapshotDataObj);
+        permissions = mapPermissionsV1();
+        compatibilityRules = mapCompatibilityV1();
+        ruleSet = mapRuleSetV1();
+      }
+
+      // Build configuration from project_configuration data
+      const configurationData = (configData as Record<string, unknown>)?.configuration_data as Record<string, unknown> | undefined;
+      const storedConfiguration = (configurationData ?? {}) as BomPipelineInput['configuration'];
+      // Spec sections 11/14: cap zones per wall unless the stored configuration
+      // is already stricter.
+      const configuration: BomPipelineInput['configuration'] = {
+        ...storedConfiguration,
+        maxZoneCount: Math.min(
+          storedConfiguration.maxZoneCount ?? MAX_ZONES_PER_WALL,
+          MAX_ZONES_PER_WALL,
+        ),
+      };
 
       const pipelineInput: BomPipelineInput = {
-        snapshotData: (snapshot?.snapshot_data ?? { zones: [] }) as BomPipelineInput['snapshotData'],
+        snapshotData: pipelineSnapshotData,
         measurements: {
-          wallWidth: (measurement?.wall_width as number) ?? 0,
-          wallHeight: (measurement?.wall_height as number) ?? 0,
-          templateWallWidth: (measurement?.template_wall_width as number) ?? 0,
-          templateWallHeight: (measurement?.template_wall_height as number) ?? undefined,
+          wallWidth: wallWidthMm,
+          wallHeight: wallHeightMm,
+          templateWallWidth,
+          templateWallHeight,
         },
-        configuration: (snapshot?.configuration ?? {}) as BomPipelineInput['configuration'],
-        ruleSet: (snapshot?.rule_set ?? {}) as BomPipelineInput['ruleSet'],
-        permissions: (permissionsData ?? []) as BomPipelineInput['permissions'],
-        compatibilityRules: (compatData ?? []) as BomPipelineInput['compatibilityRules'],
+        configuration,
+        ruleSet,
+        permissions,
+        compatibilityRules,
       };
 
       // Execute pipeline
