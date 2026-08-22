@@ -51,6 +51,38 @@ export interface WallPanelOutput {
   retainedHeight: number;
 }
 
+// --- Installation Area (spec sections 9-14) ---
+
+/** Axis-aligned rectangle in wall millimetre space. */
+export interface EdgeRect {
+  x_mm: number;
+  y_mm: number;
+  width_mm: number;
+  height_mm: number;
+}
+
+/** Whether the design covers the whole wall or only part of it. */
+export type InstallationAreaCoverage = 'FULL' | 'PARTIAL';
+
+/**
+ * Parent region of all zones. Zones must be bounded by `outerEdge`, which for
+ * PARTIAL coverage is smaller than the wall itself.
+ */
+export interface InstallationArea {
+  coverage: InstallationAreaCoverage;
+  outerEdge: EdgeRect;
+}
+
+/** Zone boundaries derived from zone geometry; never persisted. */
+export interface ZoneEdges {
+  /** Boundary against the installation area. */
+  outerEdge: EdgeRect;
+  /** Boundary of the zone <-> SKU relationship. */
+  innerEdge: EdgeRect;
+  /** width_mm * height_mm in mm^2. */
+  zoneArea: number;
+}
+
 // --- Light Engine ---
 
 export type MountingType = 'DIRECT' | 'PROFILE' | 'COVE';

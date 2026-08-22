@@ -25,6 +25,7 @@ import type {
 import type { PipelineError } from '@/engines/errorCatalogue';
 import { ErrorCode, ErrorSeverity, ErrorCategory } from '@/engines/errorCatalogue';
 import { runBomPipeline } from '@/engines/bomPipeline';
+import { MAX_ZONES_PER_WALL } from '@/engines/installationArea';
 import type { BomPipelineInput, BomOutputLine } from '@/engines/bomPipeline';
 import type { SnapshotData } from '@/lib/snapshotBuilder';
 import {
@@ -640,7 +641,16 @@ export const useBomStore = create<BomStore>((set, get) => ({
 
       // Build configuration from project_configuration data
       const configurationData = (configData as Record<string, unknown>)?.configuration_data as Record<string, unknown> | undefined;
-      const configuration = (configurationData ?? {}) as BomPipelineInput['configuration'];
+      const storedConfiguration = (configurationData ?? {}) as BomPipelineInput['configuration'];
+      // Spec sections 11/14: cap zones per wall unless the stored configuration
+      // is already stricter.
+      const configuration: BomPipelineInput['configuration'] = {
+        ...storedConfiguration,
+        maxZoneCount: Math.min(
+          storedConfiguration.maxZoneCount ?? MAX_ZONES_PER_WALL,
+          MAX_ZONES_PER_WALL,
+        ),
+      };
 
       const pipelineInput: BomPipelineInput = {
         snapshotData: pipelineSnapshotData,

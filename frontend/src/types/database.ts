@@ -97,6 +97,24 @@ export interface TemplateZone {
   created_at: string;
 }
 
+/**
+ * Installation-area coverage frozen with the wall configuration.
+ * FULL spans the whole wall; PARTIAL uses the authored outer edge.
+ */
+export type InstallationAreaCoverage = 'FULL' | 'PARTIAL';
+
+/**
+ * Installation area authored on a wall configuration. The outer edge is the
+ * parent boundary for zones (zones are bounded by it, not by the full wall).
+ */
+export interface InstallationAreaConfig {
+  coverage: InstallationAreaCoverage;
+  outer_edge_x_mm: number;
+  outer_edge_y_mm: number;
+  outer_edge_width_mm: number;
+  outer_edge_height_mm: number;
+}
+
 export interface TemplateZoneSku {
   zone_sku_id: string;
   zone_id: string;
@@ -541,6 +559,12 @@ export interface TemplateWallConfiguration {
   fit_algorithm: string;
   fit_intensity_percent: number;
   mounting_type: string;
+  /** Installation area (nullable; absent means FULL wall coverage). */
+  installation_coverage?: InstallationAreaCoverage | null;
+  installation_outer_edge_x_mm?: number | null;
+  installation_outer_edge_y_mm?: number | null;
+  installation_outer_edge_width_mm?: number | null;
+  installation_outer_edge_height_mm?: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -560,6 +584,12 @@ export interface ProjectWallConfiguration {
   fit_algorithm: string;
   fit_intensity_percent: number;
   mounting_type: string;
+  /** Installation area (nullable; absent means FULL wall coverage). */
+  installation_coverage?: InstallationAreaCoverage | null;
+  installation_outer_edge_x_mm?: number | null;
+  installation_outer_edge_y_mm?: number | null;
+  installation_outer_edge_width_mm?: number | null;
+  installation_outer_edge_height_mm?: number | null;
   consultant_overrides: Record<string, unknown> | null;
   created_at: string;
   updated_at: string;

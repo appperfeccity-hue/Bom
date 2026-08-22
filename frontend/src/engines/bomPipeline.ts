@@ -160,6 +160,7 @@ export interface BomMeasurements {
 export interface BomConfiguration {
   consultantActions?: ConsultantAction[];
   selectedSkuPairs?: SkuPair[];
+  /** Defaults to MAX_ZONES_PER_WALL (3) when omitted. */
   maxZoneCount?: number;
   minZoneDimension?: number;
   maxAspectRatio?: number;

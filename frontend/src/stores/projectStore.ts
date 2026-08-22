@@ -19,6 +19,14 @@ import type { WallConfigInput, PanelFrame } from '@/engines/types';
 import { fromTable } from '@/lib/supabase';
 import { assignSegment } from '@/canvas/utils/segmentAssignment';
 import { isLShape } from '@/engines/wallType';
+import {
+  MAX_ZONES_PER_WALL,
+  canAddZone,
+  isZoneWithinInstallationArea,
+  resolveInstallationArea,
+} from '@/engines/installationArea';
+import type { InstallationArea } from '@/engines/types';
+import { ErrorCode, createPipelineError } from '@/engines/errorCatalogue';
 import { ZoneWidthStrategy, ZoneHeightStrategy, ZonePositionStrategy } from '@/types/database';
 
 // --- Permission checking types ---
@@ -44,6 +52,11 @@ export interface ProjectState {
   wallConfig: WallConfigInput | null;
   /** Generated panel frames from wall config engine */
   panelFrames: PanelFrame[];
+  /**
+   * Installation area authored for this wall. Null means FULL wall coverage.
+   * Zones are bounded by its outer edge, not by the wall itself.
+   */
+  installationArea: InstallationArea | null;
   isLoading: boolean;
   error: string | null;
 }
@@ -69,6 +82,10 @@ export interface ProjectActions {
   removeObstruction: (obstructionId: string) => Promise<void>;
   /** Check consultant permission for a parameter */
   checkPermission: (parameterKey: string, value: unknown) => PermissionCheckResult;
+  /** Set the installation area (parent boundary of all zones) */
+  setInstallationArea: (area: InstallationArea | null) => void;
+  /** Resolve the effective installation area against the current wall size */
+  getInstallationArea: () => InstallationArea;
   /** Set wall config and generated panel frames; populates zones from frames */
   setWallConfigAndFrames: (config: WallConfigInput, frames: PanelFrame[]) => void;
   /** Populate the zones array from generated panel frames (each frame becomes a read-only zone) */
@@ -92,6 +109,7 @@ const initialState: ProjectState = {
   wallGeometry: 'STRAIGHT',
   wallConfig: null,
   panelFrames: [],
+  installationArea: null,
   isLoading: false,
   error: null,
 };
@@ -262,6 +280,31 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   addZone: async (zone) => {
     // Guard: prevent mutations on a finalized project
     if (get().currentProject?.status === 'FINALIZED') return;
+
+    // Spec sections 11/14: at most three zones per wall. Mirrors the
+    // trg_template_zone_max_count DB guard added in v1.2.4.
+    if (!canAddZone(get().zones.length)) {
+      set({
+        error: createPipelineError(ErrorCode.GEO_ZONE_COUNT_EXCEEDED, {
+          count: get().zones.length + 1,
+          maxAllowed: MAX_ZONES_PER_WALL,
+        }).message,
+      });
+      return;
+    }
+
+    // Zones are bounded by the installation-area outer edge, not the full wall.
+    const area = get().getInstallationArea();
+    const bounded = area.outerEdge.width_mm > 0 && area.outerEdge.height_mm > 0;
+    if (bounded && !isZoneWithinInstallationArea(zone, area)) {
+      set({
+        error: createPipelineError(ErrorCode.GEO_ZONE_OUTSIDE_WALL, {
+          coverage: area.coverage,
+          outerEdge: area.outerEdge,
+        }).message,
+      });
+      return;
+    }
 
     // In-memory only (project-scoped, no template_zone writes).
     // Zone changes are persisted via Phase 4's save_actual_bom as part of configuration_data.
@@ -513,6 +556,20 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   },
 
   reset: () => set(initialState),
+
+  setInstallationArea: (area) => set({ installationArea: area }),
+
+  getInstallationArea: () => {
+    const state = get();
+    const width =
+      state.measurements?.wall_width_mm ?? state.wallConfig?.total_width_mm ?? 0;
+    const height =
+      state.measurements?.wall_height_mm ?? state.wallConfig?.total_height_mm ?? 0;
+    return resolveInstallationArea(
+      { width_mm: width, height_mm: height },
+      state.installationArea,
+    );
+  },
 
   setWallConfigAndFrames: (config: WallConfigInput, frames: PanelFrame[]) => {
     // Guard: prevent mutations on a finalized project
