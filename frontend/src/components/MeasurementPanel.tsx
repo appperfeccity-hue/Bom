@@ -1,8 +1,9 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useProjectStore } from '@/stores/projectStore';
 import { usePermissionEnforcement } from '@/canvas/permissions/usePermissionEnforcement';
 import { isLShape } from '@/engines/wallType';
-import { toPermissionKey } from '@/lib/measurementModel';
+import { projectMeasurements, toPermissionKey } from '@/lib/measurementModel';
+import type { MeasurementColumn, ProjectedMeasurement } from '@/lib/measurementModel';
 
 /** Resolve a project_measurement column to the canonical DB permission key. */
 function permissionKeyFor(column: string): string {
@@ -37,10 +38,25 @@ const INPUT_STYLE: React.CSSProperties = {
 export function MeasurementPanel() {
   const measurements = useProjectStore((s) => s.measurements);
   const wallGeometry = useProjectStore((s) => s.wallGeometry);
+  const currentSnapshot = useProjectStore((s) => s.currentSnapshot);
   const updateMeasurements = useProjectStore((s) => s.updateMeasurements);
-  const { isFieldLocked, validateField, getFieldPermission } = usePermissionEnforcement();
+  const { isFieldLocked, validateField } = usePermissionEnforcement();
 
   const [fieldErrors, setFieldErrors] = useState<Record<string, string | null>>({});
+
+  /**
+   * Derived projection: default from frozen snapshot geometry, min/max from the
+   * frozen consultant permissions, actual from project_measurement. The template
+   * adaptation range takes priority; the 600-12000 / 300-6000 clamps below stay
+   * only as a secondary DB-safety bound.
+   */
+  const projected = useMemo(
+    () => projectMeasurements(currentSnapshot?.snapshot_data ?? null, measurements),
+    [currentSnapshot, measurements],
+  );
+
+  const fieldOf = (field: string): ProjectedMeasurement | undefined =>
+    projected[field as MeasurementColumn];
 
   const handleChange = useCallback(
     (field: string, value: string) => {
@@ -80,14 +96,32 @@ export function MeasurementPanel() {
   );
 
   const getFieldHint = (field: string): string | null => {
-    const permission = getFieldPermission(permissionKeyFor(field));
-    if (!permission) return null;
-    if (permission.edit_mode === 'RESTRICTED') {
-      if (permission.min_value !== null && permission.max_value !== null) {
-        return `${permission.min_value} - ${permission.max_value} mm`;
-      }
+    const measurement = fieldOf(field);
+    if (!measurement) return null;
+    if (measurement.minimum !== null && measurement.maximum !== null) {
+      return `${measurement.minimum} - ${measurement.maximum} mm`;
     }
     return null;
+  };
+
+  /** Frozen designer default, shown as a reference next to the actual value. */
+  const getDefaultHint = (field: string): string | null => {
+    const measurement = fieldOf(field);
+    if (!measurement || measurement.default === null) return null;
+    return `Design default: ${measurement.default} mm`;
+  };
+
+  const renderDefaultHint = (field: string) => {
+    const hint = getDefaultHint(field);
+    if (!hint) return null;
+    return (
+      <span
+        data-testid={`default-${field}`}
+        style={{ display: 'block', fontSize: '11px', color: '#6E6E6E' }}
+      >
+        {hint}
+      </span>
+    );
   };
 
   return (
@@ -116,8 +150,8 @@ export function MeasurementPanel() {
           )}
           <input
             type="number"
-            min={600}
-            max={12000}
+            min={fieldOf('wall_width_mm')?.minimum ?? 600}
+            max={fieldOf('wall_width_mm')?.maximum ?? 12000}
             value={measurements?.wall_width_mm ?? ''}
             onChange={(e) => handleChange('wall_width_mm', e.target.value)}
             onBlur={(e) => handleBlur('wall_width_mm', e.target.value)}
@@ -133,6 +167,7 @@ export function MeasurementPanel() {
           <span style={{ fontSize: '11px', color: '#6E6E6E' /* --color-ink-secondary */ }}>
             {getFieldHint('wall_width_mm') ?? '600 - 12000 mm'}
           </span>
+          {renderDefaultHint('wall_width_mm')}
         </label>
 
         <label style={LABEL_STYLE}>
@@ -144,8 +179,8 @@ export function MeasurementPanel() {
           )}
           <input
             type="number"
-            min={300}
-            max={6000}
+            min={fieldOf('wall_height_mm')?.minimum ?? 300}
+            max={fieldOf('wall_height_mm')?.maximum ?? 6000}
             value={measurements?.wall_height_mm ?? ''}
             onChange={(e) => handleChange('wall_height_mm', e.target.value)}
             onBlur={(e) => handleBlur('wall_height_mm', e.target.value)}
@@ -161,6 +196,7 @@ export function MeasurementPanel() {
           <span style={{ fontSize: '11px', color: '#6E6E6E' /* --color-ink-secondary */ }}>
             {getFieldHint('wall_height_mm') ?? '300 - 6000 mm'}
           </span>
+          {renderDefaultHint('wall_height_mm')}
         </label>
 
         {isLShape(wallGeometry) && (
@@ -187,6 +223,12 @@ export function MeasurementPanel() {
                   {fieldErrors.segment_a_width_mm}
                 </span>
               )}
+              {getFieldHint('segment_a_width_mm') && (
+                <span style={{ fontSize: '11px', color: '#6E6E6E' }}>
+                  {getFieldHint('segment_a_width_mm')}
+                </span>
+              )}
+              {renderDefaultHint('segment_a_width_mm')}
             </label>
 
             <label style={LABEL_STYLE}>
@@ -211,6 +253,12 @@ export function MeasurementPanel() {
                   {fieldErrors.segment_b_width_mm}
                 </span>
               )}
+              {getFieldHint('segment_b_width_mm') && (
+                <span style={{ fontSize: '11px', color: '#6E6E6E' }}>
+                  {getFieldHint('segment_b_width_mm')}
+                </span>
+              )}
+              {renderDefaultHint('segment_b_width_mm')}
             </label>
           </>
         )}

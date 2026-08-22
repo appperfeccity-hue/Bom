@@ -5,7 +5,12 @@
  * owns the UPPERCASE parameter_key vocabulary. This module is the SINGLE source that
  * maps that vocabulary onto the frontend measurement columns and the snapshot
  * wall_geometry keys; nothing else may hardcode the correspondence.
+ *
+ * It also derives the PermanentMeasurement projection (default/actual/min/max).
+ * The projection stores nothing: it reads the snapshot geometry, the frozen
+ * consultant permissions, and the project's actual measurements.
  */
+import type { PermanentMeasurement } from '@/types/database';
 
 /** Authoritative parameter_key values (baseline CHECK constraint). */
 export const PERMISSION_PARAMETER_KEYS = [
@@ -152,4 +157,113 @@ export function isPermissionParameterKey(
   value: string,
 ): value is PermissionParameterKey {
   return (PERMISSION_PARAMETER_KEYS as readonly string[]).includes(value);
+}
+
+/** Canonical keys that MeasurementPanel adapts at the project layer. */
+export const ADAPTABLE_MEASUREMENT_KEYS: readonly PermissionParameterKey[] =
+  MEASUREMENT_MAPPINGS.map((m) => m.permissionKey);
+
+export function isAdaptableMeasurementKey(value: string): boolean {
+  return (ADAPTABLE_MEASUREMENT_KEYS as readonly string[]).includes(value);
+}
+
+/**
+ * Projection of one measurement plus the provenance the UI needs to explain it.
+ * `editMode` is 'LOCKED' when the snapshot carries no permission for the field:
+ * a missing permission is never silently treated as editable.
+ */
+export interface ProjectedMeasurement extends PermanentMeasurement {
+  permissionKey: PermissionParameterKey;
+  measurementColumn: MeasurementColumn;
+  label: string;
+  editMode: PermissionEditMode;
+  /** False when no consultant permission was frozen for this parameter. */
+  hasPermission: boolean;
+}
+
+interface PermissionLike {
+  parameter_key: string;
+  edit_mode: string;
+  min_value: number | null;
+  max_value: number | null;
+}
+
+interface SnapshotLike {
+  wall_geometry?: Partial<Record<WallGeometryDefaultKey, number | null>> | null;
+  consultant_permissions?: unknown;
+  permissions?: unknown;
+}
+
+type MeasurementSource = Partial<Record<MeasurementColumn, number | null>> | null | undefined;
+
+function readPermissions(snapshot: SnapshotLike | null | undefined): PermissionLike[] {
+  const raw = snapshot?.consultant_permissions ?? snapshot?.permissions;
+  if (!Array.isArray(raw)) return [];
+  return raw.filter(
+    (p): p is PermissionLike =>
+      typeof p === 'object' && p !== null && 'parameter_key' in p,
+  );
+}
+
+/**
+ * Project one canonical measurement from its three frozen/authored sources:
+ * default = snapshot wall_geometry, minimum/maximum = frozen consultant
+ * permission, actual = project_measurement.
+ */
+export function projectMeasurement(
+  columnOrKey: string,
+  snapshot: SnapshotLike | null | undefined,
+  measurements: MeasurementSource,
+): ProjectedMeasurement | null {
+  const mapping = getMeasurementMapping(columnOrKey);
+  if (!mapping) return null;
+
+  const geometry = snapshot?.wall_geometry ?? null;
+  const permission = readPermissions(snapshot).find(
+    (p) => p.parameter_key === mapping.permissionKey,
+  );
+
+  const defaultValue = geometry?.[mapping.wallGeometryKey] ?? null;
+  const actual = measurements?.[mapping.measurementColumn] ?? defaultValue ?? 0;
+
+  const editMode: PermissionEditMode = permission
+    ? ((PERMISSION_EDIT_MODES as readonly string[]).includes(permission.edit_mode)
+        ? (permission.edit_mode as PermissionEditMode)
+        : 'LOCKED')
+    : 'LOCKED';
+
+  return {
+    permissionKey: mapping.permissionKey,
+    measurementColumn: mapping.measurementColumn,
+    label: mapping.label,
+    default: defaultValue,
+    actual,
+    minimum: editMode === 'RESTRICTED' ? (permission?.min_value ?? null) : null,
+    maximum: editMode === 'RESTRICTED' ? (permission?.max_value ?? null) : null,
+    editMode,
+    hasPermission: permission !== undefined,
+  };
+}
+
+/** Project every adaptable measurement, keyed by project_measurement column. */
+export function projectMeasurements(
+  snapshot: SnapshotLike | null | undefined,
+  measurements: MeasurementSource,
+): Record<MeasurementColumn, ProjectedMeasurement> {
+  const out = {} as Record<MeasurementColumn, ProjectedMeasurement>;
+  for (const mapping of MEASUREMENT_MAPPINGS) {
+    const projected = projectMeasurement(mapping.permissionKey, snapshot, measurements);
+    if (projected) out[mapping.measurementColumn] = projected;
+  }
+  return out;
+}
+
+/** Enforce minimum <= actual <= maximum for a projected measurement. */
+export function isWithinProjectedRange(
+  projected: PermanentMeasurement,
+  value: number,
+): boolean {
+  if (projected.minimum !== null && value < projected.minimum) return false;
+  if (projected.maximum !== null && value > projected.maximum) return false;
+  return true;
 }

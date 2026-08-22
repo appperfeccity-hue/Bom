@@ -173,6 +173,23 @@ export interface ProjectMeasurement {
   notes: string | null;
 }
 
+/**
+ * Derived projection of one adaptable measurement.
+ *
+ * This is NOT a source of truth and is never persisted: `default` comes from the
+ * designer geometry frozen in the project snapshot (wall_geometry), `minimum`/
+ * `maximum` come from the frozen consultant permission for the canonical
+ * parameter_key, and `actual` is the only value authored at the project layer
+ * (project_measurement). Derived quantities such as segment length or area do
+ * NOT receive this bundle.
+ */
+export interface PermanentMeasurement {
+  default: number | null;
+  actual: number;
+  minimum: number | null;
+  maximum: number | null;
+}
+
 export interface ProjectConfiguration {
   configuration_id: string;
   project_id: string;
