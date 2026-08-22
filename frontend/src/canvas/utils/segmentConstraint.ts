@@ -1,5 +1,5 @@
 /**
- * Pure function to detect whether a zone crosses the L_CORNER boundary.
+ * Pure function to detect whether a zone crosses the L_SHAPE (legacy L_CORNER) boundary.
  * Used to prevent zone creation/drag/resize across the corner.
  */
 

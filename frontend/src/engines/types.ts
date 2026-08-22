@@ -148,8 +148,12 @@ export interface HiddenComponentOutput {
 
 // --- Wall Configuration Engine ---
 
-/** Wall type (straight or L-shaped corner). */
-export type WallType = 'STRAIGHT' | 'L_CORNER';
+/**
+ * Wall type (straight or L-shaped corner).
+ * L_SHAPE is canonical; L_CORNER is the legacy alias kept for frozen snapshots.
+ * Use the helpers in ./wallType to compare values.
+ */
+export type WallType = 'STRAIGHT' | 'L_CORNER' | 'L_SHAPE';
 
 /** Panel fit algorithm for distributing panel widths across columns. */
 export type FitAlgorithm =
@@ -168,7 +172,7 @@ export type WallMountingType = 'DIRECT' | 'PROFILE' | 'RAIL';
 /** Type of obstruction on the wall. */
 export type ObstructionType = 'WINDOW' | 'DOOR' | 'PILLAR' | 'CUSTOM';
 
-/** Wall segment identifier for L_CORNER walls. */
+/** Wall segment identifier for L_SHAPE (legacy L_CORNER) walls. */
 export type WallSegment = 'SEGMENT_A' | 'SEGMENT_B';
 
 /** An obstruction (protected area) that panels cannot overlap. */
@@ -187,7 +191,7 @@ export interface Obstruction {
 
 /** Input configuration for the wall configuration engine. */
 export interface WallConfigInput {
-  /** Wall type (STRAIGHT or L_CORNER) */
+  /** Wall type (STRAIGHT or L_SHAPE; legacy L_CORNER accepted) */
   wall_type: WallType;
   /** Total wall width in mm */
   total_width_mm: number;
@@ -207,9 +211,9 @@ export interface WallConfigInput {
   mounting_type: WallMountingType;
   /** Array of obstructions (protected areas) */
   obstructions: Obstruction[];
-  /** Segment A width for L_CORNER walls (optional) */
+  /** Segment A width for L_SHAPE walls (optional) */
   segment_a_width_mm?: number;
-  /** Segment B width for L_CORNER walls (optional) */
+  /** Segment B width for L_SHAPE walls (optional) */
   segment_b_width_mm?: number;
   /** Left edge margin in mm (space between wall left edge and first panel) */
   edge_margin_left_mm?: number;
@@ -233,7 +237,7 @@ export interface PanelFrame {
   width_mm: number;
   /** Panel frame height in mm */
   height_mm: number;
-  /** Wall segment (for L_CORNER walls) or null */
+  /** Wall segment (for L_SHAPE walls) or null */
   segment: WallSegment | null;
   /** Whether this panel is at an edge of the wall */
   is_edge_panel: boolean;

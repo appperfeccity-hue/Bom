@@ -3,6 +3,7 @@ import { useWallConfigStore } from '@/stores/wallConfigStore';
 import { useProjectStore } from '@/stores/projectStore';
 import { fromTable } from '@/lib/supabase';
 import type { FitAlgorithm, WallMountingType } from '@/engines/types';
+import { isLShape } from '@/engines/wallType';
 import type { TemplateLighting, TemplateFurniture } from '@/types/database';
 
 const EDGE_SELECTIONS = [
@@ -174,7 +175,7 @@ export function WallConfigPanel() {
     [setWallConfig],
   );
 
-  const isLCorner = config.wall_type === 'L_CORNER';
+  const isLCorner = isLShape(config.wall_type);
 
   return (
     <div

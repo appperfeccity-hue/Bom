@@ -236,7 +236,7 @@ export const ERROR_DEFINITIONS: Record<ErrorCode, ErrorDefinition> = {
   [ErrorCode.E_WALL_INVALID_GEOMETRY]: {
     severity: ErrorSeverity.BLOCKING,
     category: ErrorCategory.GEOMETRY,
-    messageTemplate: 'Wall geometry is invalid (negative dimensions or invalid L_CORNER segments)',
+    messageTemplate: 'Wall geometry is invalid (negative dimensions or invalid L_SHAPE segments)',
   },
   [ErrorCode.E_WALL_GAP_EXCEEDS_SPACE]: {
     severity: ErrorSeverity.BLOCKING,

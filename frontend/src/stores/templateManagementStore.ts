@@ -5,6 +5,7 @@ import { fromTable } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/authStore';
 import { useProjectStore } from '@/stores/projectStore';
 import { useCanvasStore } from '@/stores/canvasStore';
+import { normalizeWallType } from '@/engines/wallType';
 
 // --- Filter types ---
 
@@ -93,7 +94,9 @@ function filterTemplates(templates: Template[], filters: TemplateFilters): Templ
   }
 
   if (filters.wallGeometry) {
-    result = result.filter((t) => t.wall_geometry.type === filters.wallGeometry);
+    // Compare through the canonical alias so L_SHAPE and legacy L_CORNER match
+    const target = normalizeWallType(filters.wallGeometry);
+    result = result.filter((t) => normalizeWallType(t.wall_geometry.type) === target);
   }
 
   return result;

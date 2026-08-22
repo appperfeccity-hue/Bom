@@ -7,6 +7,7 @@ import { useZoneValidation } from '@/canvas/utils/useZoneValidation';
 import { ZoneWidthStrategy, ZoneHeightStrategy } from '@/types/database';
 import type { TemplateZone } from '@/types/database';
 import { clampDimensions, constrainToWall, hasOverlap } from '@/canvas/utils/zoneConstraints';
+import { isLShape } from '@/engines/wallType';
 
 /* --- Design system inline style constants (matching WallConfigPanel) --- */
 const SECTION_HEADER_STYLE: React.CSSProperties = {
@@ -284,8 +285,8 @@ export function ZonePropertiesPanel() {
               />
             </label>
 
-            {/* Segment badge (L_CORNER only) */}
-            {wallGeometry === 'L_CORNER' && (
+            {/* Segment badge (L_SHAPE / legacy L_CORNER only) */}
+            {isLShape(wallGeometry) && (
               <div
                 style={{
                   display: 'inline-flex',

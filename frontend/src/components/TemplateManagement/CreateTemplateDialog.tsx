@@ -105,7 +105,8 @@ export function CreateTemplateDialog() {
             style={inputStyle}
           >
             <option value="STRAIGHT">STRAIGHT</option>
-            <option value="L_CORNER">L_CORNER</option>
+            <option value="L_SHAPE">L_SHAPE</option>
+            <option value="L_CORNER">L_CORNER (legacy)</option>
           </select>
         </label>
 

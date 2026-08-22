@@ -47,7 +47,13 @@ export enum AdaptationStrategy {
   FIXED = 'FIXED',
 }
 
-export type WallGeometryType = 'STRAIGHT' | 'L_CORNER';
+/**
+ * Wall geometry type.
+ * L_SHAPE is the canonical value; L_CORNER is the legacy value preserved in
+ * frozen snapshots and pre-existing rows. Readers must accept both
+ * (see engines/wallType.ts).
+ */
+export type WallGeometryType = 'STRAIGHT' | 'L_CORNER' | 'L_SHAPE';
 
 export interface WallGeometry {
   type: WallGeometryType;
@@ -509,7 +515,7 @@ export interface TemplateConsultantPermission {
 export interface TemplateWallConfiguration {
   wall_config_id: string;
   template_id: string;
-  wall_type: 'STRAIGHT' | 'L_CORNER';
+  wall_type: WallGeometryType;
   total_width_mm: number;
   total_height_mm: number;
   rows: number;
@@ -528,7 +534,7 @@ export interface TemplateWallConfiguration {
 export interface ProjectWallConfiguration {
   project_wall_config_id: string;
   project_id: string;
-  wall_type: 'STRAIGHT' | 'L_CORNER';
+  wall_type: WallGeometryType;
   total_width_mm: number;
   total_height_mm: number;
   rows: number;

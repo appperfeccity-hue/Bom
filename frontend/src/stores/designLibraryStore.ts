@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { Template, DesignFamilyMaster, WallGeometryType } from '@/types/database';
 import { fromTable } from '@/lib/supabase';
+import { normalizeWallType } from '@/engines/wallType';
 
 // --- Types ---
 
@@ -79,7 +80,9 @@ function filterTemplates(
   }
 
   if (filters.wallGeometry) {
-    result = result.filter((t) => t.wall_geometry.type === filters.wallGeometry);
+    // Compare through the canonical alias so L_SHAPE and legacy L_CORNER match
+    const target = normalizeWallType(filters.wallGeometry);
+    result = result.filter((t) => normalizeWallType(t.wall_geometry.type) === target);
   }
 
   if (filters.availability !== 'ALL') {

@@ -18,6 +18,7 @@ import type {
 import type { WallConfigInput, PanelFrame } from '@/engines/types';
 import { fromTable } from '@/lib/supabase';
 import { assignSegment } from '@/canvas/utils/segmentAssignment';
+import { isLShape } from '@/engines/wallType';
 import { ZoneWidthStrategy, ZoneHeightStrategy, ZonePositionStrategy } from '@/types/database';
 
 // --- Permission checking types ---
@@ -236,9 +237,9 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
     // Guard: prevent mutations on a finalized project
     if (get().currentProject?.status === 'FINALIZED') return;
 
-    // Auto-compute segment based on position for L_CORNER walls
+    // Auto-compute segment based on position for L_SHAPE (legacy L_CORNER) walls
     const { wallGeometry, measurements } = get();
-    if (wallGeometry === 'L_CORNER' && measurements?.segment_a_width_mm != null) {
+    if (isLShape(wallGeometry) && measurements?.segment_a_width_mm != null) {
       zone = {
         ...zone,
         segment: assignSegment(

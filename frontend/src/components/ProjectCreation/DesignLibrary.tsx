@@ -186,7 +186,8 @@ export function DesignLibrary() {
               >
                 <option value="">All Geometries</option>
                 <option value="STRAIGHT">Straight</option>
-                <option value="L_CORNER">L-Corner</option>
+                <option value="L_SHAPE">L-Shape</option>
+                <option value="L_CORNER">L-Corner (legacy)</option>
               </select>
             </div>
             <div className="dl-more-filters__group">
