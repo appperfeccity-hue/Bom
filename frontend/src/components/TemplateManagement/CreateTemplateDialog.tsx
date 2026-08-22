@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { WallGeometryType } from '@/types/database';
 import { AdaptationStrategy } from '@/types/database';
 import { useTemplateManagementStore } from '@/stores/templateManagementStore';
+import { isLShape } from '@/engines/wallType';
 
 export function CreateTemplateDialog() {
   const createTemplate = useTemplateManagementStore((s) => s.createTemplate);
@@ -12,6 +13,8 @@ export function CreateTemplateDialog() {
   const [wallGeometry, setWallGeometry] = useState<WallGeometryType>('STRAIGHT');
   const [baseWidthMm, setBaseWidthMm] = useState<number | ''>('');
   const [baseHeightMm, setBaseHeightMm] = useState<number | ''>('');
+  const [segmentAWidthMm, setSegmentAWidthMm] = useState<number | ''>('');
+  const [segmentBWidthMm, setSegmentBWidthMm] = useState<number | ''>('');
   const [adaptationStrategy, setAdaptationStrategy] = useState<AdaptationStrategy>(
     AdaptationStrategy.PROPORTIONAL,
   );
@@ -31,6 +34,8 @@ export function CreateTemplateDialog() {
       wall_geometry: wallGeometry,
       base_width_mm: baseWidthMm as number,
       base_height_mm: baseHeightMm as number,
+      segment_a_width_mm: isLShape(wallGeometry) && segmentAWidthMm !== '' ? segmentAWidthMm : undefined,
+      segment_b_width_mm: isLShape(wallGeometry) && segmentBWidthMm !== '' ? segmentBWidthMm : undefined,
       adaptation_strategy: adaptationStrategy,
       design_family_id: designFamilyId,
       wall_application: wallApplication,
@@ -136,6 +141,35 @@ export function CreateTemplateDialog() {
             />
           </label>
         </div>
+        {isLShape(wallGeometry) && (
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <label style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '13px', flex: 1 }}>
+              Segment A Default (mm)
+              <input
+                data-testid="create-template-segment-a"
+                type="number"
+                min="1"
+                max="50000"
+                value={segmentAWidthMm}
+                onChange={(e) => setSegmentAWidthMm(e.target.value ? Number(e.target.value) : '')}
+                style={inputStyle}
+              />
+            </label>
+            <label style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '13px', flex: 1 }}>
+              Segment B Default (mm)
+              <input
+                data-testid="create-template-segment-b"
+                type="number"
+                min="1"
+                max="50000"
+                value={segmentBWidthMm}
+                onChange={(e) => setSegmentBWidthMm(e.target.value ? Number(e.target.value) : '')}
+                style={inputStyle}
+              />
+            </label>
+          </div>
+        )}
+
         {((baseWidthMm !== '' && (baseWidthMm <= 0 || baseWidthMm > 50000)) ||
           (baseHeightMm !== '' && (baseHeightMm <= 0 || baseHeightMm > 50000))) && (
           <span data-testid="create-template-dimension-error" style={{ color: 'var(--color-error)', fontSize: '12px' }}>
