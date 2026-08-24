@@ -226,7 +226,7 @@ function createMockSupabaseResponses(options?: {
  * Helper to set up mock fromTable for the new pipeline flow:
  * Call 1: project_snapshot (single)
  * Call 2: project_measurement (single)
- * Call 3: project_configuration (single, may return null)
+ * Call 3: project_configuration (row list, may be empty)
  * Call 4: project_obstruction (array via eq)
  */
 function setupMockFromTable(
@@ -265,8 +265,10 @@ function setupMockFromTable(
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
         order: vi.fn().mockReturnThis(),
-        limit: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({ data: mocks.configurationData, error: null }),
+        limit: vi.fn().mockResolvedValue({
+          data: mocks.configurationData ? [mocks.configurationData] : [],
+          error: null,
+        }),
       } as unknown as ReturnType<typeof mockedFromTable>;
     } else {
       // project_obstruction

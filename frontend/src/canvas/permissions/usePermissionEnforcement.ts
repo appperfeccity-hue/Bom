@@ -41,6 +41,16 @@ export interface PermissionEnforcement {
   isWallParamAllowed: (param: string) => boolean;
 }
 
+/** True for a frozen consultant_permissions record (vs a wall-config entry). */
+function isPermissionRecord(value: unknown): boolean {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'parameter_key' in value &&
+    'edit_mode' in value
+  );
+}
+
 /**
  * Hook that reads permissions from the loaded project snapshot and exposes
  * enforcement helpers. Only active in CONSULTANT mode with a loaded snapshot.
@@ -49,15 +59,30 @@ export function usePermissionEnforcement(): PermissionEnforcement {
   const mode = useCanvasStore((s) => s.mode);
   const currentSnapshot = useProjectStore((s) => s.currentSnapshot);
 
+  /**
+   * Measurement permissions frozen into the snapshot.
+   *
+   * build_template_snapshot writes them under `consultant_permissions` as an
+   * array of permission records; older snapshots used a `permissions` array.
+   * The keyed-object form of `consultant_permissions` is the wall-config
+   * permission map handled separately below, so it is ignored here.
+   */
   const permissions: SnapshotPermission[] = useMemo(() => {
     if (mode !== CanvasMode.CONSULTANT || !currentSnapshot) {
       return [];
     }
     const snapshotData = currentSnapshot.snapshot_data;
-    if (!snapshotData || !Array.isArray(snapshotData.permissions)) {
+    if (!snapshotData) {
       return [];
     }
-    return snapshotData.permissions as SnapshotPermission[];
+    const frozen = snapshotData.consultant_permissions;
+    if (Array.isArray(frozen) && frozen.length > 0 && isPermissionRecord(frozen[0])) {
+      return frozen as SnapshotPermission[];
+    }
+    if (Array.isArray(snapshotData.permissions)) {
+      return snapshotData.permissions as SnapshotPermission[];
+    }
+    return [];
   }, [mode, currentSnapshot]);
 
   /**
@@ -79,9 +104,12 @@ export function usePermissionEnforcement(): PermissionEnforcement {
 
     const raw = snapshotData.consultant_permissions;
 
-    // Handle array format (already normalized)
+    // Handle array format: measurement permission records live here too, and
+    // are not wall-config entries.
     if (Array.isArray(raw)) {
-      return raw as WallConfigPermission[];
+      return (raw as unknown[]).filter(
+        (entry) => !isPermissionRecord(entry),
+      ) as WallConfigPermission[];
     }
 
     // Handle object format (ConsultantWallPermissions keyed by parameter name)

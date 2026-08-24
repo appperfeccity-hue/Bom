@@ -58,15 +58,30 @@ export function MeasurementPanel() {
   const fieldOf = (field: string): ProjectedMeasurement | undefined =>
     projected[field as MeasurementColumn];
 
+  /**
+   * Drafts keep what the consultant is typing. Without them a controlled input
+   * bound to the persisted value resets on every rejected keystroke, so no
+   * multi-digit value inside a range with a non-zero minimum could ever be
+   * entered.
+   */
+  const [drafts, setDrafts] = useState<Record<string, string>>({});
+
+  const valueOf = (field: string): string | number => {
+    const draft = drafts[field];
+    if (draft !== undefined) return draft;
+    const persisted = (measurements as Record<string, unknown> | null)?.[field];
+    return typeof persisted === 'number' ? persisted : '';
+  };
+
   const handleChange = useCallback(
     (field: string, value: string) => {
+      const canonicalKey = permissionKeyFor(field);
+      if (isFieldLocked(canonicalKey)) return;
+
+      setDrafts((prev) => ({ ...prev, [field]: value }));
+
       const numValue = parseInt(value, 10);
       if (isNaN(numValue)) return;
-
-      const canonicalKey = permissionKeyFor(field);
-
-      // If field is locked, do not update
-      if (isFieldLocked(canonicalKey)) return;
 
       // Permission-specific validation takes priority over generic constraints
       const permResult = validateField(canonicalKey, numValue);
@@ -76,6 +91,7 @@ export function MeasurementPanel() {
       if (field === 'wall_width_mm' && (numValue < 600 || numValue > 12000)) return;
       if (field === 'wall_height_mm' && (numValue < 300 || numValue > 6000)) return;
 
+      setFieldErrors((prev) => ({ ...prev, [field]: null }));
       void updateMeasurements({ [field]: numValue });
     },
     [updateMeasurements, isFieldLocked, validateField],
@@ -83,6 +99,12 @@ export function MeasurementPanel() {
 
   const handleBlur = useCallback(
     (field: string, value: string) => {
+      setDrafts((prev) => {
+        const next = { ...prev };
+        delete next[field];
+        return next;
+      });
+
       const numValue = parseInt(value, 10);
       if (isNaN(numValue)) return;
 
@@ -152,7 +174,7 @@ export function MeasurementPanel() {
             type="number"
             min={fieldOf('wall_width_mm')?.minimum ?? 600}
             max={fieldOf('wall_width_mm')?.maximum ?? 12000}
-            value={measurements?.wall_width_mm ?? ''}
+            value={valueOf('wall_width_mm')}
             onChange={(e) => handleChange('wall_width_mm', e.target.value)}
             onBlur={(e) => handleBlur('wall_width_mm', e.target.value)}
             disabled={isFieldLocked('wall_width_mm')}
@@ -181,7 +203,7 @@ export function MeasurementPanel() {
             type="number"
             min={fieldOf('wall_height_mm')?.minimum ?? 300}
             max={fieldOf('wall_height_mm')?.maximum ?? 6000}
-            value={measurements?.wall_height_mm ?? ''}
+            value={valueOf('wall_height_mm')}
             onChange={(e) => handleChange('wall_height_mm', e.target.value)}
             onBlur={(e) => handleBlur('wall_height_mm', e.target.value)}
             disabled={isFieldLocked('wall_height_mm')}
@@ -211,7 +233,7 @@ export function MeasurementPanel() {
               <input
                 type="number"
                 min={0}
-                value={measurements?.segment_a_width_mm ?? ''}
+                value={valueOf('segment_a_width_mm')}
                 onChange={(e) => handleChange('segment_a_width_mm', e.target.value)}
                 onBlur={(e) => handleBlur('segment_a_width_mm', e.target.value)}
                 disabled={isFieldLocked('segment_a_width_mm')}
@@ -241,7 +263,7 @@ export function MeasurementPanel() {
               <input
                 type="number"
                 min={0}
-                value={measurements?.segment_b_width_mm ?? ''}
+                value={valueOf('segment_b_width_mm')}
                 onChange={(e) => handleChange('segment_b_width_mm', e.target.value)}
                 onBlur={(e) => handleBlur('segment_b_width_mm', e.target.value)}
                 disabled={isFieldLocked('segment_b_width_mm')}

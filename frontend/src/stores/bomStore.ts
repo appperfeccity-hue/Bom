@@ -41,6 +41,14 @@ import {
 import { BOM_ENGINE_VERSION } from '@/lib/bomEngine/version';
 import { computeInputHash } from '@/lib/inputHash';
 
+/** First row of an optional list result, tolerating a null or object payload. */
+function firstRow(rows: unknown): Record<string, unknown> | null {
+  if (Array.isArray(rows)) {
+    return (rows[0] as Record<string, unknown> | undefined) ?? null;
+  }
+  return (rows as Record<string, unknown> | null) ?? null;
+}
+
 export interface BomState {
   masterBom: MasterBom | null;
   masterBomLines: MasterBomLine[];
@@ -493,13 +501,15 @@ export const useBomStore = create<BomStore>((set, get) => ({
       // Generate idempotency key
       const idempotencyKey = crypto.randomUUID();
 
-      // Get configuration from the latest project_configuration
-      const { data: configData } = await fromTable('project_configuration')
+      // Latest project_configuration. A project may not have one yet, so this
+      // reads a row list rather than coercing to a single object.
+      const { data: configRows } = await fromTable('project_configuration')
         .select('*')
         .eq('project_id', projectId)
         .order('configuration_version', { ascending: false })
-        .limit(1)
-        .single();
+        .limit(1);
+
+      const configData = firstRow(configRows);
 
       const configurationData = (configData as Record<string, unknown>)?.configuration_data ?? {};
 
@@ -586,16 +596,23 @@ export const useBomStore = create<BomStore>((set, get) => ({
         .eq('project_id', projectId)
         .single();
 
-      if (measErr) throw new Error(measErr.message ?? 'Failed to fetch measurements');
+      if (measErr) {
+        throw new Error(
+          measErr.code === 'PGRST116'
+            ? 'Enter site measurements before generating the BOM'
+            : (measErr.message ?? 'Failed to fetch measurements'),
+        );
+      }
 
       // Fetch project configuration (latest version)
       set({ pipelineProgress: 'Loading configuration' });
-      const { data: configData } = await fromTable('project_configuration')
+      const { data: configRows } = await fromTable('project_configuration')
         .select('*')
         .eq('project_id', projectId)
         .order('configuration_version', { ascending: false })
-        .limit(1)
-        .single();
+        .limit(1);
+
+      const configData = firstRow(configRows);
 
       // Fetch project obstructions
       set({ pipelineProgress: 'Loading obstructions' });

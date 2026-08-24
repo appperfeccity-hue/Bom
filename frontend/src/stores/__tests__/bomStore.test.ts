@@ -979,9 +979,8 @@ describe('bomStore', () => {
             select: vi.fn().mockReturnThis(),
             eq: vi.fn().mockReturnThis(),
             order: vi.fn().mockReturnThis(),
-            limit: vi.fn().mockReturnThis(),
-            single: vi.fn().mockResolvedValue({
-              data: { configuration_data: { wallColor: 'white' } },
+            limit: vi.fn().mockResolvedValue({
+              data: [{ configuration_data: { wallColor: 'white' } }],
               error: null,
             }),
           } as unknown as ReturnType<typeof fromTable>;
