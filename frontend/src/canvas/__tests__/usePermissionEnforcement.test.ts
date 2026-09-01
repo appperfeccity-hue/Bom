@@ -25,8 +25,8 @@ const mockSnapshot: ProjectSnapshot = {
       {
         permission_id: 'perm-1',
         template_id: 'tmpl-1',
-        parameter_key: 'wall_width_mm',
-        parameter_type: 'measurement',
+        parameter_key: 'WALL_WIDTH',
+        parameter_type: 'DIMENSION',
         edit_mode: 'LOCKED',
         min_value: null,
         max_value: null,
@@ -35,8 +35,8 @@ const mockSnapshot: ProjectSnapshot = {
       {
         permission_id: 'perm-2',
         template_id: 'tmpl-1',
-        parameter_key: 'wall_height_mm',
-        parameter_type: 'measurement',
+        parameter_key: 'WALL_HEIGHT',
+        parameter_type: 'DIMENSION',
         edit_mode: 'RESTRICTED',
         min_value: 600,
         max_value: 3000,
@@ -45,8 +45,8 @@ const mockSnapshot: ProjectSnapshot = {
       {
         permission_id: 'perm-3',
         template_id: 'tmpl-1',
-        parameter_key: 'segment_a_width_mm',
-        parameter_type: 'measurement',
+        parameter_key: 'SEGMENT_A_WIDTH',
+        parameter_type: 'DIMENSION',
         edit_mode: 'FREE',
         min_value: null,
         max_value: null,
@@ -56,7 +56,7 @@ const mockSnapshot: ProjectSnapshot = {
         permission_id: 'perm-4',
         template_id: 'tmpl-1',
         parameter_key: 'finish_type',
-        parameter_type: 'selection',
+        parameter_type: 'OPTION',
         edit_mode: 'RESTRICTED',
         min_value: null,
         max_value: null,
@@ -66,7 +66,7 @@ const mockSnapshot: ProjectSnapshot = {
         permission_id: 'perm-5',
         template_id: 'tmpl-1',
         parameter_key: 'zone_a1b2c3d4-e5f6-7890-abcd-ef1234567890',
-        parameter_type: 'zone',
+        parameter_type: 'OPTION',
         edit_mode: 'LOCKED',
         min_value: null,
         max_value: null,
@@ -240,7 +240,7 @@ describe('usePermissionEnforcement', () => {
             permission_id: 'perm-uuid',
             template_id: 'tmpl-1',
             parameter_key: `zone_${uuidZoneId}`,
-            parameter_type: 'zone',
+            parameter_type: 'OPTION',
             edit_mode: 'LOCKED',
             min_value: null,
             max_value: null,
@@ -261,4 +261,63 @@ describe('usePermissionEnforcement', () => {
     // Different valid UUID should be allowed (no matching permission)
     expect(result.current.canEditZone('aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee')).toBe(true);
   });
+
+  it('reads measurement permissions frozen under consultant_permissions', () => {
+    const snapshotWithFrozenPermissions: ProjectSnapshot = {
+      ...mockSnapshot,
+      snapshot_data: {
+        consultant_permissions: [
+          {
+            permission_id: 'perm-1',
+            template_id: 'tmpl-1',
+            parameter_key: 'WALL_WIDTH',
+            parameter_type: 'DIMENSION',
+            edit_mode: 'RESTRICTED',
+            min_value: 2400,
+            max_value: 3600,
+            allowed_values: null,
+          },
+        ],
+      },
+    };
+
+    useCanvasStore.setState({ mode: CanvasMode.CONSULTANT });
+    useProjectStore.setState({ currentSnapshot: snapshotWithFrozenPermissions });
+
+    const { result } = renderHook(() => usePermissionEnforcement());
+
+    expect(result.current.getFieldPermission('wall_width_mm')?.min_value).toBe(2400);
+    expect(result.current.validateField('wall_width_mm', 3200)).toEqual({ valid: true });
+    // Adaptable measurement with no frozen permission is locked, not editable
+    expect(result.current.isFieldLocked('segment_a_width_mm')).toBe(true);
+    expect(result.current.validateField('segment_a_width_mm', 1200).valid).toBe(false);
+  });
+
+  it('ignores measurement permission records when resolving wall config permissions', () => {
+    const snapshot: ProjectSnapshot = {
+      ...mockSnapshot,
+      snapshot_data: {
+        consultant_permissions: [
+          {
+            permission_id: 'perm-1',
+            template_id: 'tmpl-1',
+            parameter_key: 'wall_width',
+            parameter_type: 'DIMENSION',
+            edit_mode: 'FREE',
+            min_value: null,
+            max_value: null,
+            allowed_values: null,
+          },
+        ],
+      },
+    };
+
+    useCanvasStore.setState({ mode: CanvasMode.CONSULTANT });
+    useProjectStore.setState({ currentSnapshot: snapshot });
+
+    const { result } = renderHook(() => usePermissionEnforcement());
+
+    expect(result.current.isWallParamAllowed('wall_width')).toBe(false);
+  });
 });
+

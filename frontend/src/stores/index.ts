@@ -21,3 +21,6 @@ export type { TemplateManagementState, TemplateManagementActions, TemplateManage
 
 export { useFinalizationStore, FinalizationStep } from './finalizationStore';
 export type { FinalizationState, FinalizationActions, FinalizationStore } from './finalizationStore';
+
+export { useDesignLibraryStore, groupByDesignFamily } from './designLibraryStore';
+export type { DesignLibraryState, DesignLibraryActions, DesignLibraryStore, DesignLibraryFilters, TemplateWithAvailability } from './designLibraryStore';

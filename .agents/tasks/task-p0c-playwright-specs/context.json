@@ -1,0 +1,28 @@
+{
+  "project_type": "React SPA with Supabase backend, Playwright E2E tests",
+  "language": "TypeScript",
+  "build_system": "npm + Vite for frontend, Playwright for E2E",
+  "test_framework": "Vitest for unit, Playwright for E2E (ESM-compatible, fixtures in e2e/fixtures/, helpers in e2e/helpers/)",
+  "build_command": "cd frontend && npm run build",
+  "test_command": "cd frontend && npx playwright test e2e/p0-c/ --list (structural validation since no network to live Supabase)",
+  "verification_instructions": "1. npx playwright test --list e2e/p0-c/ to confirm all 41 spec files parse correctly. 2. npx tsc --noEmit to confirm type safety. 3. Validate CI workflow YAML syntax.",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "cd frontend && npm ci",
+  "environment_constraints": "CANNOT reach bom-beryl.vercel.app or *.supabase.co via HTTPS from sandbox. CAN use Vitest locally. CANNOT run Playwright browser tests. Tests must be structurally validated (parse, type-check) rather than executed live.",
+  "contribution_requirements": "Architecture FROZEN - no production code changes. Keep all 41 P0-C test IDs aligned with backlog. Credentials must be environment-driven. Never commit secrets.",
+  "key_patterns": "Existing spec pattern in p0-a/rbac-template-create.spec.ts: imports test/expect from fixtures/auth.fixture, uses designerPage/consultantPage/adminPage fixtures with APIRequestContext. Seed data in fixtures/seed-data.ts. Helpers: assertions.ts (expectRlsDeny, expectImmutable, expectAuditEvent), api.helper.ts (signIn, createProject, getProject, finalize). Global setup authenticates 3 users via Supabase Auth REST. Playwright config: Chromium, 30s timeout, 0 retries, fullyParallel, html+list reporters, baseURL from env.",
+  "relevant_files": [
+    "frontend/e2e/p0-a/rbac-template-create.spec.ts",
+    "frontend/e2e/fixtures/auth.fixture.ts",
+    "frontend/e2e/fixtures/seed-data.ts",
+    "frontend/e2e/helpers/assertions.ts",
+    "frontend/e2e/helpers/api.helper.ts",
+    "frontend/e2e/global-setup.ts",
+    "frontend/playwright.config.ts",
+    "frontend/package.json",
+    "frontend/.env.e2e.example",
+    ".github/workflows/ci.yml",
+    "docs/qa/p0-remaining-backlog.md"
+  ],
+  "directory_structure": "Root: Bom/ with frontend/, baseline/, migrations/, docs/, tests/, .github/workflows/. E2E dir: frontend/e2e/ with p0-a/ (has example spec), p0-b/ (.gitkeep), p0-c/ (empty - target for 41 specs). Fixtures: e2e/fixtures/ (auth.fixture.ts, seed-data.ts). Helpers: e2e/helpers/ (api.helper.ts, assertions.ts)."
+}

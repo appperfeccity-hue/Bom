@@ -1,0 +1,21 @@
+{
+  "id": "FEAT-004",
+  "type": "chore",
+  "description": "Commit all changes and push to origin feat/db-baseline-v1.1.5. This includes the new migration file and the updated publishStore.ts + test.",
+  "status": "completed",
+  "steps": [
+    "git add the new/modified files: migrations/v1.1.7_publish_template_and_create_project_fix.sql, frontend/src/stores/publishStore.ts, frontend/src/stores/__tests__/publishStore.test.ts",
+    "git commit with message: 'fix(security): harden Design Library publication + selection boundaries\n\n- P0: create_project RPC now validates check_template_eligible()\n- P0: New publish_template RPC for atomic publication with full validation\n- P1: Template RLS tightened - Consultant can only see ACTIVE templates\n- Frontend publishStore updated to use publish_template RPC'",
+    "git push origin feat/db-baseline-v1.1.5"
+  ],
+  "acceptance_criteria": [
+    "All changes committed to feat/db-baseline-v1.1.5 branch",
+    "Push to origin succeeds"
+  ],
+  "verification": [
+    "git log --oneline -1 shows the security fix commit",
+    "git status shows clean working tree (for tracked files)"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

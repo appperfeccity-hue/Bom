@@ -1,0 +1,26 @@
+{
+  "id": "FEAT-003",
+  "type": "fix",
+  "description": "Address 5 issues from the 2026-08-16-044500 review: (1) Create browser auth fixture for authenticated browser tests, (2) Remove false-pass defensive guards, (3) Fix CANVAS-014 to use consultant auth, (4) Fix CI exit-code capture, (5) Add video: retain-on-failure to playwright config.",
+  "status": "completed",
+  "steps": [
+    "Create frontend/e2e/fixtures/browser-auth.fixture.ts providing designerBrowser, consultantBrowser, adminBrowser Page fixtures that inject Supabase auth into localStorage before navigation",
+    "Update all 30 browser tests to import from browser-auth.fixture.ts instead of @playwright/test",
+    "Replace if (visible) defensive guards with proper assertions or test.skip() calls",
+    "Fix CANVAS-014 to use consultantBrowser from the new browser auth fixture",
+    "Fix CI exit-code capture in .github/workflows/p0c-e2e.yml",
+    "Add video: retain-on-failure to frontend/playwright.config.ts use block"
+  ],
+  "acceptance_criteria": [
+    "Browser auth fixture exists at frontend/e2e/fixtures/browser-auth.fixture.ts",
+    "All browser tests use authenticated Page fixtures",
+    "No if (await element.isVisible()) patterns guard meaningful assertions",
+    "CANVAS-014 uses consultantBrowser fixture",
+    "CI workflow correctly captures Playwright exit code",
+    "playwright.config.ts includes video: retain-on-failure",
+    "All 41 unique test IDs still present",
+    "No production files modified"
+  ],
+  "blocked_reason": null,
+  "findings": "All 5 review issues resolved. Browser auth fixture created at e2e/fixtures/browser-auth.fixture.ts. All 30 browser tests now use authenticated Page fixtures (designerBrowser/consultantBrowser). Defensive if-visible guards replaced with proper assertions or test.skip(). CANVAS-014 uses consultantBrowser. CI exit-code capture uses semicolon and $EC variable. Video retain-on-failure added to playwright config. 41 test IDs confirmed with --list."
+}

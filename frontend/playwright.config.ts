@@ -1,0 +1,29 @@
+import { defineConfig, devices } from '@playwright/test';
+
+export default defineConfig({
+  testDir: './e2e',
+  timeout: 30_000,
+  expect: {
+    timeout: 5_000,
+  },
+  fullyParallel: true,
+  forbidOnly: !!process.env.CI,
+  retries: 0,
+  workers: process.env.CI ? 1 : undefined,
+  reporter: [['html'], ['list'], ['json', { outputFile: 'test-results/p0c-results.json' }]],
+  use: {
+    baseURL: process.env.PLAYWRIGHT_BASE_URL || 'https://bom-beryl.vercel.app',
+    navigationTimeout: 60_000,
+    screenshot: 'only-on-failure',
+    trace: 'retain-on-failure',
+    video: 'retain-on-failure',
+  },
+  outputDir: 'test-results/',
+  globalSetup: './e2e/global-setup.ts',
+  projects: [
+    {
+      name: 'chromium',
+      use: { ...devices['Desktop Chrome'] },
+    },
+  ],
+});

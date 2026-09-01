@@ -27,10 +27,29 @@ vi.mock('@/lib/supabase', () => {
   };
   return {
     fromTable: vi.fn(() => ({ ...mockQueryBuilder })),
-    supabase: {},
+    supabase: {
+      rpc: vi.fn().mockResolvedValue({ data: null, error: null }),
+    },
     isSupabaseConfigured: false,
   };
 });
+
+// Mock authStore
+vi.mock('@/stores/authStore', async () => {
+  const { create } = await import('zustand');
+  const useAuthStore = create(() => ({
+    user: { id: 'user-1' } as never,
+    role: 'CONSULTANT',
+    isAuthenticated: true,
+    isLoading: false,
+  }));
+  return { useAuthStore };
+});
+
+// Mock inputHash
+vi.mock('@/lib/inputHash', () => ({
+  computeInputHash: vi.fn().mockResolvedValue('a'.repeat(64)),
+}));
 
 describe('bomStore', () => {
   beforeEach(() => {
@@ -53,6 +72,8 @@ describe('bomStore', () => {
       pipelineWarnings: [],
       pipelineProgress: null,
       pipelineOutputLines: [],
+      isSaving: false,
+      saveError: null,
     });
   });
 
@@ -271,6 +292,33 @@ describe('bomStore', () => {
 
       await useBomStore.getState().fetchActualBom('proj-456');
       expect(useBomStore.getState().error).toBe('DB connection failed');
+    });
+
+    it('should treat a no-rows result as an empty BOM, not an error', async () => {
+      const { fromTable } = await import('@/lib/supabase');
+      const mockedFromTable = vi.mocked(fromTable);
+
+      const mockChain = {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        neq: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockReturnThis(),
+        order: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
+          data: null,
+          error: {
+            code: 'PGRST116',
+            message: 'Cannot coerce the result to a single JSON object',
+          },
+        }),
+      };
+      mockedFromTable.mockReturnValue(mockChain as unknown as ReturnType<typeof fromTable>);
+
+      await useBomStore.getState().fetchActualBom('proj-456');
+
+      expect(useBomStore.getState().error).toBeNull();
+      expect(useBomStore.getState().actualBom).toBeNull();
+      expect(useBomStore.getState().actualBomLines).toEqual([]);
     });
   });
 
@@ -550,15 +598,29 @@ describe('bomStore', () => {
       const { fromTable } = await import('@/lib/supabase');
       const mockedFromTable = vi.mocked(fromTable);
 
-      const mockChain = {
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        neq: vi.fn().mockReturnThis(),
-        limit: vi.fn().mockReturnThis(),
-        order: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({ data: { snapshot_data: { zones: [] }, configuration: {}, rule_set: {} }, error: null }),
-      };
-      mockedFromTable.mockReturnValue(mockChain as unknown as ReturnType<typeof fromTable>);
+      let callCount = 0;
+      mockedFromTable.mockImplementation(() => {
+        callCount++;
+        const chain = {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          neq: vi.fn().mockReturnThis(),
+          limit: vi.fn().mockReturnThis(),
+          order: vi.fn().mockReturnThis(),
+          single: vi.fn().mockResolvedValue({
+            data: { snapshot_data: { zones: [] } },
+            error: null,
+          }),
+        };
+        if (callCount === 4) {
+          // project_obstruction returns array, not single
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockResolvedValue({ data: [], error: null }),
+          } as unknown as ReturnType<typeof fromTable>;
+        }
+        return chain as unknown as ReturnType<typeof fromTable>;
+      });
 
       const { runBomPipeline } = await import('@/engines/bomPipeline');
       vi.mocked(runBomPipeline).mockReturnValue({
@@ -577,19 +639,50 @@ describe('bomStore', () => {
       const { fromTable } = await import('@/lib/supabase');
       const mockedFromTable = vi.mocked(fromTable);
 
-      const mockChain = {
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        neq: vi.fn().mockReturnThis(),
-        limit: vi.fn().mockReturnThis(),
-        order: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({ data: { snapshot_data: { zones: [] }, configuration: {}, rule_set: {}, wall_width: 2400, wall_height: 1200, template_wall_width: 2400 }, error: null }),
-      };
-      mockedFromTable.mockReturnValue(mockChain as unknown as ReturnType<typeof fromTable>);
+      let callCount = 0;
+      mockedFromTable.mockImplementation(() => {
+        callCount++;
+        if (callCount === 1) {
+          // project_snapshot
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            single: vi.fn().mockResolvedValue({
+              data: { snapshot_data: { zones: [], base_dimensions: { width_mm: 3000, height_mm: 2400 } } },
+              error: null,
+            }),
+          } as unknown as ReturnType<typeof fromTable>;
+        } else if (callCount === 2) {
+          // project_measurement
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            single: vi.fn().mockResolvedValue({
+              data: { wall_width_mm: 3000, wall_height_mm: 2400 },
+              error: null,
+            }),
+          } as unknown as ReturnType<typeof fromTable>;
+        } else if (callCount === 3) {
+          // project_configuration
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            order: vi.fn().mockReturnThis(),
+            limit: vi.fn().mockReturnThis(),
+            single: vi.fn().mockResolvedValue({ data: null, error: null }),
+          } as unknown as ReturnType<typeof fromTable>;
+        } else {
+          // project_obstruction
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockResolvedValue({ data: [], error: null }),
+          } as unknown as ReturnType<typeof fromTable>;
+        }
+      });
 
       const { runBomPipeline } = await import('@/engines/bomPipeline');
       vi.mocked(runBomPipeline).mockReturnValue({
-        actualBomLines: [{ lineId: 'l1', componentId: 'c1', skuId: 's1', quantity: 5, requiredQuantity: 5, wasteQuantity: 0, unitOfMeasure: 'PCS', calculationRule: 'FIXED' }],
+        actualBomLines: [{ lineId: 'l1', componentId: 'c1', skuId: 's1', quantity: 5, requiredQuantity: 5, wasteQuantity: 0, unitOfMeasure: 'PCS', calculationRule: 'FIXED', productType: 'WALL_PANEL' }],
         errors: [],
         warnings: [],
         status: 'SUCCESS',
@@ -609,15 +702,42 @@ describe('bomStore', () => {
       const { fromTable } = await import('@/lib/supabase');
       const mockedFromTable = vi.mocked(fromTable);
 
-      const mockChain = {
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        neq: vi.fn().mockReturnThis(),
-        limit: vi.fn().mockReturnThis(),
-        order: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({ data: { snapshot_data: { zones: [] }, configuration: {}, rule_set: {}, wall_width: 2400, wall_height: 1200, template_wall_width: 2400 }, error: null }),
-      };
-      mockedFromTable.mockReturnValue(mockChain as unknown as ReturnType<typeof fromTable>);
+      let callCount = 0;
+      mockedFromTable.mockImplementation(() => {
+        callCount++;
+        if (callCount === 1) {
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            single: vi.fn().mockResolvedValue({
+              data: { snapshot_data: { zones: [], base_dimensions: { width_mm: 3000, height_mm: 2400 } } },
+              error: null,
+            }),
+          } as unknown as ReturnType<typeof fromTable>;
+        } else if (callCount === 2) {
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            single: vi.fn().mockResolvedValue({
+              data: { wall_width_mm: 3000, wall_height_mm: 2400 },
+              error: null,
+            }),
+          } as unknown as ReturnType<typeof fromTable>;
+        } else if (callCount === 3) {
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            order: vi.fn().mockReturnThis(),
+            limit: vi.fn().mockReturnThis(),
+            single: vi.fn().mockResolvedValue({ data: null, error: null }),
+          } as unknown as ReturnType<typeof fromTable>;
+        } else {
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockResolvedValue({ data: [], error: null }),
+          } as unknown as ReturnType<typeof fromTable>;
+        }
+      });
 
       const blockedError: PipelineError = {
         code: ErrorCode.GEO_ZONE_OVERLAP,
@@ -669,15 +789,42 @@ describe('bomStore', () => {
       const { fromTable } = await import('@/lib/supabase');
       const mockedFromTable = vi.mocked(fromTable);
 
-      const mockChain = {
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        neq: vi.fn().mockReturnThis(),
-        limit: vi.fn().mockReturnThis(),
-        order: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({ data: { snapshot_data: { zones: [] }, configuration: {}, rule_set: {}, wall_width: 2400, wall_height: 1200, template_wall_width: 2400 }, error: null }),
-      };
-      mockedFromTable.mockReturnValue(mockChain as unknown as ReturnType<typeof fromTable>);
+      let callCount = 0;
+      mockedFromTable.mockImplementation(() => {
+        callCount++;
+        if (callCount === 1) {
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            single: vi.fn().mockResolvedValue({
+              data: { snapshot_data: { zones: [], base_dimensions: { width_mm: 3000, height_mm: 2400 } } },
+              error: null,
+            }),
+          } as unknown as ReturnType<typeof fromTable>;
+        } else if (callCount === 2) {
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            single: vi.fn().mockResolvedValue({
+              data: { wall_width_mm: 3000, wall_height_mm: 2400 },
+              error: null,
+            }),
+          } as unknown as ReturnType<typeof fromTable>;
+        } else if (callCount === 3) {
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            order: vi.fn().mockReturnThis(),
+            limit: vi.fn().mockReturnThis(),
+            single: vi.fn().mockResolvedValue({ data: null, error: null }),
+          } as unknown as ReturnType<typeof fromTable>;
+        } else {
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockResolvedValue({ data: [], error: null }),
+          } as unknown as ReturnType<typeof fromTable>;
+        }
+      });
 
       const warning: PipelineError = {
         code: ErrorCode.GEO_GAP_TOO_SMALL,
@@ -701,6 +848,62 @@ describe('bomStore', () => {
       expect(state.pipelineWarnings).toHaveLength(1);
       expect(state.pipelineWarnings[0].code).toBe(ErrorCode.GEO_GAP_TOO_SMALL);
     });
+
+    it('should not query permission_rule or compatibility_rule tables', async () => {
+      const { fromTable } = await import('@/lib/supabase');
+      const mockedFromTable = vi.mocked(fromTable);
+
+      let callCount = 0;
+      const calledTables: string[] = [];
+      mockedFromTable.mockImplementation((table: string) => {
+        calledTables.push(table);
+        callCount++;
+        if (callCount <= 2) {
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            single: vi.fn().mockResolvedValue({
+              data: callCount === 1
+                ? { snapshot_data: { zones: [], base_dimensions: { width_mm: 3000, height_mm: 2400 } } }
+                : { wall_width_mm: 3000, wall_height_mm: 2400 },
+              error: null,
+            }),
+          } as unknown as ReturnType<typeof fromTable>;
+        } else if (callCount === 3) {
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            order: vi.fn().mockReturnThis(),
+            limit: vi.fn().mockReturnThis(),
+            single: vi.fn().mockResolvedValue({ data: null, error: null }),
+          } as unknown as ReturnType<typeof fromTable>;
+        } else {
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockResolvedValue({ data: [], error: null }),
+          } as unknown as ReturnType<typeof fromTable>;
+        }
+      });
+
+      const { runBomPipeline } = await import('@/engines/bomPipeline');
+      vi.mocked(runBomPipeline).mockReturnValue({
+        actualBomLines: [],
+        errors: [],
+        warnings: [],
+        status: 'SUCCESS',
+      });
+
+      await useBomStore.getState().runPipeline('proj-1', 'snap-1');
+
+      // Verify no queries to non-existent tables
+      expect(calledTables).not.toContain('permission_rule');
+      expect(calledTables).not.toContain('compatibility_rule');
+      // Verify correct tables are queried
+      expect(calledTables).toContain('project_snapshot');
+      expect(calledTables).toContain('project_measurement');
+      expect(calledTables).toContain('project_configuration');
+      expect(calledTables).toContain('project_obstruction');
+    });
   });
 
   describe('resetPipeline', () => {
@@ -720,7 +923,7 @@ describe('bomStore', () => {
           message: 'test warning',
         }],
         pipelineProgress: 'Running pipeline',
-        pipelineOutputLines: [{ lineId: 'l1', componentId: 'c1', skuId: 's1', quantity: 5, requiredQuantity: 5, wasteQuantity: 0, unitOfMeasure: 'PCS', calculationRule: 'FIXED' }],
+        pipelineOutputLines: [{ lineId: 'l1', componentId: 'c1', skuId: 's1', quantity: 5, requiredQuantity: 5, wasteQuantity: 0, unitOfMeasure: 'PCS', calculationRule: 'FIXED', productType: 'WALL_PANEL' }],
       });
 
       useBomStore.getState().resetPipeline();
@@ -746,6 +949,331 @@ describe('bomStore', () => {
       expect(state.pipelineStatus).toBe('idle');
       expect(state.isBomPanelOpen).toBe(true);
       expect(state.error).toBe('some error');
+    });
+  });
+
+  describe('saveBomToServer', () => {
+    beforeEach(async () => {
+      // Reset auth store mock
+      const { useAuthStore } = await import('../authStore');
+      useAuthStore.setState({
+        user: { id: 'user-1' } as never,
+        role: 'CONSULTANT',
+        isAuthenticated: true,
+        isLoading: false,
+      });
+    });
+
+    it('should call save_actual_bom RPC with correct arguments', async () => {
+      const { useAuthStore } = await import('../authStore');
+      useAuthStore.setState({
+        user: { id: 'user-1' } as never,
+        role: 'CONSULTANT',
+        isAuthenticated: true,
+        isLoading: false,
+      });
+
+      // Set pipeline to success with output lines
+      useBomStore.setState({
+        pipelineStatus: 'success',
+        pipelineOutputLines: [
+          {
+            lineId: 'l1',
+            componentId: 'comp-1',
+            skuId: 'sku-1',
+            quantity: 5,
+            requiredQuantity: 5,
+            wasteQuantity: 0,
+            unitOfMeasure: 'PCS',
+            calculationRule: 'FIXED',
+            productType: 'WALL_PANEL',
+          },
+        ],
+      });
+
+      const { fromTable } = await import('@/lib/supabase');
+      const mockedFromTable = vi.mocked(fromTable);
+      const { supabase } = await import('@/lib/supabase');
+      const mockedRpc = vi.fn().mockResolvedValue({ data: 'new-bom-id', error: null });
+      (supabase as unknown as { rpc: typeof mockedRpc }).rpc = mockedRpc;
+
+      let callCount = 0;
+      mockedFromTable.mockImplementation(() => {
+        callCount++;
+        if (callCount === 1) {
+          // project_configuration query
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            order: vi.fn().mockReturnThis(),
+            limit: vi.fn().mockResolvedValue({
+              data: [{ configuration_data: { wallColor: 'white' } }],
+              error: null,
+            }),
+          } as unknown as ReturnType<typeof fromTable>;
+        } else if (callCount === 2) {
+          // project_measurement query
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            single: vi.fn().mockResolvedValue({
+              data: { wall_width_mm: 3000, wall_height_mm: 2400 },
+              error: null,
+            }),
+          } as unknown as ReturnType<typeof fromTable>;
+        } else {
+          // fetchActualBom query chain
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            neq: vi.fn().mockReturnThis(),
+            order: vi.fn().mockReturnThis(),
+            limit: vi.fn().mockReturnThis(),
+            single: vi.fn().mockResolvedValue({ data: null, error: null }),
+          } as unknown as ReturnType<typeof fromTable>;
+        }
+      });
+
+      const result = await useBomStore.getState().saveBomToServer('proj-1', 'snap-hash-123');
+
+      expect(result).toBe('new-bom-id');
+      expect(mockedRpc).toHaveBeenCalledWith('save_actual_bom', expect.objectContaining({
+        p_project_id: 'proj-1',
+        p_user_id: 'user-1',
+        p_configuration_data: { wallColor: 'white' },
+        p_engine_version: '1.0.0',
+      }));
+
+      // Verify p_bom_lines format
+      const rpcArgs = mockedRpc.mock.calls[0][1];
+      expect(rpcArgs.p_bom_lines).toEqual([
+        expect.objectContaining({
+          component_id: 'comp-1',
+          sku_id: 'sku-1',
+          quantity: 5,
+          required_quantity: 5,
+          waste_quantity: 0,
+          unit_of_measure: 'PCS',
+          calculation_rule: 'FIXED',
+        }),
+      ]);
+
+      // Verify input_hash is a hex string
+      expect(rpcArgs.p_input_hash).toMatch(/^[a-f0-9]{64}$/);
+
+      // Verify idempotency_key is a UUID
+      expect(rpcArgs.p_idempotency_key).toMatch(
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
+      );
+
+      // State should not be saving
+      expect(useBomStore.getState().isSaving).toBe(false);
+      expect(useBomStore.getState().saveError).toBeNull();
+    });
+
+    it('should carry every product_type through to the RPC payload', async () => {
+      const { useAuthStore } = await import('../authStore');
+      useAuthStore.setState({
+        user: { id: 'user-1' } as never,
+        role: 'CONSULTANT',
+        isAuthenticated: true,
+        isLoading: false,
+      });
+
+      const productTypes = [
+        'WALL_PANEL',
+        'LIGHT',
+        'FURNITURE',
+        'HIDDEN_COMPONENT',
+      ] as const;
+
+      useBomStore.setState({
+        pipelineStatus: 'success',
+        pipelineOutputLines: productTypes.map((productType, index) => ({
+          lineId: `l${index}`,
+          componentId: `comp-${index}`,
+          skuId: `sku-${index}`,
+          quantity: 1,
+          requiredQuantity: 1,
+          wasteQuantity: 0,
+          unitOfMeasure: 'PCS',
+          calculationRule: 'FIXED',
+          productType,
+        })),
+      });
+
+      const { fromTable, supabase } = await import('@/lib/supabase');
+      const mockedFromTable = vi.mocked(fromTable);
+      const mockedRpc = vi.fn().mockResolvedValue({ data: 'new-bom-id', error: null });
+      (supabase as unknown as { rpc: typeof mockedRpc }).rpc = mockedRpc;
+
+      mockedFromTable.mockImplementation(
+        () =>
+          ({
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            neq: vi.fn().mockReturnThis(),
+            order: vi.fn().mockReturnThis(),
+            limit: vi.fn().mockReturnThis(),
+            single: vi.fn().mockResolvedValue({ data: null, error: null }),
+          }) as unknown as ReturnType<typeof fromTable>,
+      );
+
+      await useBomStore.getState().saveBomToServer('proj-1', 'snap-hash-123');
+
+      const rpcArgs = mockedRpc.mock.calls[0][1];
+      expect(
+        (rpcArgs.p_bom_lines as Array<{ product_type: string }>).map((l) => l.product_type),
+      ).toEqual([...productTypes]);
+    });
+
+    it('should surface DB validation errors verbatim', async () => {
+      const { useAuthStore } = await import('../authStore');
+      useAuthStore.setState({
+        user: { id: 'user-1' } as never,
+        role: 'CONSULTANT',
+        isAuthenticated: true,
+        isLoading: false,
+      });
+
+      useBomStore.setState({
+        pipelineStatus: 'success',
+        pipelineOutputLines: [
+          {
+            lineId: 'l1',
+            componentId: 'comp-1',
+            skuId: 'sku-1',
+            quantity: 5,
+            requiredQuantity: 5,
+            wasteQuantity: 0,
+            unitOfMeasure: 'PCS',
+            calculationRule: 'FIXED',
+            productType: 'WALL_PANEL',
+          },
+        ],
+      });
+
+      const { fromTable } = await import('@/lib/supabase');
+      const mockedFromTable = vi.mocked(fromTable);
+      const { supabase } = await import('@/lib/supabase');
+      const mockedRpc = vi.fn().mockResolvedValue({
+        data: null,
+        error: { message: 'SKU sku-1 not present in project snapshot' },
+      });
+      (supabase as unknown as { rpc: typeof mockedRpc }).rpc = mockedRpc;
+
+      mockedFromTable.mockImplementation(() => {
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          neq: vi.fn().mockReturnThis(),
+          order: vi.fn().mockReturnThis(),
+          limit: vi.fn().mockReturnThis(),
+          single: vi.fn().mockResolvedValue({ data: null, error: null }),
+        } as unknown as ReturnType<typeof fromTable>;
+      });
+
+      await expect(
+        useBomStore.getState().saveBomToServer('proj-1', 'snap-hash-123'),
+      ).rejects.toThrow('SKU sku-1 not present in project snapshot');
+
+      expect(useBomStore.getState().isSaving).toBe(false);
+      expect(useBomStore.getState().saveError).toBe('SKU sku-1 not present in project snapshot');
+    });
+
+    it('should throw if user is not authenticated', async () => {
+      const { useAuthStore } = await import('../authStore');
+      useAuthStore.setState({
+        user: null,
+        role: null,
+        isAuthenticated: false,
+        isLoading: false,
+      });
+
+      useBomStore.setState({
+        pipelineStatus: 'success',
+        pipelineOutputLines: [],
+      });
+
+      await expect(
+        useBomStore.getState().saveBomToServer('proj-1', 'snap-hash-123'),
+      ).rejects.toThrow('User not authenticated');
+
+      expect(useBomStore.getState().saveError).toBe('User not authenticated');
+    });
+
+    it('should throw if pipeline has not succeeded', async () => {
+      const { useAuthStore } = await import('../authStore');
+      useAuthStore.setState({
+        user: { id: 'user-1' } as never,
+        role: 'CONSULTANT',
+        isAuthenticated: true,
+        isLoading: false,
+      });
+
+      useBomStore.setState({
+        pipelineStatus: 'idle',
+        pipelineOutputLines: [],
+      });
+
+      await expect(
+        useBomStore.getState().saveBomToServer('proj-1', 'snap-hash-123'),
+      ).rejects.toThrow('Pipeline must complete successfully before saving');
+
+      expect(useBomStore.getState().saveError).toBe('Pipeline must complete successfully before saving');
+    });
+
+    it('should pass BOM_ENGINE_VERSION from version.ts', async () => {
+      const { useAuthStore } = await import('../authStore');
+      useAuthStore.setState({
+        user: { id: 'user-1' } as never,
+        role: 'CONSULTANT',
+        isAuthenticated: true,
+        isLoading: false,
+      });
+
+      useBomStore.setState({
+        pipelineStatus: 'success',
+        pipelineOutputLines: [
+          {
+            lineId: 'l1',
+            componentId: 'comp-1',
+            skuId: 'sku-1',
+            quantity: 2,
+            requiredQuantity: 2,
+            wasteQuantity: 0,
+            unitOfMeasure: 'PCS',
+            calculationRule: 'FIXED',
+            productType: 'WALL_PANEL',
+          },
+        ],
+      });
+
+      const { fromTable } = await import('@/lib/supabase');
+      const mockedFromTable = vi.mocked(fromTable);
+      const { supabase } = await import('@/lib/supabase');
+      const mockedRpc = vi.fn().mockResolvedValue({ data: 'bom-id-2', error: null });
+      (supabase as unknown as { rpc: typeof mockedRpc }).rpc = mockedRpc;
+
+      mockedFromTable.mockImplementation(() => {
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          neq: vi.fn().mockReturnThis(),
+          order: vi.fn().mockReturnThis(),
+          limit: vi.fn().mockReturnThis(),
+          single: vi.fn().mockResolvedValue({ data: null, error: null }),
+        } as unknown as ReturnType<typeof fromTable>;
+      });
+
+      await useBomStore.getState().saveBomToServer('proj-1', 'snap-hash-456');
+
+      expect(mockedRpc).toHaveBeenCalledWith(
+        'save_actual_bom',
+        expect.objectContaining({
+          p_engine_version: '1.0.0',
+        }),
+      );
     });
   });
 });

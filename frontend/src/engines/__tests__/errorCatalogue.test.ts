@@ -9,9 +9,9 @@ import {
 
 describe('errorCatalogue', () => {
   describe('ErrorCode enum', () => {
-    it('should have 33 error codes', () => {
+    it('should have 34 error codes', () => {
       const codes = Object.values(ErrorCode);
-      expect(codes).toHaveLength(33);
+      expect(codes).toHaveLength(34);
     });
 
     it('should have all unique error codes', () => {
@@ -48,11 +48,11 @@ describe('errorCatalogue', () => {
       expect(permCodes).toHaveLength(3);
     });
 
-    it('should have 1 quantity code', () => {
+    it('should have 2 quantity codes', () => {
       const qtyCodes = Object.values(ErrorCode).filter((c) =>
         c.startsWith('QTY_')
       );
-      expect(qtyCodes).toHaveLength(1);
+      expect(qtyCodes).toHaveLength(2);
     });
   });
 

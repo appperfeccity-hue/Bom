@@ -21,6 +21,7 @@ import {
   CataloguePage,
   RuleSetPage,
 } from '@/pages/admin';
+import { DesignLibraryPage } from '@/pages/DesignLibraryPage';
 import { useAuthStore } from '@/stores/authStore';
 
 /**
@@ -57,6 +58,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
               <Route path="/" element={<DashboardPage />} />
               <Route path="/projects" element={<DashboardPage />} />
               <Route path="/canvas" element={<App />} />
+              <Route path="/design-library" element={<DesignLibraryPage />} />
 
               {/* Admin routes - redirect to / if not ADMIN */}
               <Route element={<AdminRoute />}>

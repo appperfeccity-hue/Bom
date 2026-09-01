@@ -1,0 +1,14 @@
+{
+  "task_id": "task-design-library-module",
+  "task_description": "Implement the enhanced Design Library module with availability calculation (AVAILABLE vs BLOCKED), blocked-reason display, search/filter controls, Design Family grouping, and template detail/preview panel for consultants.",
+  "status": "completed",
+  "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003"],
+  "blocked_reason": null,
+  "verification": {
+    "build": "pass",
+    "tests": "pass",
+    "test_quality": "pass",
+    "docker_build": "skipped",
+    "summary": "All 1205 unit tests pass (61 new tests added from baseline of 1144). Build succeeds. Only pre-existing TS error (unused variable in ValidationOverlayLayer.tsx, unrelated to this task). E2E test failures are pre-existing (missing env vars)."
+  }
+}

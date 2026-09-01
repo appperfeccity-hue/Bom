@@ -1,7 +1,8 @@
 import { create } from 'zustand';
-import { supabase } from '@/lib/supabase';
+import { supabase, fromTable } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/authStore';
 import { useProjectStore } from '@/stores/projectStore';
+import { sortKeysDeep } from '@/lib/snapshotBuilder';
 import type { Project } from '@/types/database';
 
 // --- Finalization Step Enum ---
@@ -55,6 +56,45 @@ async function computeSha256(input: string): Promise<string> {
   return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
+/**
+ * Compute the canonical hash from actual_bom_line rows fetched from DB.
+ * Mirrors the server-side computation: uses canonical_jsonb (alphabetical key
+ * ordering) over the same field set from actual_bom_line rows, concatenated
+ * with commas, ordered by actual_bom_line_id.
+ */
+async function computeHashFromLines(lines: Record<string, unknown>[]): Promise<string> {
+  // Build canonical representation matching server-side computation.
+  // Server selects from actual_bom_line: actual_bom_line_id, sku_id,
+  // product_type, quantity, required_quantity, waste_quantity,
+  // unit_of_measure, resolved_dimensions, component_id AS source_zone_id,
+  // and a constructed source_trace jsonb object.
+  // canonical_jsonb sorts keys alphabetically at every level.
+  const canonicalParts = lines.map((line) => {
+    const subset = {
+      actual_bom_line_id: line.actual_bom_line_id,
+      product_type: line.product_type,
+      quantity: line.quantity,
+      required_quantity: line.required_quantity,
+      resolved_dimensions: line.resolved_dimensions,
+      sku_id: line.sku_id,
+      source_trace: {
+        actual_bom_id: line.actual_bom_id,
+        actual_bom_line_id: line.actual_bom_line_id,
+        configuration_id: line.configuration_id ?? null,
+        rule_set_id: line.rule_set_id ?? null,
+        snapshot_id: line.snapshot_id ?? null,
+        zone_id: line.component_id,
+      },
+      source_zone_id: line.component_id,
+      unit_of_measure: line.unit_of_measure,
+      waste_quantity: line.waste_quantity,
+    };
+    return JSON.stringify(sortKeysDeep(subset));
+  });
+  const canonical = canonicalParts.join(',');
+  return computeSha256(canonical);
+}
+
 export const useFinalizationStore = create<FinalizationStore>((set, get) => ({
   ...initialState,
 
@@ -74,8 +114,44 @@ export const useFinalizationStore = create<FinalizationStore>((set, get) => ({
         throw new Error('User not authenticated');
       }
 
-      const timestamp = new Date().toISOString();
-      const computedHash = await computeSha256(projectId + finalizationKey + timestamp);
+      // Precondition: project must be VALIDATED with a current_actual_bom_id
+      const project = useProjectStore.getState().currentProject;
+      if (!project || project.status !== 'VALIDATED') {
+        throw new Error('Project must be in VALIDATED status to finalize');
+      }
+      if (!project.current_actual_bom_id) {
+        throw new Error('Project has no current actual BOM');
+      }
+
+      // Fetch persisted actual_bom_line rows from DB for hash computation
+      const { data: bomLines, error: linesError } = await fromTable('actual_bom_line')
+        .select('*')
+        .eq('actual_bom_id', project.current_actual_bom_id)
+        .order('actual_bom_line_id');
+
+      if (linesError) throw linesError;
+      if (!bomLines || bomLines.length === 0) {
+        throw new Error('No BOM lines found for the current actual BOM');
+      }
+
+      // Fetch actual_bom metadata for lineage fields
+      const { data: actualBom, error: bomError } = await fromTable('actual_bom')
+        .select('actual_bom_id, configuration_id, rule_set_id')
+        .eq('actual_bom_id', project.current_actual_bom_id)
+        .single();
+
+      if (bomError) throw bomError;
+
+      // Enrich lines with lineage metadata for hash computation
+      const enrichedLines = bomLines.map((line: Record<string, unknown>) => ({
+        ...line,
+        snapshot_id: project.snapshot_id,
+        configuration_id: actualBom?.configuration_id ?? null,
+        rule_set_id: actualBom?.rule_set_id ?? null,
+      }));
+
+      // Compute hash from the persisted DB rows (not from Zustand memory)
+      const computedHash = await computeHashFromLines(enrichedLines);
 
       const { data, error } = await supabase.rpc('finalize_project', {
         p_project_id: projectId,
@@ -92,11 +168,7 @@ export const useFinalizationStore = create<FinalizationStore>((set, get) => ({
       }
 
       const finalBomId = data;
-
-      // Use the client-computed timestamp as the approximate finalized_at.
-      // The server records its own `now()` for the authoritative value;
-      // this client timestamp is for immediate display only.
-      const finalizedAt = timestamp;
+      const finalizedAt = new Date().toISOString();
 
       // Update the project status in projectStore to FINALIZED
       const projectState = useProjectStore.getState();

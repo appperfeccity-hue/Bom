@@ -1,0 +1,34 @@
+{
+  "id": "FEAT-001",
+  "type": "feat",
+  "description": "Redesign the Design Library UI to match the premium interior-design reference aesthetic. This transforms the current basic grid with dropdown filters into an immersive, image-first gallery experience with: (1) 'Explore designs for' horizontal category cards for room types based on wall_application field, (2) 'Explore all looks' visual material/style swatches based on design families, (3) Smart filter bar with category chips replacing dropdown selects, (4) Template grid with large image cards featuring a heart/favorite toggle, design name overlay, and approximate price indicator, (5) Overall premium warm/minimal aesthetic using the existing design system tokens.",
+  "status": "completed",
+  "steps": [
+    "Create a new CSS module or stylesheet for the redesigned Design Library at frontend/src/styles/design-library.css with styles for: category cards (horizontal scroll), material swatches, filter chips, image-first template cards with heart button and overlay text, using existing CSS custom properties from design-system.css.",
+    "Create a new component frontend/src/components/ProjectCreation/CategoryCarousel.tsx - horizontal row of clickable room-type category cards ('Living Room', 'TV Unit', 'Bedroom', etc.) derived from wall_application values in the store. Each card should have a placeholder image area with warm gradient, the room type name, and on-click should filter the templates. Section header: 'Explore designs for'.",
+    "Create a new component frontend/src/components/ProjectCreation/LookSwatches.tsx - horizontal row of circular or rounded visual swatches representing design families (derived from store.designFamilies). Each swatch shows the family name (e.g., 'Marble', 'Wooden', 'Modern', 'Minimalist'). On click filters by design family. Section header: 'Explore all looks'.",
+    "Create a new component frontend/src/components/ProjectCreation/FilterChipBar.tsx - horizontal bar of filter chips showing active filters (selected wall_application, design family, geometry, availability, price range). Each chip has an 'x' to clear it. Replaces the current <select> dropdowns. Include a 'Clear all' option when multiple filters are active.",
+    "Redesign the EnhancedTemplateCard component (frontend/src/components/ProjectCreation/EnhancedTemplateCard.tsx) to be an image-first large card: tall aspect ratio with placeholder gradient image area (top 65%), heart/favorite button in top-right corner, design name and design family at bottom, availability indicator as a subtle dot or ribbon, approximate price shown if metadata contains pricing. Keep all existing data-testid attributes and the onSelect/onPreview callbacks.",
+    "Rewrite the main DesignLibrary component (frontend/src/components/ProjectCreation/DesignLibrary.tsx) to compose all the above: show CategoryCarousel at top, then LookSwatches, then FilterChipBar, then the template grid (using the redesigned EnhancedTemplateCard). Maintain the existing data-testid='design-library' on the root. Preserve all existing store connections and the fetchTemplatesWithAvailability call on mount. Keep the TemplatePreviewPanel integration.",
+    "Update the TemplatePreviewPanel (frontend/src/components/ProjectCreation/TemplatePreviewPanel.tsx) to align with the new premium aesthetic - larger preview image area, warmer typography, refined spacing using design system tokens.",
+    "Update the barrel export at frontend/src/components/ProjectCreation/index.ts to include the new sub-components (CategoryCarousel, LookSwatches, FilterChipBar).",
+    "Update existing tests in frontend/src/components/ProjectCreation/__tests__/ to work with the redesigned components. Ensure all key tests still pass: template cards render, select/preview buttons work, filters work, loading/error states display. Add new test cases for CategoryCarousel click filtering and FilterChipBar chip removal.",
+    "Import the new design-library.css stylesheet in the appropriate entry point (likely frontend/src/styles/ or via the component) so styles are loaded."
+  ],
+  "acceptance_criteria": [
+    "Running 'cd /projects/sandbox/Bom/frontend && NODE_OPTIONS=\"\" npx vitest run' passes all tests including new and updated ones",
+    "Running 'cd /projects/sandbox/Bom/frontend && NODE_OPTIONS=\"\" npm run build' succeeds with no TypeScript errors",
+    "The DesignLibrary component renders CategoryCarousel, LookSwatches, FilterChipBar, and the image-first template grid",
+    "data-testid='design-library' is preserved on the root element",
+    "data-testid='template-card' is preserved on each card",
+    "Template selection (onSelect) and preview (onPreview) callbacks continue to work",
+    "The store's filter logic (search, designFamilyId, wallGeometry, availability) is driven by the new UI without changing the store itself",
+    "All existing test behaviors pass (loading state, error state, empty state, card rendering, selection flow)"
+  ],
+  "verification": [
+    "cd /projects/sandbox/Bom/frontend && NODE_OPTIONS=\"\" npx vitest run",
+    "cd /projects/sandbox/Bom/frontend && NODE_OPTIONS=\"\" npm run build"
+  ],
+  "blocked_reason": null,
+  "findings": "All 1205 unit tests pass. Build succeeds. The EnhancedTemplateCard availability badge was converted from visible text to a dot indicator, with visually-hidden text to maintain test compatibility (tests assert on textContent). The CategoryCarousel derives categories from wall_application field on the full templates[] array (not filteredTemplates) so categories remain visible even when other filters are applied. The category filter is local UI state layered on top of the store's existing filter system to avoid modifying the store."
+}

@@ -18,6 +18,7 @@ export function TemplateFilters() {
   const geometryOptions: Array<{ label: string; value: WallGeometryType | null }> = [
     { label: 'All', value: null },
     { label: 'STRAIGHT', value: 'STRAIGHT' },
+    { label: 'L_SHAPE', value: 'L_SHAPE' },
     { label: 'L_CORNER', value: 'L_CORNER' },
   ];
 

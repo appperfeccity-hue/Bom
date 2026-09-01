@@ -1,0 +1,26 @@
+{
+  "id": "FEAT-003",
+  "type": "feat",
+  "description": "Add comprehensive unit tests for the designLibraryStore and the enhanced DesignLibrary UI components. Tests should cover availability calculation, filtering, grouping, blocked-reason display, and the template preview panel.",
+  "status": "completed",
+  "steps": [
+    "Create frontend/src/stores/__tests__/designLibraryStore.test.ts following the pattern in projectCreationStore.test.ts: (a) mock @/lib/supabase, (b) test fetchTemplatesWithAvailability - templates with all ACTIVE SKUs and READY catalogue get AVAILABLE status, (c) test that templates with INACTIVE SKU get BLOCKED with reason, (d) test that templates with non-READY catalogue get BLOCKED with reason, (e) test filter actions (search, designFamily, wallGeometry, availability), (f) test groupByDesignFamily returns correct grouping, (g) test selectTemplateForPreview/clearPreview, (h) test error handling when fetch fails, (i) test loading state transitions",
+    "Create frontend/src/components/ProjectCreation/__tests__/DesignLibrary.test.tsx (or update the existing test in ProjectCreationWizard.test.tsx) to test the enhanced DesignLibrary: (a) renders search input and filter controls, (b) displays templates grouped by design family, (c) shows AVAILABLE/BLOCKED badges on cards, (d) BLOCKED templates have disabled Select button, (e) clicking Preview opens the preview panel, (f) search input filters displayed templates, (g) shows blocked reasons for BLOCKED templates",
+    "Create frontend/src/components/ProjectCreation/__tests__/TemplatePreviewPanel.test.tsx: (a) renders template details (name, description, geometry, adaptation strategy, design family), (b) shows availability status and blocked reasons if BLOCKED, (c) Select button disabled when BLOCKED, (d) Select button calls projectCreationStore.selectTemplate when clicked and AVAILABLE, (e) Close button calls clearPreview",
+    "Ensure all new tests use vi.mock('@/lib/supabase') pattern consistent with existing test files and use makeTemplate() helpers for test data creation"
+  ],
+  "acceptance_criteria": [
+    "All new store tests pass covering availability calculation (AVAILABLE and BLOCKED cases)",
+    "All new component tests pass covering UI rendering, interaction, and state integration",
+    "Tests cover edge cases: no templates, all blocked, mixed availability, empty design family",
+    "Test count increases by at least 20 new test cases",
+    "All 1144+ existing tests still pass",
+    "No test uses real Supabase calls - all properly mocked"
+  ],
+  "verification": [
+    "cd frontend && NODE_OPTIONS=\"\" npx vitest run",
+    "cd frontend && npm run typecheck"
+  ],
+  "blocked_reason": null,
+  "findings": "61 new tests added (26 store + 18 card + 17 panel). Total test count increased from 1144 to 1205. All pass. The fromTable mock requires per-call mockImplementation with a callIndex counter since the store makes 6 sequential queries. E2E tests still fail due to missing SUPABASE_URL (pre-existing, documented in context)."
+}

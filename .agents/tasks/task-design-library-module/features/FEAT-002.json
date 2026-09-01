@@ -1,0 +1,35 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "Enhance the DesignLibrary component with search bar, filter controls (design family, wall geometry, availability), Design Family grouping display, availability badges, blocked-reason tooltips, and a template detail/preview panel. Replace the basic grid with an enhanced gallery.",
+  "status": "completed",
+  "steps": [
+    "Refactor frontend/src/components/ProjectCreation/DesignLibrary.tsx to use the new useDesignLibraryStore instead of useProjectCreationStore for template fetching. Keep using useProjectCreationStore.selectTemplate for template selection (project creation flow unchanged).",
+    "Add a search input at the top of the Design Library (data-testid='design-library-search') that calls setSearchFilter on the designLibraryStore",
+    "Add filter controls row below search: (a) Design Family dropdown (data-testid='design-library-family-filter') populated from designFamilies in the store, (b) Wall Geometry dropdown (data-testid='design-library-geometry-filter') with STRAIGHT/L_CORNER options, (c) Availability toggle/dropdown (data-testid='design-library-availability-filter') with ALL/AVAILABLE/BLOCKED options",
+    "Display templates grouped by Design Family in collapsible sections. Each section has a header with the family name and template count. Templates within each group are displayed in a grid (same grid pattern as before but within sections)",
+    "Create a new frontend/src/components/ProjectCreation/EnhancedTemplateCard.tsx component that extends TemplateCard with: (a) availability badge - green 'AVAILABLE' or red 'BLOCKED' indicator (data-testid='availability-badge'), (b) if BLOCKED: show blocked reasons as a list below the card details (data-testid='blocked-reasons'), (c) a 'Preview' button (data-testid='template-preview-btn') in addition to Select, (d) the Select button is disabled when template is BLOCKED (data-testid='template-select-btn' with disabled attribute), (e) design family name shown as a subtle label",
+    "Create a frontend/src/components/ProjectCreation/TemplatePreviewPanel.tsx component: a slide-in side panel (similar to ProjectCreationWizard pattern) showing template details - name, description, wall geometry details, adaptation strategy, zone count (from metadata or a count), design family, availability status with blocked reasons if any, and a 'Select Template' button (disabled if BLOCKED). Include a close button. Use data-testid='template-preview-panel'.",
+    "Wire up the Preview button on EnhancedTemplateCard to call selectTemplateForPreview, which shows the TemplatePreviewPanel. The Select button on the preview panel calls useProjectCreationStore.selectTemplate to continue the project creation flow.",
+    "Ensure the Design Library still shows 'Loading templates...' during fetch, error state, and 'No templates available' empty state (preserving existing behavior for edge cases)"
+  ],
+  "acceptance_criteria": [
+    "DesignLibrary renders search input, filter dropdowns, and template cards grouped by design family",
+    "Search filters templates by name/description in real-time (client-side)",
+    "Design family filter shows only templates from selected family",
+    "Availability filter toggles between ALL/AVAILABLE/BLOCKED views",
+    "BLOCKED templates show red badge and blocked reasons, with disabled Select button",
+    "AVAILABLE templates show green badge and enabled Select button",
+    "Preview button opens TemplatePreviewPanel with full template details",
+    "Selecting a template from either card or preview panel triggers projectCreationStore.selectTemplate",
+    "All existing ProjectCreationWizard tests still pass (component API unchanged for wizard flow)",
+    "TypeScript compiles without errors"
+  ],
+  "verification": [
+    "cd frontend && npm run typecheck",
+    "cd frontend && NODE_OPTIONS=\"\" npx vitest run",
+    "cd frontend && npm run build"
+  ],
+  "blocked_reason": null,
+  "findings": "All 1144 unit tests pass. Build succeeds. Only pre-existing TS error (ValidationOverlayLayer.tsx errorCount unused variable). Updated existing test file to mock useDesignLibraryStore instead of useProjectCreationStore for DesignLibrary tests. The empty state logic checks that no filters are active before showing 'No templates available' to distinguish from a 'no results for filter' state."
+}

@@ -1,0 +1,27 @@
+{
+  "id": "FEAT-007",
+  "type": "feat",
+  "description": "Phase 5 - Finalization wiring: Create migration v1.2.2 with finalization integrity fixes (server-side hash computation and proper source_trace/source_zone_id population). Update finalizationStore to fetch actual_bom_lines from DB for hash computation and add precondition checks.",
+  "status": "completed",
+  "steps": [
+    "Create migrations/v1.2.2_finalization_integrity.sql with: (a) CREATE OR REPLACE FUNCTION perfecity.finalize_project (same signature as existing) that fixes two defects: D6 - compute final_bom_hash server-side from the inserted final_bom_line rows (sha256 of canonical JSON of all lines ordered by actual_bom_line_id) and treat p_computed_final_hash as an assertion (raise on mismatch), D7 - populate source_trace with {snapshot_id, configuration_id, actual_bom_id, actual_bom_line_id, rule_set_id, zone_id} and put the real zone id from actual_bom_line.component_id into source_zone_id. The function body rebuilds the finalize_project function from v1.1.6 with these two fixes applied.",
+    "Update frontend/src/stores/finalizationStore.ts confirmFinalization: (a) Add precondition check before calling RPC: verify project.status='VALIDATED' and current_actual_bom_id is non-null, (b) Change hash computation: fetch persisted actual_bom_line rows from DB (SELECT * FROM actual_bom_line WHERE actual_bom_id = project.current_actual_bom_id ORDER BY actual_bom_line_id), then compute p_computed_final_hash from those DB rows (not from Zustand memory) using sortKeysDeep + sha256, (c) Keep the existing RPC call with the computed hash.",
+    "Update frontend/src/stores/__tests__/finalizationStore.test.ts: (a) Test precondition check rejects finalization when project is not VALIDATED, (b) Test that hash is computed from fetched actual_bom_line rows, (c) Test error handling when hash mismatch occurs.",
+    "Add SQL test file tests/regression_v1.2.2.sql with structural assertions: finalize_project function exists, verify it computes hash server-side (check function source contains sha256/encode pattern)."
+  ],
+  "acceptance_criteria": [
+    "migrations/v1.2.2_finalization_integrity.sql is syntactically valid SQL",
+    "finalize_project computes final_bom_hash server-side and raises on mismatch with p_computed_final_hash",
+    "source_trace in final_bom_line is populated with {snapshot_id, configuration_id, actual_bom_id, actual_bom_line_id, rule_set_id, zone_id}",
+    "finalizationStore fetches actual_bom_lines from DB before computing hash (not from Zustand memory)",
+    "finalizationStore checks project.status='VALIDATED' before calling RPC",
+    "All vitest tests pass",
+    "TypeScript type-checking passes"
+  ],
+  "verification": [
+    "cd frontend && npx vitest run",
+    "cd frontend && npx tsc --noEmit"
+  ],
+  "blocked_reason": null,
+  "findings": "All 1357 vitest tests pass. TypeScript has only the 3 pre-existing TS6133/TS6196 errors. Build succeeds. The finalizationStore now fetches actual_bom_line rows from DB via fromTable and computes hash from those persisted rows (not Zustand memory). Precondition checks for project.status=VALIDATED and current_actual_bom_id non-null are enforced before calling the RPC. The P0 finalizationConcurrency tests and Finalization component tests were updated to set up project state with current_actual_bom_id and proper fromTable mock chains (including .order() and .single()). The migration v1.2.2 replaces finalize_project with server-side sha256 hash computation and proper source_trace lineage population."
+}

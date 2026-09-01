@@ -51,9 +51,61 @@ export interface WallPanelOutput {
   retainedHeight: number;
 }
 
+// --- Installation Area (spec sections 9-14) ---
+
+/** Axis-aligned rectangle in wall millimetre space. */
+export interface EdgeRect {
+  x_mm: number;
+  y_mm: number;
+  width_mm: number;
+  height_mm: number;
+}
+
+/** Whether the design covers the whole wall or only part of it. */
+export type InstallationAreaCoverage = 'FULL' | 'PARTIAL';
+
+/**
+ * Parent region of all zones. Zones must be bounded by `outerEdge`, which for
+ * PARTIAL coverage is smaller than the wall itself.
+ */
+export interface InstallationArea {
+  coverage: InstallationAreaCoverage;
+  outerEdge: EdgeRect;
+}
+
+/** Zone boundaries derived from zone geometry; never persisted. */
+export interface ZoneEdges {
+  /** Boundary against the installation area. */
+  outerEdge: EdgeRect;
+  /** Boundary of the zone <-> SKU relationship. */
+  innerEdge: EdgeRect;
+  /** width_mm * height_mm in mm^2. */
+  zoneArea: number;
+}
+
 // --- Light Engine ---
 
 export type MountingType = 'DIRECT' | 'PROFILE' | 'COVE';
+
+/** Physical layers a light is installed between (spec sections 18-20). */
+export type LightingLayerElement = 'WALL' | 'STRUCTURE' | 'LIGHT' | 'PANEL';
+
+/** Surface the luminaire is physically fixed to. */
+export type LightingMountingSurface = 'WALL' | 'PANEL_FACE' | 'STRUCTURE';
+
+/** Installation geometry of a mounting type; distinct from its quantity offset. */
+export interface LightingInstallationGeometry {
+  mountingType: MountingType;
+  /** Front-to-back build-up, wall first. */
+  layerOrder: LightingLayerElement[];
+  mountingSurface: LightingMountingSurface;
+  /** COVE only: a structure creates the pocket the light sits in. */
+  requiresStructure: boolean;
+  /** True when the light occupies Z-depth between the wall and the panel. */
+  createsZDepthBetweenWallAndPanel: boolean;
+  /** Per-edge offset used by lightEngine quantity math. */
+  offsetMm: number;
+}
 export type LightMode = 'DISCRETE' | 'LINEAR';
 
 export interface LightEdge {
@@ -148,8 +200,12 @@ export interface HiddenComponentOutput {
 
 // --- Wall Configuration Engine ---
 
-/** Wall type (straight or L-shaped corner). */
-export type WallType = 'STRAIGHT' | 'L_CORNER';
+/**
+ * Wall type (straight or L-shaped corner).
+ * L_SHAPE is canonical; L_CORNER is the legacy alias kept for frozen snapshots.
+ * Use the helpers in ./wallType to compare values.
+ */
+export type WallType = 'STRAIGHT' | 'L_CORNER' | 'L_SHAPE';
 
 /** Panel fit algorithm for distributing panel widths across columns. */
 export type FitAlgorithm =
@@ -168,7 +224,7 @@ export type WallMountingType = 'DIRECT' | 'PROFILE' | 'RAIL';
 /** Type of obstruction on the wall. */
 export type ObstructionType = 'WINDOW' | 'DOOR' | 'PILLAR' | 'CUSTOM';
 
-/** Wall segment identifier for L_CORNER walls. */
+/** Wall segment identifier for L_SHAPE (legacy L_CORNER) walls. */
 export type WallSegment = 'SEGMENT_A' | 'SEGMENT_B';
 
 /** An obstruction (protected area) that panels cannot overlap. */
@@ -187,7 +243,7 @@ export interface Obstruction {
 
 /** Input configuration for the wall configuration engine. */
 export interface WallConfigInput {
-  /** Wall type (STRAIGHT or L_CORNER) */
+  /** Wall type (STRAIGHT or L_SHAPE; legacy L_CORNER accepted) */
   wall_type: WallType;
   /** Total wall width in mm */
   total_width_mm: number;
@@ -207,10 +263,12 @@ export interface WallConfigInput {
   mounting_type: WallMountingType;
   /** Array of obstructions (protected areas) */
   obstructions: Obstruction[];
-  /** Segment A width for L_CORNER walls (optional) */
+  /** Segment A width for L_SHAPE walls (optional) */
   segment_a_width_mm?: number;
-  /** Segment B width for L_CORNER walls (optional) */
+  /** Segment B width for L_SHAPE walls (optional) */
   segment_b_width_mm?: number;
+  /** Installation area bounding zones (optional; absent means FULL wall coverage) */
+  installation_area?: InstallationArea | null;
   /** Left edge margin in mm (space between wall left edge and first panel) */
   edge_margin_left_mm?: number;
   /** Right edge margin in mm (space between last panel and wall right edge) */
@@ -233,7 +291,7 @@ export interface PanelFrame {
   width_mm: number;
   /** Panel frame height in mm */
   height_mm: number;
-  /** Wall segment (for L_CORNER walls) or null */
+  /** Wall segment (for L_SHAPE walls) or null */
   segment: WallSegment | null;
   /** Whether this panel is at an edge of the wall */
   is_edge_panel: boolean;

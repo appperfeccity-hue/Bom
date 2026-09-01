@@ -1,0 +1,36 @@
+{
+  "id": "FEAT-001",
+  "type": "feat",
+  "description": "Redesign WallConfigPanel.tsx for professional CAD/CPQ-style clarity, compact layout, strong hierarchy, consistent design tokens, and improved UX while preserving all existing data-testid attributes and business logic",
+  "status": "completed",
+  "steps": [
+    "Refactor frontend/src/components/WallConfigPanel.tsx inline style constants to use CSS custom properties from design-system.css (--color-*, --space-*, --radius-*, --text-*) instead of hard-coded hex values. Keep inline styles but reference var() where supported, or use the existing CSS utility classes from components.css (.input, .btn-primary, .btn-secondary, .panel, .panel-header).",
+    "Restructure the panel layout for clear section hierarchy: (1) Panel header with title. (2) Wall Type section with clear Straight/L-Corner indication, Wall dimensions with 'mm' unit labels. (3) For L-Corner walls, show Segment A/B width fields (config.segment_a_width_mm / segment_b_width_mm). (4) Panel Layout section (rows, columns, fit algorithm, fit intensity). (5) Spacing section (panel gap, edge margins). (6) Mounting section. (7) Lighting section. (8) Furniture section. (9) Generated panel count status.",
+    "Improve visual grouping: use subtle background (--color-canvas) for section groups instead of excessive borders. Add compact section dividers with thin --color-hairline lines between major sections. Use consistent --space-2 gap within sections and --space-4 between sections.",
+    "Improve form controls: (a) Consistent 32px height for all inputs/selects matching .input class. (b) Clear focus states using --color-accent ring. (c) Numeric inputs should show 'mm' unit suffix inline or in label. (d) Read-only fields should have --color-canvas background and --color-ink-secondary text. (e) Range slider (fit intensity) should show current value prominently.",
+    "Improve disabled/read-only states: Wall Type field should be visually distinct as read-only (different background, no cursor). Use INPUT_READONLY_STYLE pattern consistently.",
+    "Improve Lighting and Furniture sub-sections: (a) Compact item list with subtle alternating or grouped styling. (b) Remove buttons should be small, icon-like, with clear destructive color. (c) Add forms should be collapsible or compact (progressive disclosure). (d) Clear visual separation between the 'add new' form and the existing items list.",
+    "Improve the Generated Panels status indicator: make it a compact, always-visible status chip at the bottom rather than a full-width card. Use monospace font for the count value.",
+    "Ensure the generation error banner remains prominent with error color and clear messaging.",
+    "Preserve ALL existing data-testid attributes exactly as they are: wall-config-panel, generation-error, input-wall-type, input-total-width, input-total-height, select-rows, input-columns, select-fit-algorithm, input-fit-intensity, input-panel-gap, input-edge-margin-left, input-edge-margin-right, select-mounting-type, lighting-section, select-edge-selection, select-lighting-mounting-type, add-light-btn, lighting-item-*, remove-light-*, furniture-section, input-position-x, input-position-y, select-orientation, add-furniture-btn, furniture-item-*, remove-furniture-*, frame-count.",
+    "Ensure responsive behavior: panel should remain usable at 280px width (tablet breakpoint). Controls should not overflow."
+  ],
+  "acceptance_criteria": [
+    "All existing data-testid attributes are preserved with identical names",
+    "TypeScript type check passes (npm run typecheck)",
+    "Build succeeds (npm run build)",
+    "No business logic changes - all callbacks (handleNumberChange, handleFitAlgorithmChange, etc.) remain functionally identical",
+    "Panel uses design system tokens consistently instead of hard-coded hex values",
+    "Section hierarchy is visually clear with distinct grouping",
+    "All form inputs have consistent 32px height",
+    "Read-only fields are visually distinct from editable fields",
+    "Generated panels count remains visible at bottom"
+  ],
+  "verification": [
+    "cd /projects/sandbox/Bom/frontend && npm run typecheck",
+    "cd /projects/sandbox/Bom/frontend && npm run build",
+    "cd /projects/sandbox/Bom/frontend && NODE_OPTIONS=\"\" npx vitest run src/stores/__tests__/wallConfigStore.test.ts"
+  ],
+  "blocked_reason": null,
+  "findings": "Pre-existing typecheck error in ValidationOverlayLayer.tsx (TS6133 unused var) - not caused by this change. All 1144 unit/component tests pass. 8 e2e suites fail due to missing SUPABASE_URL env var (pre-existing). Build succeeds cleanly. Progressive disclosure for Lighting/Furniture add forms hides the form fields until user clicks + Add, but data-testid attributes are all preserved (no tests reference the form-level testids directly)."
+}

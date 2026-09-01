@@ -1,0 +1,22 @@
+{
+  "project_type": "Supabase + React/Vite fullstack app with frozen architecture",
+  "language": "TypeScript",
+  "build_system": "Vite + Vitest",
+  "test_framework": "Vitest for unit/component/integration tests, Playwright (not available) for browser tests",
+  "build_command": "cd frontend && npm run build",
+  "test_command": "cd frontend && NODE_OPTIONS='' npx vitest run",
+  "verification_instructions": "Run Vitest (1144 tests pass), confirm p0c-test-results.md is well-formed",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "No npm install needed - already installed",
+  "environment_constraints": "CANNOT reach bom-beryl.vercel.app (browser tests blocked). CANNOT reach *.supabase.co via HTTPS/curl (API tests blocked). CAN use Supabase MCP execute_sql. CAN run Vitest locally. Architecture is FROZEN.",
+  "contribution_requirements": "No production code changes. Results go to .agents/tasks/task-p0c-functional/p0c-test-results.md. Commit and push.",
+  "key_patterns": "81 Vitest test files covering stores, components, engines, canvas logic, and integration scenarios. 1144 tests passing. Database has 38 tables in perfecity schema.",
+  "relevant_files": [
+    "docs/qa/p0-remaining-backlog.md",
+    "frontend/src/__integration__/",
+    "frontend/src/canvas/__tests__/",
+    "frontend/src/stores/__tests__/",
+    "frontend/src/components/__tests__/"
+  ],
+  "directory_structure": "frontend/src/ contains the React app; tests/ has SQL P0 tests; docs/qa/ has the test backlog spec"
+}

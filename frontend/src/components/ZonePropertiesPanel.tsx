@@ -7,6 +7,103 @@ import { useZoneValidation } from '@/canvas/utils/useZoneValidation';
 import { ZoneWidthStrategy, ZoneHeightStrategy } from '@/types/database';
 import type { TemplateZone } from '@/types/database';
 import { clampDimensions, constrainToWall, hasOverlap } from '@/canvas/utils/zoneConstraints';
+import { isLShape } from '@/engines/wallType';
+
+/* --- Design system inline style constants (matching WallConfigPanel) --- */
+const SECTION_HEADER_STYLE: React.CSSProperties = {
+  margin: 0,
+  padding: '0 0 var(--space-1)',
+  fontSize: 'var(--text-sm)',
+  fontWeight: 600,
+  color: 'var(--color-ink-secondary)',
+  textTransform: 'uppercase',
+  letterSpacing: '0.5px',
+};
+
+const LABEL_STYLE: React.CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '2px',
+  fontSize: 'var(--text-base)',
+  color: 'var(--color-ink-secondary)',
+  fontWeight: 400,
+};
+
+const INPUT_STYLE: React.CSSProperties = {
+  display: 'block',
+  width: '100%',
+  height: '32px',
+  padding: '0 8px',
+  boxSizing: 'border-box',
+  border: '1px solid var(--color-disabled)',
+  borderRadius: 'var(--radius-sm)',
+  backgroundColor: 'var(--color-surface)',
+  fontSize: 'var(--text-base)',
+  fontFamily: 'var(--font-sans)',
+  color: 'var(--color-ink-primary)',
+};
+
+const INPUT_READONLY_STYLE: React.CSSProperties = {
+  ...INPUT_STYLE,
+  backgroundColor: 'var(--color-canvas)',
+  color: 'var(--color-ink-secondary)',
+  cursor: 'default',
+};
+
+const SECTION_GROUP_STYLE: React.CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 'var(--space-2)',
+};
+
+const SECTION_DIVIDER_STYLE: React.CSSProperties = {
+  height: '1px',
+  backgroundColor: 'var(--color-hairline)',
+  border: 'none',
+  margin: 0,
+};
+
+const BUTTON_PRIMARY_STYLE: React.CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  height: '32px',
+  padding: '0 12px',
+  fontSize: 'var(--text-base)',
+  fontWeight: 500,
+  border: 'none',
+  borderRadius: 'var(--radius-sm)',
+  cursor: 'pointer',
+  backgroundColor: 'var(--color-accent)',
+  color: 'var(--color-surface)',
+  fontFamily: 'var(--font-sans)',
+};
+
+const BUTTON_DESTRUCTIVE_STYLE: React.CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  height: '28px',
+  padding: '0 10px',
+  fontSize: 'var(--text-sm)',
+  fontWeight: 500,
+  border: 'none',
+  borderRadius: 'var(--radius-sm)',
+  cursor: 'pointer',
+  backgroundColor: 'transparent',
+  color: 'var(--color-error)',
+  fontFamily: 'var(--font-sans)',
+};
+
+const MM_SUFFIX_STYLE: React.CSSProperties = {
+  position: 'absolute',
+  right: '8px',
+  top: '50%',
+  transform: 'translateY(-50%)',
+  fontSize: 'var(--text-xs)',
+  color: 'var(--color-ink-secondary)',
+  pointerEvents: 'none',
+};
 
 /**
  * Side panel for DESIGNER mode when a zone is selected.
@@ -29,25 +126,36 @@ export function ZonePropertiesPanel() {
   if (selection.selectedZoneIds.length > 1) {
     return (
       <div
-        className="zone-properties-panel"
+        className="zone-properties-panel panel"
         style={{
           width: '280px',
-          padding: '16px',
-          borderLeft: '1px solid #e0e0e0',
+          padding: 'var(--space-4)',
+          borderLeft: '1px solid var(--color-hairline)',
+          backgroundColor: 'var(--color-surface)',
           overflowY: 'auto',
+          fontFamily: 'var(--font-sans)',
         }}
         data-testid="zone-properties-panel"
       >
-        <h3 style={{ margin: '0 0 16px', fontSize: '14px', fontWeight: 600 }}>
+        <h3
+          style={{
+            margin: '0 0 var(--space-4)',
+            fontSize: 'var(--text-md)',
+            fontWeight: 600,
+            color: 'var(--color-ink-primary)',
+          }}
+        >
           Zone Properties
         </h3>
         <div
           style={{
-            padding: '12px',
-            backgroundColor: '#e3f2fd',
-            borderRadius: '4px',
-            fontSize: '13px',
-            color: '#1565c0',
+            padding: '10px 12px',
+            backgroundColor: 'rgba(154, 123, 79, 0.08)',
+            borderRadius: 'var(--radius-sm)',
+            border: '1px solid rgba(154, 123, 79, 0.2)',
+            fontSize: 'var(--text-base)',
+            color: 'var(--color-accent)',
+            fontWeight: 500,
           }}
           data-testid="multi-select-info"
         >
@@ -104,16 +212,26 @@ export function ZonePropertiesPanel() {
 
   return (
     <div
-      className="zone-properties-panel"
+      className="zone-properties-panel panel"
       style={{
         width: '280px',
-        padding: '16px',
-        borderLeft: '1px solid #e0e0e0',
+        padding: 'var(--space-4)',
+        borderLeft: '1px solid var(--color-hairline)',
+        backgroundColor: 'var(--color-surface)',
         overflowY: 'auto',
+        fontFamily: 'var(--font-sans)',
       }}
       data-testid="zone-properties-panel"
     >
-      <h3 style={{ margin: '0 0 16px', fontSize: '14px', fontWeight: 600 }}>
+      {/* Panel Header */}
+      <h3
+        style={{
+          margin: '0 0 var(--space-4)',
+          fontSize: 'var(--text-md)',
+          fontWeight: 600,
+          color: 'var(--color-ink-primary)',
+        }}
+      >
         Zone Properties
       </h3>
 
@@ -122,183 +240,247 @@ export function ZonePropertiesPanel() {
         <div
           data-testid="zone-validation-errors"
           style={{
-            marginBottom: '16px',
-            padding: '10px 12px',
-            backgroundColor: '#fbe9e7',
-            borderRadius: '4px',
-            border: '1px solid #f44336',
+            marginBottom: 'var(--space-4)',
+            padding: '8px 10px',
+            backgroundColor: 'rgba(176, 65, 62, 0.06)',
+            borderRadius: 'var(--radius-sm)',
+            border: '1px solid var(--color-error)',
           }}
         >
-          <div style={{ fontSize: '12px', fontWeight: 600, color: '#c62828', marginBottom: '6px' }}>
-            Validation Errors
-          </div>
-          <ul style={{ margin: 0, padding: '0 0 0 16px', listStyle: 'disc' }}>
-            {zoneValidation.errors.map((error, i) => (
-              <li key={i} style={{ fontSize: '12px', color: '#d32f2f', marginBottom: '4px' }}>
-                {error}
-              </li>
-            ))}
-          </ul>
+          {zoneValidation.errors.length === 1 ? (
+            <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-error)', fontWeight: 500 }}>
+              {zoneValidation.errors[0]}
+            </div>
+          ) : (
+            <>
+              <div style={{ fontSize: 'var(--text-sm)', fontWeight: 600, color: 'var(--color-error)', marginBottom: '4px' }}>
+                Validation Errors
+              </div>
+              <ul style={{ margin: 0, padding: '0 0 0 16px', listStyle: 'disc' }}>
+                {zoneValidation.errors.map((error, i) => (
+                  <li key={i} style={{ fontSize: 'var(--text-sm)', color: 'var(--color-error)', marginBottom: '2px' }}>
+                    {error}
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
         </div>
       )}
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        {/* Zone ID */}
-        <label style={{ fontSize: '13px' }}>
-          Zone ID
-          <input
-            type="text"
-            value={selectedZone.zone_id}
-            readOnly
-            style={{ display: 'block', width: '100%', marginTop: '4px', padding: '6px' }}
-            data-testid="input-zone-name"
-          />
-        </label>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+        {/* ─── Identity Section ─── */}
+        <section>
+          <h4 style={SECTION_HEADER_STYLE}>Identity</h4>
+          <div style={SECTION_GROUP_STYLE}>
+            {/* Zone ID */}
+            <label style={LABEL_STYLE}>
+              Zone ID
+              <input
+                type="text"
+                value={selectedZone.zone_id}
+                readOnly
+                style={INPUT_READONLY_STYLE}
+                data-testid="input-zone-name"
+              />
+            </label>
 
-        {/* Segment badge (L_CORNER only) */}
-        {wallGeometry === 'L_CORNER' && (
+            {/* Segment badge (L_SHAPE / legacy L_CORNER only) */}
+            {isLShape(wallGeometry) && (
+              <div
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  alignSelf: 'flex-start',
+                  padding: '4px 10px',
+                  borderRadius: 'var(--radius-sm)',
+                  fontSize: 'var(--text-sm)',
+                  fontWeight: 600,
+                  backgroundColor: selectedZone.segment === 'SEGMENT_A'
+                    ? 'rgba(63, 107, 79, 0.08)'
+                    : selectedZone.segment === 'SEGMENT_B'
+                      ? 'rgba(154, 123, 79, 0.08)'
+                      : 'var(--color-canvas)',
+                  color: selectedZone.segment === 'SEGMENT_A'
+                    ? 'var(--color-success)'
+                    : selectedZone.segment === 'SEGMENT_B'
+                      ? 'var(--color-accent)'
+                      : 'var(--color-ink-secondary)',
+                  border: `1px solid ${
+                    selectedZone.segment === 'SEGMENT_A'
+                      ? 'rgba(63, 107, 79, 0.3)'
+                      : selectedZone.segment === 'SEGMENT_B'
+                        ? 'rgba(154, 123, 79, 0.3)'
+                        : 'var(--color-disabled)'
+                  }`,
+                }}
+                data-testid="segment-badge"
+              >
+                {selectedZone.segment === 'SEGMENT_A'
+                  ? 'Segment A'
+                  : selectedZone.segment === 'SEGMENT_B'
+                    ? 'Segment B'
+                    : 'Unassigned'}
+              </div>
+            )}
+          </div>
+        </section>
+
+        <hr style={SECTION_DIVIDER_STYLE} />
+
+        {/* ─── Position Section ─── */}
+        <section>
+          <h4 style={SECTION_HEADER_STYLE}>Position</h4>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-2)' }}>
+            <label style={LABEL_STYLE}>
+              X
+              <div style={{ position: 'relative' }}>
+                <input
+                  type="number"
+                  value={selectedZone.x_mm}
+                  onChange={(e) => handleFieldChange('x_mm', parseInt(e.target.value, 10) || 0)}
+                  style={{ ...INPUT_STYLE, paddingRight: '32px' }}
+                  data-testid="input-zone-x"
+                />
+                <span style={MM_SUFFIX_STYLE}>mm</span>
+              </div>
+            </label>
+            <label style={LABEL_STYLE}>
+              Y
+              <div style={{ position: 'relative' }}>
+                <input
+                  type="number"
+                  value={selectedZone.y_mm}
+                  onChange={(e) => handleFieldChange('y_mm', parseInt(e.target.value, 10) || 0)}
+                  style={{ ...INPUT_STYLE, paddingRight: '32px' }}
+                  data-testid="input-zone-y"
+                />
+                <span style={MM_SUFFIX_STYLE}>mm</span>
+              </div>
+            </label>
+          </div>
+        </section>
+
+        <hr style={SECTION_DIVIDER_STYLE} />
+
+        {/* ─── Dimensions Section ─── */}
+        <section>
+          <h4 style={SECTION_HEADER_STYLE}>Dimensions</h4>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-2)' }}>
+            <label style={LABEL_STYLE}>
+              Width
+              <div style={{ position: 'relative' }}>
+                <input
+                  type="number"
+                  value={selectedZone.width_mm}
+                  onChange={(e) => handleFieldChange('width_mm', parseInt(e.target.value, 10) || 0)}
+                  style={{ ...INPUT_STYLE, paddingRight: '32px' }}
+                  data-testid="input-zone-width"
+                />
+                <span style={MM_SUFFIX_STYLE}>mm</span>
+              </div>
+            </label>
+            <label style={LABEL_STYLE}>
+              Height
+              <div style={{ position: 'relative' }}>
+                <input
+                  type="number"
+                  value={selectedZone.height_mm}
+                  onChange={(e) => handleFieldChange('height_mm', parseInt(e.target.value, 10) || 0)}
+                  style={{ ...INPUT_STYLE, paddingRight: '32px' }}
+                  data-testid="input-zone-height"
+                />
+                <span style={MM_SUFFIX_STYLE}>mm</span>
+              </div>
+            </label>
+          </div>
+        </section>
+
+        <hr style={SECTION_DIVIDER_STYLE} />
+
+        {/* ─── Strategy Section ─── */}
+        <section>
+          <h4 style={SECTION_HEADER_STYLE}>Strategy</h4>
+          <div style={SECTION_GROUP_STYLE}>
+            {/* Width Strategy */}
+            <label style={LABEL_STYLE}>
+              Width Strategy
+              <select
+                value={selectedZone.width_strategy}
+                onChange={(e) => handleFieldChange('width_strategy', e.target.value)}
+                style={INPUT_STYLE}
+                data-testid="select-width-strategy"
+              >
+                {Object.values(ZoneWidthStrategy).map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+            </label>
+
+            {/* Height Strategy */}
+            <label style={LABEL_STYLE}>
+              Height Strategy
+              <select
+                value={selectedZone.height_strategy}
+                onChange={(e) => handleFieldChange('height_strategy', e.target.value)}
+                style={INPUT_STYLE}
+                data-testid="select-height-strategy"
+              >
+                {Object.values(ZoneHeightStrategy).map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+            </label>
+          </div>
+        </section>
+
+        <hr style={SECTION_DIVIDER_STYLE} />
+
+        {/* ─── SKU Assignment Section ─── */}
+        <section>
+          <h4 style={SECTION_HEADER_STYLE}>SKU Assignment</h4>
           <div
             style={{
-              display: 'inline-block',
-              padding: '4px 8px',
-              borderRadius: '4px',
-              fontSize: '12px',
-              fontWeight: 600,
-              backgroundColor: selectedZone.segment === 'SEGMENT_A'
-                ? '#e8f5e9'
-                : selectedZone.segment === 'SEGMENT_B'
-                  ? '#e3f2fd'
-                  : '#fff3e0',
-              color: selectedZone.segment === 'SEGMENT_A'
-                ? '#2e7d32'
-                : selectedZone.segment === 'SEGMENT_B'
-                  ? '#1565c0'
-                  : '#e65100',
-              border: `1px solid ${
-                selectedZone.segment === 'SEGMENT_A'
-                  ? '#a5d6a7'
-                  : selectedZone.segment === 'SEGMENT_B'
-                    ? '#90caf9'
-                    : '#ffcc80'
-              }`,
+              padding: '10px 12px',
+              backgroundColor: 'var(--color-canvas)',
+              borderRadius: 'var(--radius-sm)',
+              border: '1px solid var(--color-hairline)',
             }}
-            data-testid="segment-badge"
           >
-            {selectedZone.segment === 'SEGMENT_A'
-              ? 'Segment A'
-              : selectedZone.segment === 'SEGMENT_B'
-                ? 'Segment B'
-                : 'Unassigned'}
-          </div>
-        )}
-
-        {/* Position */}
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <label style={{ flex: 1, fontSize: '13px' }}>
-            X (mm)
-            <input
-              type="number"
-              value={selectedZone.x_mm}
-              onChange={(e) => handleFieldChange('x_mm', parseInt(e.target.value, 10) || 0)}
-              style={{ display: 'block', width: '100%', marginTop: '4px', padding: '6px' }}
-              data-testid="input-zone-x"
-            />
-          </label>
-          <label style={{ flex: 1, fontSize: '13px' }}>
-            Y (mm)
-            <input
-              type="number"
-              value={selectedZone.y_mm}
-              onChange={(e) => handleFieldChange('y_mm', parseInt(e.target.value, 10) || 0)}
-              style={{ display: 'block', width: '100%', marginTop: '4px', padding: '6px' }}
-              data-testid="input-zone-y"
-            />
-          </label>
-        </div>
-
-        {/* Dimensions */}
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <label style={{ flex: 1, fontSize: '13px' }}>
-            Width (mm)
-            <input
-              type="number"
-              value={selectedZone.width_mm}
-              onChange={(e) => handleFieldChange('width_mm', parseInt(e.target.value, 10) || 0)}
-              style={{ display: 'block', width: '100%', marginTop: '4px', padding: '6px' }}
-              data-testid="input-zone-width"
-            />
-          </label>
-          <label style={{ flex: 1, fontSize: '13px' }}>
-            Height (mm)
-            <input
-              type="number"
-              value={selectedZone.height_mm}
-              onChange={(e) => handleFieldChange('height_mm', parseInt(e.target.value, 10) || 0)}
-              style={{ display: 'block', width: '100%', marginTop: '4px', padding: '6px' }}
-              data-testid="input-zone-height"
-            />
-          </label>
-        </div>
-
-        {/* Width Strategy */}
-        <label style={{ fontSize: '13px' }}>
-          Width Strategy
-          <select
-            value={selectedZone.width_strategy}
-            onChange={(e) => handleFieldChange('width_strategy', e.target.value)}
-            style={{ display: 'block', width: '100%', marginTop: '4px', padding: '6px' }}
-            data-testid="select-width-strategy"
-          >
-            {Object.values(ZoneWidthStrategy).map((s) => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </select>
-        </label>
-
-        {/* Height Strategy */}
-        <label style={{ fontSize: '13px' }}>
-          Height Strategy
-          <select
-            value={selectedZone.height_strategy}
-            onChange={(e) => handleFieldChange('height_strategy', e.target.value)}
-            style={{ display: 'block', width: '100%', marginTop: '4px', padding: '6px' }}
-            data-testid="select-height-strategy"
-          >
-            {Object.values(ZoneHeightStrategy).map((s) => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </select>
-        </label>
-
-        {/* Assigned SKU */}
-        <div style={{ marginTop: '8px', padding: '8px', backgroundColor: '#f5f5f5', borderRadius: '4px' }}>
-          <div style={{ fontSize: '12px', color: '#666', marginBottom: '4px' }}>Assigned SKU</div>
-          {sku ? (
-            <div style={{ fontSize: '13px' }}>
-              <strong>{sku.sku_code}</strong>
-              <br />
-              {sku.material} {sku.colour}
+            {sku ? (
+              <div style={{ marginBottom: 'var(--space-2)' }}>
+                <div style={{ fontSize: 'var(--text-base)', fontWeight: 600, color: 'var(--color-ink-primary)' }}>
+                  {sku.sku_code}
+                </div>
+                <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-ink-secondary)', marginTop: '2px' }}>
+                  {sku.material} {sku.colour}
+                </div>
+              </div>
+            ) : (
+              <div style={{ fontSize: 'var(--text-base)', color: 'var(--color-ink-secondary)', marginBottom: 'var(--space-2)' }}>
+                No SKU assigned
+              </div>
+            )}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+              <button
+                onClick={openBrowser}
+                style={BUTTON_PRIMARY_STYLE}
+                data-testid="assign-sku-btn"
+              >
+                Assign SKU
+              </button>
+              {sku && (
+                <button
+                  onClick={() => removeSku(selectedZone.zone_id)}
+                  style={BUTTON_DESTRUCTIVE_STYLE}
+                  data-testid="remove-sku-btn"
+                >
+                  Remove
+                </button>
+              )}
             </div>
-          ) : (
-            <div style={{ fontSize: '13px', color: '#999' }}>No SKU assigned</div>
-          )}
-          <button
-            onClick={openBrowser}
-            style={{ marginTop: '8px', fontSize: '12px', padding: '4px 8px' }}
-            data-testid="assign-sku-btn"
-          >
-            Assign SKU
-          </button>
-          {sku && (
-            <button
-              onClick={() => removeSku(selectedZone.zone_id)}
-              style={{ marginTop: '4px', marginLeft: '8px', fontSize: '12px', padding: '4px 8px', color: '#d32f2f' }}
-              data-testid="remove-sku-btn"
-            >
-              Remove SKU
-            </button>
-          )}
-        </div>
+          </div>
+        </section>
       </div>
     </div>
   );

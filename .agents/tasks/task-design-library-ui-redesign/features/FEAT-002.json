@@ -1,0 +1,30 @@
+{
+  "id": "FEAT-002",
+  "type": "fix",
+  "description": "Address 4 issues from the semantic review: (1) Add More Filters popover for geometry/availability, (2) Document ephemeral favorite as intentional, (3) Add unit tests for CategoryCarousel, LookSwatches, FilterChipBar, (4) Document activeCategory as intentional tech debt.",
+  "status": "completed",
+  "steps": [
+    "Add a 'More Filters' button/popover to DesignLibrary.tsx or FilterChipBar.tsx that allows users to set wallGeometry and availability filters via a compact dropdown/popover mechanism.",
+    "Add code comment in EnhancedTemplateCard.tsx documenting that the ephemeral favorite state is intentional cosmetic-only behavior.",
+    "Create unit tests for CategoryCarousel in __tests__/CategoryCarousel.test.tsx following existing test patterns.",
+    "Create unit tests for LookSwatches in __tests__/LookSwatches.test.tsx following existing test patterns.",
+    "Create unit tests for FilterChipBar in __tests__/FilterChipBar.test.tsx following existing test patterns.",
+    "Add code comment in DesignLibrary.tsx documenting that activeCategory is intentional local state to avoid modifying the store, with a note about future migration."
+  ],
+  "acceptance_criteria": [
+    "Users can set wallGeometry and availability filters via the new More Filters UI",
+    "Ephemeral favorite state has a documenting comment explaining it is intentional",
+    "CategoryCarousel has unit tests covering rendering, click interaction, and keyboard navigation",
+    "LookSwatches has unit tests covering rendering, click interaction, and active state",
+    "FilterChipBar has unit tests covering chip rendering, removal, and clear all",
+    "DesignLibrary.tsx has a code comment about activeCategory being intentional tech debt",
+    "All existing and new tests pass",
+    "Build succeeds"
+  ],
+  "verification": [
+    "cd /projects/sandbox/Bom/frontend && NODE_OPTIONS=\"\" npx vitest run",
+    "cd /projects/sandbox/Bom/frontend && NODE_OPTIONS=\"\" npm run build"
+  ],
+  "blocked_reason": null,
+  "findings": "All 4 review issues addressed. Added expandable More Filters panel with geometry (STRAIGHT/L_CORNER) and availability (ALL/AVAILABLE/BLOCKED) select dropdowns. Documented ephemeral favorite state and activeCategory tech debt with code comments. Created 36 new unit tests across 3 test files (CategoryCarousel: 10, LookSwatches: 9, FilterChipBar: 17). All 1242 unit tests pass, build succeeds."
+}

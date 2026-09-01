@@ -21,20 +21,6 @@ vi.mock('@/lib/supabase', () => {
   };
 });
 
-// Mock snapshotBuilder
-vi.mock('@/lib/snapshotBuilder', () => ({
-  buildSnapshotData: vi.fn(() => ({
-    base_dimensions: { width_mm: 3000, height_mm: 2700 },
-    zones: [],
-    lighting: [],
-    furniture: [],
-    trims: [],
-    hidden_components: [],
-    calculation_parameters: {},
-  })),
-  computeSnapshotHash: vi.fn(() => Promise.resolve('abc123hash')),
-}));
-
 const makeTemplate = (overrides: Partial<Template> = {}): Template => ({
   template_id: 'tpl-1',
   name: 'Test Template',
@@ -190,9 +176,8 @@ describe('projectCreationStore', () => {
       expect(useProjectCreationStore.getState().step).toBe(CreationStep.IDLE);
     });
 
-    it('calls supabase.rpc with correct params on success', async () => {
-      const { fromTable, supabase } = await import('@/lib/supabase');
-      const mockedFromTable = vi.mocked(fromTable);
+    it('calls supabase.rpc with 5-arg signature (no snapshot data)', async () => {
+      const { supabase } = await import('@/lib/supabase');
       const mockedRpc = vi.mocked(supabase.rpc);
 
       const template = makeTemplate();
@@ -202,17 +187,6 @@ describe('projectCreationStore', () => {
         customerReference: 'CUST-001',
         siteReference: 'SITE-001',
       });
-
-      // Mock chainable query builder that supports .eq().order() and .eq() alone
-      mockedFromTable.mockReturnValue({
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnValue({
-          order: vi.fn().mockResolvedValue({ data: [], error: null }),
-          then: (resolve: (v: unknown) => void) => Promise.resolve({ data: [], error: null }).then(resolve),
-        }),
-        in: vi.fn().mockResolvedValue({ data: [], error: null }),
-        order: vi.fn().mockResolvedValue({ data: [], error: null }),
-      } as unknown as ReturnType<typeof fromTable>);
 
       // Mock rpc call
       mockedRpc.mockResolvedValue({ data: 'proj-123', error: null } as never);
@@ -227,22 +201,22 @@ describe('projectCreationStore', () => {
 
       await useProjectCreationStore.getState().createProject();
 
-      expect(mockedRpc).toHaveBeenCalledWith('create_project', expect.objectContaining({
+      expect(mockedRpc).toHaveBeenCalledWith('create_project', {
         p_template_id: 'tpl-1',
         p_user_id: 'user-1',
-        p_snapshot_data: expect.objectContaining({
-          project_metadata: {
-            customer_reference: 'CUST-001',
-            site_reference: 'SITE-001',
-          },
-        }),
-        p_snapshot_hash: 'abc123hash',
-        p_rule_set_id: null,
-      }));
+        p_idempotency_key: expect.stringContaining('user-1'),
+        p_customer_reference: 'CUST-001',
+        p_site_reference: 'SITE-001',
+      });
 
-      // Verify idempotency key contains user id and template id
+      // Verify no snapshot_data or snapshot_hash is sent
       const rpcCall = mockedRpc.mock.calls[0];
       const params = rpcCall[1] as Record<string, unknown>;
+      expect(params).not.toHaveProperty('p_snapshot_data');
+      expect(params).not.toHaveProperty('p_snapshot_hash');
+      expect(params).not.toHaveProperty('p_rule_set_id');
+
+      // Verify idempotency key contains user id and template id
       expect(params.p_idempotency_key).toContain('user-1');
       expect(params.p_idempotency_key).toContain('tpl-1');
 
@@ -254,9 +228,34 @@ describe('projectCreationStore', () => {
       expect(state.idempotencyKey).toBeNull();
     });
 
+    it('sends null for empty customer/site references', async () => {
+      const { supabase } = await import('@/lib/supabase');
+      const mockedRpc = vi.mocked(supabase.rpc);
+      mockedRpc.mockClear();
+
+      const template = makeTemplate();
+      useProjectCreationStore.setState({
+        selectedTemplate: template,
+        step: CreationStep.PROJECT_DETAILS,
+        customerReference: '',
+        siteReference: '',
+      });
+
+      mockedRpc.mockResolvedValue({ data: 'proj-456', error: null } as never);
+
+      const mockLoadProject = vi.fn().mockResolvedValue(undefined);
+      useProjectStore.setState({ loadProject: mockLoadProject } as never);
+      useCanvasStore.setState({ setMode: vi.fn() } as never);
+
+      await useProjectCreationStore.getState().createProject();
+
+      const params = mockedRpc.mock.calls[0][1] as Record<string, unknown>;
+      expect(params.p_customer_reference).toBeNull();
+      expect(params.p_site_reference).toBeNull();
+    });
+
     it('reuses idempotency key on retry', async () => {
-      const { fromTable, supabase } = await import('@/lib/supabase');
-      const mockedFromTable = vi.mocked(fromTable);
+      const { supabase } = await import('@/lib/supabase');
       const mockedRpc = vi.mocked(supabase.rpc);
       mockedRpc.mockClear();
 
@@ -268,16 +267,6 @@ describe('projectCreationStore', () => {
         siteReference: 'SITE-001',
         idempotencyKey: null,
       });
-
-      mockedFromTable.mockReturnValue({
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnValue({
-          order: vi.fn().mockResolvedValue({ data: [], error: null }),
-          then: (resolve: (v: unknown) => void) => Promise.resolve({ data: [], error: null }).then(resolve),
-        }),
-        in: vi.fn().mockResolvedValue({ data: [], error: null }),
-        order: vi.fn().mockResolvedValue({ data: [], error: null }),
-      } as unknown as ReturnType<typeof fromTable>);
 
       // First call fails
       mockedRpc.mockResolvedValueOnce({ data: null, error: { message: 'Timeout' } } as never);
@@ -308,8 +297,7 @@ describe('projectCreationStore', () => {
     });
 
     it('shows post-creation error without retry when loadProject fails', async () => {
-      const { fromTable, supabase } = await import('@/lib/supabase');
-      const mockedFromTable = vi.mocked(fromTable);
+      const { supabase } = await import('@/lib/supabase');
       const mockedRpc = vi.mocked(supabase.rpc);
 
       const template = makeTemplate();
@@ -319,16 +307,6 @@ describe('projectCreationStore', () => {
         customerReference: 'CUST-001',
         siteReference: 'SITE-001',
       });
-
-      mockedFromTable.mockReturnValue({
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnValue({
-          order: vi.fn().mockResolvedValue({ data: [], error: null }),
-          then: (resolve: (v: unknown) => void) => Promise.resolve({ data: [], error: null }).then(resolve),
-        }),
-        in: vi.fn().mockResolvedValue({ data: [], error: null }),
-        order: vi.fn().mockResolvedValue({ data: [], error: null }),
-      } as unknown as ReturnType<typeof fromTable>);
 
       // RPC succeeds
       mockedRpc.mockResolvedValue({ data: 'proj-789', error: null } as never);
@@ -347,8 +325,7 @@ describe('projectCreationStore', () => {
     });
 
     it('transitions to ERROR step with error message on failure', async () => {
-      const { fromTable, supabase } = await import('@/lib/supabase');
-      const mockedFromTable = vi.mocked(fromTable);
+      const { supabase } = await import('@/lib/supabase');
       const mockedRpc = vi.mocked(supabase.rpc);
 
       const template = makeTemplate();
@@ -356,17 +333,6 @@ describe('projectCreationStore', () => {
         selectedTemplate: template,
         step: CreationStep.PROJECT_DETAILS,
       });
-
-      // Mock chainable query builder
-      mockedFromTable.mockReturnValue({
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnValue({
-          order: vi.fn().mockResolvedValue({ data: [], error: null }),
-          then: (resolve: (v: unknown) => void) => Promise.resolve({ data: [], error: null }).then(resolve),
-        }),
-        in: vi.fn().mockResolvedValue({ data: [], error: null }),
-        order: vi.fn().mockResolvedValue({ data: [], error: null }),
-      } as unknown as ReturnType<typeof fromTable>);
 
       // Mock rpc call failure
       mockedRpc.mockResolvedValue({ data: null, error: { message: 'RPC failed: duplicate key' } } as never);
@@ -380,9 +346,6 @@ describe('projectCreationStore', () => {
     });
 
     it('transitions to ERROR if user is not authenticated', async () => {
-      const { fromTable } = await import('@/lib/supabase');
-      const mockedFromTable = vi.mocked(fromTable);
-
       useAuthStore.setState({ user: null, role: null, isAuthenticated: false, isLoading: false });
 
       const template = makeTemplate();
@@ -390,16 +353,6 @@ describe('projectCreationStore', () => {
         selectedTemplate: template,
         step: CreationStep.PROJECT_DETAILS,
       });
-
-      mockedFromTable.mockReturnValue({
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnValue({
-          order: vi.fn().mockResolvedValue({ data: [], error: null }),
-          then: (resolve: (v: unknown) => void) => Promise.resolve({ data: [], error: null }).then(resolve),
-        }),
-        in: vi.fn().mockResolvedValue({ data: [], error: null }),
-        order: vi.fn().mockResolvedValue({ data: [], error: null }),
-      } as unknown as ReturnType<typeof fromTable>);
 
       await useProjectCreationStore.getState().createProject();
 
@@ -409,8 +362,7 @@ describe('projectCreationStore', () => {
     });
 
     it('transitions to CREATING step while in progress', async () => {
-      const { fromTable, supabase } = await import('@/lib/supabase');
-      const mockedFromTable = vi.mocked(fromTable);
+      const { supabase } = await import('@/lib/supabase');
       const mockedRpc = vi.mocked(supabase.rpc);
 
       const template = makeTemplate();
@@ -424,21 +376,11 @@ describe('projectCreationStore', () => {
         resolveRpc = resolve;
       });
 
-      mockedFromTable.mockReturnValue({
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnValue({
-          order: vi.fn().mockResolvedValue({ data: [], error: null }),
-          then: (resolve: (v: unknown) => void) => Promise.resolve({ data: [], error: null }).then(resolve),
-        }),
-        in: vi.fn().mockResolvedValue({ data: [], error: null }),
-        order: vi.fn().mockResolvedValue({ data: [], error: null }),
-      } as unknown as ReturnType<typeof fromTable>);
-
       mockedRpc.mockReturnValue(rpcPending as never);
 
       const promise = useProjectCreationStore.getState().createProject();
 
-      // Wait for the async queries to resolve before rpc is called
+      // Wait for the async to settle into CREATING state
       await new Promise((r) => setTimeout(r, 50));
 
       // Should be in CREATING state
@@ -457,8 +399,7 @@ describe('projectCreationStore', () => {
     });
 
     it('loads project and switches to CONSULTANT mode after creation', async () => {
-      const { fromTable, supabase } = await import('@/lib/supabase');
-      const mockedFromTable = vi.mocked(fromTable);
+      const { supabase } = await import('@/lib/supabase');
       const mockedRpc = vi.mocked(supabase.rpc);
 
       const template = makeTemplate();
@@ -466,16 +407,6 @@ describe('projectCreationStore', () => {
         selectedTemplate: template,
         step: CreationStep.PROJECT_DETAILS,
       });
-
-      mockedFromTable.mockReturnValue({
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnValue({
-          order: vi.fn().mockResolvedValue({ data: [], error: null }),
-          then: (resolve: (v: unknown) => void) => Promise.resolve({ data: [], error: null }).then(resolve),
-        }),
-        in: vi.fn().mockResolvedValue({ data: [], error: null }),
-        order: vi.fn().mockResolvedValue({ data: [], error: null }),
-      } as unknown as ReturnType<typeof fromTable>);
 
       mockedRpc.mockResolvedValue({ data: 'proj-789', error: null } as never);
 

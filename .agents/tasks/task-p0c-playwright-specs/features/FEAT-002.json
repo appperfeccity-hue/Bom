@@ -1,0 +1,35 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "Create the GitHub Actions CI workflow at .github/workflows/p0c-e2e.yml that runs the P0-C Playwright specs against the live environment, captures artifacts, and produces a machine-readable JSON result mapping for all 41 test IDs.",
+  "status": "completed",
+  "steps": [
+    "Create .github/workflows/p0c-e2e.yml with triggers: workflow_dispatch (manual) and push to feat/db-baseline-v1.1.5 branch.",
+    "Job setup: ubuntu-latest, Node 22, npm ci in frontend/, install Chromium via npx playwright install --with-deps chromium.",
+    "Environment variables from GitHub secrets: SUPABASE_URL, SUPABASE_ANON_KEY, E2E_DESIGNER_EMAIL, E2E_DESIGNER_PASSWORD, E2E_CONSULTANT_EMAIL, E2E_CONSULTANT_PASSWORD, E2E_ADMIN_EMAIL, E2E_ADMIN_PASSWORD, PLAYWRIGHT_BASE_URL.",
+    "Add a connectivity check step that verifies reachability of both bom-beryl.vercel.app and fbiemsbykrmrbqcsobvh.supabase.co (curl with timeout, fail job early if unreachable).",
+    "Run Playwright: npx playwright test e2e/p0-c/ --reporter=html,json. Configure json reporter to output to test-results/p0c-results.json.",
+    "Add a post-test step that parses test-results/p0c-results.json and generates a machine-readable summary mapping all 41 test IDs to their results (PASS/FAIL/BLOCKED). Output as test-results/p0c-summary.json. Use a simple Node script inline or a small script file.",
+    "Upload artifacts: playwright-report/ (HTML report), test-results/ (traces, screenshots, videos, JSON results, summary). Use actions/upload-artifact@v4 with retention-days: 30.",
+    "Fail the job if any required P0-C test fails (default Playwright behavior - non-zero exit code).",
+    "Add a result classification step that maps Playwright outcomes to PASS/PARTIAL/BLOCKED/FAIL categories. PASS = test passed. FAIL = test failed with assertion error. BLOCKED = test failed due to network/setup error (timeout, connection refused). PARTIAL = test partially passed (some assertions ok, some failed)."
+  ],
+  "acceptance_criteria": [
+    ".github/workflows/p0c-e2e.yml is valid YAML and parseable by GitHub Actions",
+    "Workflow triggers on workflow_dispatch and push to feat/db-baseline-v1.1.5",
+    "All credentials come from GitHub secrets (never hardcoded)",
+    "Chromium is installed in CI",
+    "Connectivity check verifies both target URLs",
+    "HTML report, traces, screenshots, videos uploaded as artifacts",
+    "Machine-readable JSON summary maps all 41 test IDs to results",
+    "Job fails if any test fails",
+    "Result classification distinguishes PASS/PARTIAL/BLOCKED/FAIL"
+  ],
+  "verification": [
+    "Run: python3 -c \"import yaml; yaml.safe_load(open('.github/workflows/p0c-e2e.yml'))\" or equivalent to validate YAML syntax",
+    "Grep the workflow for all required secrets: SUPABASE_URL, SUPABASE_ANON_KEY, E2E_DESIGNER_EMAIL, E2E_DESIGNER_PASSWORD, E2E_CONSULTANT_EMAIL, E2E_CONSULTANT_PASSWORD, E2E_ADMIN_EMAIL, E2E_ADMIN_PASSWORD, PLAYWRIGHT_BASE_URL",
+    "Confirm the workflow references 'npx playwright install' and 'npx playwright test e2e/p0-c/'"
+  ],
+  "blocked_reason": null,
+  "findings": "CI workflow validated as syntactically correct YAML. All 9 secrets referenced. Includes connectivity pre-check, JSON reporter, artifact uploads (HTML report + traces + screenshots + videos), and post-test Node script that classifies results into PASS/FAIL/BLOCKED/PARTIAL for all 41 test IDs."
+}
