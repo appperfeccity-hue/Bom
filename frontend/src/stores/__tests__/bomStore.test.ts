@@ -293,6 +293,33 @@ describe('bomStore', () => {
       await useBomStore.getState().fetchActualBom('proj-456');
       expect(useBomStore.getState().error).toBe('DB connection failed');
     });
+
+    it('should treat a no-rows result as an empty BOM, not an error', async () => {
+      const { fromTable } = await import('@/lib/supabase');
+      const mockedFromTable = vi.mocked(fromTable);
+
+      const mockChain = {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        neq: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockReturnThis(),
+        order: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
+          data: null,
+          error: {
+            code: 'PGRST116',
+            message: 'Cannot coerce the result to a single JSON object',
+          },
+        }),
+      };
+      mockedFromTable.mockReturnValue(mockChain as unknown as ReturnType<typeof fromTable>);
+
+      await useBomStore.getState().fetchActualBom('proj-456');
+
+      expect(useBomStore.getState().error).toBeNull();
+      expect(useBomStore.getState().actualBom).toBeNull();
+      expect(useBomStore.getState().actualBomLines).toEqual([]);
+    });
   });
 
   describe('fetchFinalBom', () => {

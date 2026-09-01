@@ -244,6 +244,22 @@ describe('projectStore - Project Isolation (Phase 2)', () => {
       expect(builder).toBeDefined();
     });
 
+    it('sends measurement_source, which is NOT NULL without a default', async () => {
+      await useProjectStore.getState().updateMeasurements({ wall_width_mm: 3200 });
+
+      const { fromTable: mockFromTable } = await import('@/lib/supabase');
+      const builders = (mockFromTable as ReturnType<typeof vi.fn>).mock.results
+        .map((r) => r.value as { upsert: ReturnType<typeof vi.fn> })
+        .filter((b) => b.upsert.mock.calls.length > 0);
+      const builder = builders[builders.length - 1];
+
+      expect(builder.upsert.mock.calls[0][0]).toMatchObject({
+        project_id: 'proj-1',
+        wall_width_mm: 3200,
+        measurement_source: 'MANUAL',
+      });
+    });
+
     it('updates in-memory measurements state', async () => {
       await useProjectStore.getState().updateMeasurements({
         wall_width_mm: 3500,

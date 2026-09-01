@@ -389,10 +389,13 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
     set({ measurements: updated });
 
     try {
-      // Use upsert with onConflict on project_id since the row may not exist yet
+      // Use upsert with onConflict on project_id since the row may not exist yet.
+      // measurement_source is NOT NULL without a default, and values authored
+      // here are typed in by the consultant.
       const { error } = await fromTable('project_measurement')
         .upsert(
           {
+            measurement_source: prev?.measurement_source ?? 'MANUAL',
             ...measurements,
             project_id: projectId,
           },

@@ -41,6 +41,9 @@ import {
 import { BOM_ENGINE_VERSION } from '@/lib/bomEngine/version';
 import { computeInputHash } from '@/lib/inputHash';
 
+/** PostgREST code for "single() matched no rows", a valid empty result here. */
+const NO_ROWS = 'PGRST116';
+
 /** First row of an optional list result, tolerating a null or object payload. */
 function firstRow(rows: unknown): Record<string, unknown> | null {
   if (Array.isArray(rows)) {
@@ -207,7 +210,7 @@ export const useBomStore = create<BomStore>((set, get) => ({
         .limit(1)
         .single();
 
-      if (bomErr) throw bomErr;
+      if (bomErr && bomErr.code !== NO_ROWS) throw bomErr;
       if (!bomData) {
         const { isMasterBomLoading, isFinalBomLoading } = get();
         set({
@@ -255,7 +258,7 @@ export const useBomStore = create<BomStore>((set, get) => ({
         .eq('project_id', projectId)
         .single();
 
-      if (bomErr) throw bomErr;
+      if (bomErr && bomErr.code !== NO_ROWS) throw bomErr;
       if (!bomData) {
         const { isMasterBomLoading, isActualBomLoading } = get();
         set({

@@ -40,6 +40,7 @@ export function MeasurementPanel() {
   const wallGeometry = useProjectStore((s) => s.wallGeometry);
   const currentSnapshot = useProjectStore((s) => s.currentSnapshot);
   const updateMeasurements = useProjectStore((s) => s.updateMeasurements);
+  const saveError = useProjectStore((s) => s.error);
   const { isFieldLocked, validateField } = usePermissionEnforcement();
 
   const [fieldErrors, setFieldErrors] = useState<Record<string, string | null>>({});
@@ -161,6 +162,15 @@ export function MeasurementPanel() {
       <h3 style={{ margin: '0 0 16px', fontSize: '14px', fontWeight: 600, color: '#1A1A1A' /* --color-ink-primary */ }}>
         Site Measurements
       </h3>
+
+      {saveError && (
+        <div
+          data-testid="measurement-save-error"
+          style={{ marginBottom: '12px', fontSize: '11px', color: '#B0413E' /* --color-error */ }}
+        >
+          Could not save measurements: {saveError}
+        </div>
+      )}
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
         <label style={LABEL_STYLE}>
