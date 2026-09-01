@@ -260,6 +260,14 @@ describe('projectStore - Project Isolation (Phase 2)', () => {
       });
     });
 
+    it('clears a previous save error once a save succeeds', async () => {
+      useProjectStore.setState({ error: 'permission denied for table actual_bom' });
+
+      await useProjectStore.getState().updateMeasurements({ wall_width_mm: 3200 });
+
+      expect(useProjectStore.getState().error).toBeNull();
+    });
+
     it('updates in-memory measurements state', async () => {
       await useProjectStore.getState().updateMeasurements({
         wall_width_mm: 3500,

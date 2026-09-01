@@ -402,6 +402,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
           { onConflict: 'project_id' },
         );
       if (error) throw error;
+      set({ error: null });
     } catch (err) {
       set({ measurements: prev, error: (err as Error).message });
     }
