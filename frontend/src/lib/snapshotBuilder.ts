@@ -81,6 +81,8 @@ export interface SnapshotData {
   site_obstructions: unknown[];
   /** SKU compatibility rules frozen at snapshot time (v2) */
   sku_compatibility?: unknown[];
+  /** Transitive SKU dependency closure frozen at snapshot time (v1.2.6+) */
+  sku_dependencies?: unknown[];
   /** Rule set frozen at snapshot time (v2) */
   rule_set?: SnapshotRuleSet | null;
 }

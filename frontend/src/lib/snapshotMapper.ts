@@ -18,6 +18,13 @@ import type {
   BomRuleSet,
 } from '@/engines/bomPipeline';
 import type { PermissionRule, CompatibilityRule } from '@/engines/validationEngine';
+import type {
+  SkuDependencyRule,
+  SkuDependencyType,
+  SkuDependencyQuantityRule,
+  SkuDependencyUnit,
+  SkuPhysicalProductType,
+} from '@/engines/skuDependencyEngine';
 import type { SnapshotData, SnapshotConsultantPermission, SnapshotRuleSet } from '@/lib/snapshotBuilder';
 import type { TemplateLighting, TemplateFurniture, SkuMaster } from '@/types/database';
 
@@ -166,6 +173,71 @@ function mapCondition(cond: unknown): BomSnapshotHiddenComponent['condition'] | 
   };
 }
 
+const DEPENDENCY_TYPES: readonly SkuDependencyType[] = ['REQUIRED', 'CONDITIONAL', 'OPTIONAL'];
+const DEPENDENCY_QUANTITY_RULES: readonly SkuDependencyQuantityRule[] = [
+  'PER_PARENT',
+  'PER_AREA',
+  'PER_LENGTH',
+  'PER_EDGE',
+  'FIXED',
+];
+const DEPENDENCY_UNITS: readonly SkuDependencyUnit[] = ['PCS', 'M', 'M2'];
+const PHYSICAL_PRODUCT_TYPES: readonly SkuPhysicalProductType[] = [
+  'WALL_PANEL',
+  'LIGHT',
+  'FURNITURE',
+  'HIDDEN_COMPONENT',
+];
+
+function pickEnum<T extends string>(value: unknown, allowed: readonly T[]): T | undefined {
+  return typeof value === 'string' && (allowed as readonly string[]).includes(value)
+    ? (value as T)
+    : undefined;
+}
+
+/**
+ * Maps frozen `sku_dependencies` rows (v1.2.6) to engine rules. Rows with an
+ * unknown type/rule are dropped rather than guessed, so a malformed snapshot
+ * can never silently generate BOM lines.
+ */
+export function mapSkuDependencies(rows: unknown[] | undefined): SkuDependencyRule[] {
+  if (!rows || !Array.isArray(rows)) return [];
+  const rules: SkuDependencyRule[] = [];
+  for (const raw of rows) {
+    if (!raw || typeof raw !== 'object') continue;
+    const row = raw as Record<string, unknown>;
+    const childSku = (row.child_sku ?? null) as Partial<SkuMaster> | null;
+    const dependencyType = pickEnum(row.dependency_type, DEPENDENCY_TYPES);
+    const quantityRule = pickEnum(row.quantity_rule, DEPENDENCY_QUANTITY_RULES);
+    const childProductType = pickEnum(childSku?.product_type, PHYSICAL_PRODUCT_TYPES);
+    const factor = Number(row.quantity_factor ?? 1);
+    if (
+      typeof row.dependency_id !== 'string' ||
+      typeof row.parent_sku_id !== 'string' ||
+      typeof row.child_sku_id !== 'string' ||
+      !dependencyType ||
+      !quantityRule ||
+      !childProductType ||
+      !Number.isFinite(factor) ||
+      factor <= 0
+    ) {
+      continue;
+    }
+    rules.push({
+      dependencyId: row.dependency_id,
+      parentSkuId: row.parent_sku_id,
+      childSkuId: row.child_sku_id,
+      dependencyType,
+      condition: mapCondition(row.condition),
+      quantityRule,
+      quantityFactor: factor,
+      unitOfMeasure: pickEnum(row.unit_of_measure, DEPENDENCY_UNITS) ?? 'PCS',
+      childProductType,
+    });
+  }
+  return rules;
+}
+
 // --- Public API ---
 
 /**
@@ -178,12 +250,14 @@ export function mapSnapshotToPipeline(s: SnapshotData): BomSnapshotData {
   const lighting = mapLighting(s.lighting ?? []);
   const furniture = mapFurniture(s.furniture ?? []);
   const hiddenComponents = mapHiddenComponents(s.hidden_components ?? []);
+  const skuDependencies = mapSkuDependencies(s.sku_dependencies);
 
   return {
     zones,
     lighting: lighting.length > 0 ? lighting : undefined,
     furniture: furniture.length > 0 ? furniture : undefined,
     hiddenComponents: hiddenComponents.length > 0 ? hiddenComponents : undefined,
+    skuDependencies: skuDependencies.length > 0 ? skuDependencies : undefined,
   };
 }
 

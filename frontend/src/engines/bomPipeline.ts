@@ -36,6 +36,13 @@ import { calculateWallPanels } from './wallPanelEngine';
 import { calculateLights } from './lightEngine';
 import { calculateFurniture } from './furnitureEngine';
 import { calculateHiddenComponent } from './hiddenComponentEngine';
+import { resolveSkuDependencies } from './skuDependencyEngine';
+import type {
+  DependencyParentContext,
+  SkuDependencyRule,
+  SkuDependencyQuantityRule,
+  SkuDependencyType,
+} from './skuDependencyEngine';
 import type {
   SiteAdaptationInput,
   SiteAdaptationZoneInput,
@@ -57,6 +64,17 @@ export interface BomOutputLine {
   unitOfMeasure: string;
   calculationRule: string;
   productType: 'WALL_PANEL' | 'LIGHT' | 'FURNITURE' | 'HIDDEN_COMPONENT';
+  /** Present only on lines generated from the SKU dependency graph. */
+  dependency?: BomLineDependency;
+}
+
+export interface BomLineDependency {
+  parentSkuId: string;
+  dependencyId: string;
+  dependencyType: SkuDependencyType;
+  quantityRule: SkuDependencyQuantityRule;
+  /** 1 = direct child of a primary line, 2 = grandchild, ... */
+  level: number;
 }
 
 export interface SnapshotZone {
@@ -121,6 +139,12 @@ export interface SnapshotData {
   hiddenComponents?: SnapshotHiddenComponent[];
   /** Generated panel frames from wallConfigEngine (Amendment 001). When present, these override zone dimensions for panel calculation. */
   generatedPanelFrames?: SnapshotPanelFrame[];
+  /** Frozen SKU dependency graph (transitive closure of the template SKU set). */
+  skuDependencies?: SkuDependencyRule[];
+  /** OPTIONAL child SKUs selected per parent component id. */
+  selectedOptionalSkus?: Record<string, string[]>;
+  /** Wall-level facts CONDITIONAL dependencies may reference (e.g. wallType). */
+  dependencyFieldValues?: Record<string, number | string>;
 }
 
 /**
@@ -207,7 +231,7 @@ export interface BomPipelineOutput {
  * 3. SKU Compatibility Check
  * 4. Geometry Validation
  * 5. Construction Validation
- * 6. Quantity Calculation
+ * 6. Quantity Calculation (primary lines, then SKU dependency expansion)
  * 7. BOM Reconciliation
  * 8. Final BOM Validation
  *
@@ -342,6 +366,19 @@ export function runBomPipeline(input: BomPipelineInput): BomPipelineOutput {
   accumulatedWarnings.push(...quantityResult.warnings);
   bomLines.push(...quantityResult.lines);
 
+  // --- Step 6b: SKU Dependency Expansion ---
+  const dependencyResult = runDependencyExpansion(input, quantityResult.parents, bomLines);
+  if (dependencyResult.errors.length > 0) {
+    return {
+      actualBomLines: [],
+      errors: dependencyResult.errors,
+      warnings: [...accumulatedWarnings, ...dependencyResult.warnings],
+      status: 'BLOCKED',
+    };
+  }
+  accumulatedWarnings.push(...dependencyResult.warnings);
+  bomLines.push(...dependencyResult.lines);
+
   // --- Step 7: BOM Reconciliation ---
   const reconciledLines = reconcileBomLines(bomLines);
 
@@ -474,8 +511,18 @@ function buildConstructionLines(
 
 interface QuantityCalculationResult {
   lines: BomOutputLine[];
+  /** Geometry context per primary line, keyed by lineId, for dependency expansion. */
+  parents: Map<string, Omit<DependencyParentContext, 'componentId' | 'skuId' | 'quantity'>>;
   errors: PipelineError[];
   warnings: PipelineError[];
+}
+
+function rectContext(width: number, height: number) {
+  return {
+    areaMm2: width * height,
+    edgeLengthMm: 2 * (width + height),
+    edgeCount: 4,
+  };
 }
 
 /**
@@ -515,6 +562,7 @@ function runQuantityCalculation(
   adaptedZones: AdaptedZone[]
 ): QuantityCalculationResult {
   const lines: BomOutputLine[] = [];
+  const parents: QuantityCalculationResult['parents'] = new Map();
   const errors: PipelineError[] = [];
   const warnings: PipelineError[] = [];
 
@@ -546,6 +594,7 @@ function runQuantityCalculation(
           panelOutput.requiredQuantity,
           { frameId: frame.frameId },
         );
+        parents.set(`panel-${frame.frameId}`, rectContext(frame.width, frame.height));
         lines.push({
           lineId: `panel-${frame.frameId}`,
           componentId: frame.frameId,
@@ -592,6 +641,7 @@ function runQuantityCalculation(
           panelOutput.requiredQuantity,
           { zoneId: zone.zoneId },
         );
+        parents.set(`panel-${zone.zoneId}`, rectContext(zone.width, zone.height));
         lines.push({
           lineId: `panel-${zone.zoneId}`,
           componentId: zone.zoneId,
@@ -629,6 +679,11 @@ function runQuantityCalculation(
 
       try {
         const lightOutput = calculateLights(lightInput);
+        parents.set(`light-${light.componentId}`, {
+          edgeLengthMm: light.edges.reduce((sum, e) => sum + e.length, 0),
+          edgeCount: light.edges.length,
+          fieldValues: { mountingType: light.mountingType, mode: light.mode },
+        });
         lines.push({
           lineId: `light-${light.componentId}`,
           componentId: light.componentId,
@@ -711,7 +766,60 @@ function runQuantityCalculation(
     }
   }
 
-  return { lines, errors, warnings };
+  return { lines, parents, errors, warnings };
+}
+
+function runDependencyExpansion(
+  input: BomPipelineInput,
+  parentContexts: QuantityCalculationResult['parents'],
+  primaryLines: BomOutputLine[],
+): { lines: BomOutputLine[]; errors: PipelineError[]; warnings: PipelineError[] } {
+  const rules = input.snapshotData.skuDependencies ?? [];
+  if (rules.length === 0) {
+    return { lines: [], errors: [], warnings: [] };
+  }
+
+  const wallFields = input.snapshotData.dependencyFieldValues ?? {};
+  const selected = input.snapshotData.selectedOptionalSkus ?? {};
+
+  const parents: DependencyParentContext[] = primaryLines
+    .filter((line) => line.skuId !== '')
+    .map((line) => {
+      const ctx = parentContexts.get(line.lineId);
+      return {
+        componentId: line.componentId,
+        skuId: line.skuId,
+        quantity: line.requiredQuantity,
+        areaMm2: ctx?.areaMm2,
+        edgeLengthMm: ctx?.edgeLengthMm,
+        edgeCount: ctx?.edgeCount,
+        fieldValues: { ...wallFields, ...ctx?.fieldValues, productType: line.productType },
+        selectedOptionalSkuIds: selected[line.componentId],
+      };
+    });
+
+  const result = resolveSkuDependencies(parents, rules);
+
+  const lines: BomOutputLine[] = result.lines.map((dep) => ({
+    lineId: dep.lineId,
+    componentId: dep.componentId,
+    skuId: dep.skuId,
+    quantity: dep.quantity,
+    requiredQuantity: dep.quantity,
+    wasteQuantity: 0,
+    unitOfMeasure: dep.unitOfMeasure,
+    calculationRule: `SKU_DEPENDENCY_${dep.quantityRule}`,
+    productType: dep.productType,
+    dependency: {
+      parentSkuId: dep.parentSkuId,
+      dependencyId: dep.dependencyId,
+      dependencyType: dep.dependencyType,
+      quantityRule: dep.quantityRule,
+      level: dep.level,
+    },
+  }));
+
+  return { lines, errors: result.errors, warnings: result.warnings };
 }
 
 function reconcileBomLines(lines: BomOutputLine[]): BomOutputLine[] {
@@ -719,7 +827,9 @@ function reconcileBomLines(lines: BomOutputLine[]): BomOutputLine[] {
   const mergedMap = new Map<string, BomOutputLine>();
 
   for (const line of lines) {
-    const key = `${line.skuId}-${line.calculationRule}-${line.componentId}`;
+    const key = line.dependency
+      ? `${line.skuId}-${line.calculationRule}-${line.componentId}-${line.dependency.parentSkuId}-${line.dependency.level}`
+      : `${line.skuId}-${line.calculationRule}-${line.componentId}`;
     const existing = mergedMap.get(key);
     if (existing) {
       existing.quantity += line.quantity;

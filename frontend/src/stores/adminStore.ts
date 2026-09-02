@@ -8,6 +8,7 @@ import type {
   DesignSubfamilyMaster,
   SkuMaster,
   SkuCompatibility,
+  SkuDependency,
   CatalogueEntry,
   CatalogueAsset,
   RuleSet,
@@ -44,6 +45,8 @@ export interface AdminState {
   skus: SkuMaster[];
   // Compatibility
   compatibilityRules: SkuCompatibility[];
+  // SKU dependency graph
+  skuDependencies: SkuDependency[];
   // Catalogue
   catalogueEntries: CatalogueEntry[];
   catalogueAssets: CatalogueAsset[];
@@ -56,6 +59,7 @@ export interface AdminState {
   isLoadingDesignSubfamilies: boolean;
   isLoadingSkus: boolean;
   isLoadingCompatibility: boolean;
+  isLoadingDependencies: boolean;
   isLoadingCatalogue: boolean;
   isLoadingAssets: boolean;
   isLoadingRuleSets: boolean;
@@ -95,6 +99,11 @@ export interface AdminActions {
   createCompatibilityRule: (rule: Partial<SkuCompatibility>) => Promise<void>;
   updateCompatibilityRule: (id: string, updates: Partial<SkuCompatibility>) => Promise<void>;
   deleteCompatibilityRule: (id: string) => Promise<void>;
+  // SKU dependency graph
+  fetchSkuDependencies: () => Promise<void>;
+  createSkuDependency: (dep: Partial<SkuDependency>) => Promise<void>;
+  updateSkuDependency: (id: string, updates: Partial<SkuDependency>) => Promise<void>;
+  deleteSkuDependency: (id: string) => Promise<void>;
   // Catalogue
   fetchCatalogueEntries: () => Promise<void>;
   fetchCatalogueAssets: (entryId: string) => Promise<void>;
@@ -118,6 +127,7 @@ const initialState: AdminState = {
   designSubfamilies: [],
   skus: [],
   compatibilityRules: [],
+  skuDependencies: [],
   catalogueEntries: [],
   catalogueAssets: [],
   ruleSets: [],
@@ -127,6 +137,7 @@ const initialState: AdminState = {
   isLoadingDesignSubfamilies: false,
   isLoadingSkus: false,
   isLoadingCompatibility: false,
+  isLoadingDependencies: false,
   isLoadingCatalogue: false,
   isLoadingAssets: false,
   isLoadingRuleSets: false,
@@ -143,6 +154,7 @@ function computeIsLoading(state: Partial<AdminState>): boolean {
     state.isLoadingDesignSubfamilies ||
     state.isLoadingSkus ||
     state.isLoadingCompatibility ||
+    state.isLoadingDependencies ||
     state.isLoadingCatalogue ||
     state.isLoadingAssets ||
     state.isLoadingRuleSets
@@ -515,6 +527,66 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
     } catch (err) {
       set((s) => {
         const next = { ...s, isLoadingCompatibility: false, error: (err as Error).message };
+        return { ...next, isLoading: computeIsLoading(next) };
+      });
+    }
+  },
+
+  // --- SKU dependency graph ---
+  fetchSkuDependencies: async () => {
+    set(() => ({ isLoadingDependencies: true, isLoading: true, error: null }));
+    try {
+      const { data, error } = await fromTable('sku_dependency').select('*').order('created_at');
+      if (error) throw error;
+      set((s) => {
+        const next = { ...s, skuDependencies: (data ?? []) as SkuDependency[], isLoadingDependencies: false };
+        return { ...next, isLoading: computeIsLoading(next) };
+      });
+    } catch (err) {
+      set((s) => {
+        const next = { ...s, isLoadingDependencies: false, error: (err as Error).message };
+        return { ...next, isLoading: computeIsLoading(next) };
+      });
+    }
+  },
+
+  createSkuDependency: async (dep: Partial<SkuDependency>) => {
+    set(() => ({ isLoadingDependencies: true, isLoading: true, error: null }));
+    try {
+      const { error } = await fromTable('sku_dependency').insert(dep);
+      if (error) throw error;
+      await get().fetchSkuDependencies();
+    } catch (err) {
+      set((s) => {
+        const next = { ...s, isLoadingDependencies: false, error: (err as Error).message };
+        return { ...next, isLoading: computeIsLoading(next) };
+      });
+    }
+  },
+
+  updateSkuDependency: async (id: string, updates: Partial<SkuDependency>) => {
+    set(() => ({ isLoadingDependencies: true, isLoading: true, error: null }));
+    try {
+      const { error } = await fromTable('sku_dependency').update(updates).eq('dependency_id', id);
+      if (error) throw error;
+      await get().fetchSkuDependencies();
+    } catch (err) {
+      set((s) => {
+        const next = { ...s, isLoadingDependencies: false, error: (err as Error).message };
+        return { ...next, isLoading: computeIsLoading(next) };
+      });
+    }
+  },
+
+  deleteSkuDependency: async (id: string) => {
+    set(() => ({ isLoadingDependencies: true, isLoading: true, error: null }));
+    try {
+      const { error } = await fromTable('sku_dependency').delete().eq('dependency_id', id);
+      if (error) throw new Error(friendlyDeleteError(error.message));
+      await get().fetchSkuDependencies();
+    } catch (err) {
+      set((s) => {
+        const next = { ...s, isLoadingDependencies: false, error: (err as Error).message };
         return { ...next, isLoading: computeIsLoading(next) };
       });
     }

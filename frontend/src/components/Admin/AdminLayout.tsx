@@ -6,6 +6,7 @@ const navItems = [
   { to: '/admin/design-families', label: 'Design Families' },
   { to: '/admin/skus', label: 'SKU Master' },
   { to: '/admin/compatibility', label: 'Compatibility' },
+  { to: '/admin/dependencies', label: 'Dependencies' },
   { to: '/admin/catalogue', label: 'Catalogue' },
   { to: '/admin/rule-sets', label: 'Rule Sets' },
 ];
