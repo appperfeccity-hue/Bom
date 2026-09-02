@@ -42,6 +42,10 @@ export enum ErrorCode {
   // Quantity errors (2)
   QTY_PANEL_NO_VALID_ARRANGEMENT = 'QTY_PANEL_NO_VALID_ARRANGEMENT',
   QTY_AREA_FIT_DIVERGENCE = 'QTY_AREA_FIT_DIVERGENCE',
+  // SKU dependency errors (3)
+  DEP_CIRCULAR_DEPENDENCY = 'DEP_CIRCULAR_DEPENDENCY',
+  DEP_CONTEXT_MISSING = 'DEP_CONTEXT_MISSING',
+  DEP_CONDITION_UNRESOLVED = 'DEP_CONDITION_UNRESOLVED',
   // Wall Configuration errors (3)
   E_WALL_NO_DIMENSIONS = 'E-WALL-001',
   E_WALL_INVALID_GEOMETRY = 'E-WALL-002',
@@ -233,6 +237,24 @@ export const ERROR_DEFINITIONS: Record<ErrorCode, ErrorDefinition> = {
     category: ErrorCategory.QUANTITY,
     messageTemplate:
       'Area-division coverage differs from the geometric panel fit; the geometric fit is authoritative',
+  },
+  // SKU dependency
+  [ErrorCode.DEP_CIRCULAR_DEPENDENCY]: {
+    severity: ErrorSeverity.BLOCKING,
+    category: ErrorCategory.QUANTITY,
+    messageTemplate: 'SKU dependency graph contains a circular dependency',
+  },
+  [ErrorCode.DEP_CONTEXT_MISSING]: {
+    severity: ErrorSeverity.BLOCKING,
+    category: ErrorCategory.QUANTITY,
+    messageTemplate:
+      'Dependent SKU quantity rule needs geometry (area, edge length or edge count) that the parent does not provide',
+  },
+  [ErrorCode.DEP_CONDITION_UNRESOLVED]: {
+    severity: ErrorSeverity.WARNING,
+    category: ErrorCategory.QUANTITY,
+    messageTemplate:
+      'Conditional SKU dependency references a field absent from the parent context; child omitted',
   },
   // Wall Configuration
   [ErrorCode.E_WALL_NO_DIMENSIONS]: {

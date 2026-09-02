@@ -545,7 +545,15 @@ export const useBomStore = create<BomStore>((set, get) => ({
           ? Math.round((line.wasteQuantity / line.requiredQuantity) * 100) / 100
           : 0,
         resolved_dimensions: {},
-        calculation_inputs: {},
+        calculation_inputs: line.dependency
+          ? {
+              parent_sku_id: line.dependency.parentSkuId,
+              dependency_id: line.dependency.dependencyId,
+              dependency_type: line.dependency.dependencyType,
+              quantity_rule: line.dependency.quantityRule,
+              level: line.dependency.level,
+            }
+          : {},
       }));
 
       // Call the RPC

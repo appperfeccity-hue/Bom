@@ -75,6 +75,24 @@ export type {
   BomValidationLine,
 } from './validationEngine';
 
+// --- SKU Dependency Engine ---
+export {
+  resolveSkuDependencies,
+  detectDependencyCycles,
+  indexDependencyRules,
+  MAX_DEPENDENCY_DEPTH,
+} from './skuDependencyEngine';
+export type {
+  SkuDependencyRule,
+  SkuDependencyType,
+  SkuDependencyQuantityRule,
+  SkuDependencyUnit,
+  SkuPhysicalProductType,
+  DependencyParentContext,
+  ResolvedDependencyLine,
+  ResolveDependenciesOutput,
+} from './skuDependencyEngine';
+
 // --- BOM Pipeline ---
 export { runBomPipeline } from './bomPipeline';
 export type {
@@ -82,6 +100,7 @@ export type {
   BomPipelineOutput,
   BomPipelineStatus,
   BomOutputLine,
+  BomLineDependency,
   SnapshotData,
   SnapshotZone,
   SnapshotLighting,

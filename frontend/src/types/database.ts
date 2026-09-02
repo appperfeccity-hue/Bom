@@ -338,6 +338,34 @@ export interface SkuCompatibility {
   created_at: string;
 }
 
+export type SkuDependencyType = 'REQUIRED' | 'CONDITIONAL' | 'OPTIONAL';
+export type SkuDependencyQuantityRule =
+  | 'PER_PARENT'
+  | 'PER_AREA'
+  | 'PER_LENGTH'
+  | 'PER_EDGE'
+  | 'FIXED';
+export type SkuDependencyUnit = 'PCS' | 'M' | 'M2';
+
+export interface SkuDependencyCondition {
+  field: string;
+  operator: 'EQ' | 'NEQ' | 'GT' | 'LT' | 'GTE' | 'LTE';
+  value: number | string;
+}
+
+export interface SkuDependency {
+  dependency_id: string;
+  parent_sku_id: string;
+  child_sku_id: string;
+  dependency_type: SkuDependencyType;
+  condition: SkuDependencyCondition | null;
+  quantity_rule: SkuDependencyQuantityRule;
+  quantity_factor: number;
+  unit_of_measure: SkuDependencyUnit;
+  status: SkuStatus;
+  created_at: string;
+}
+
 export interface DesignFamilyMaster {
   design_family_id: string;
   name: string;

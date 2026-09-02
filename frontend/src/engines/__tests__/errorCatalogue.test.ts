@@ -9,9 +9,16 @@ import {
 
 describe('errorCatalogue', () => {
   describe('ErrorCode enum', () => {
-    it('should have 34 error codes', () => {
+    it('should have 37 error codes', () => {
       const codes = Object.values(ErrorCode);
-      expect(codes).toHaveLength(34);
+      expect(codes).toHaveLength(37);
+    });
+
+    it('should have 3 dependency codes', () => {
+      const depCodes = Object.values(ErrorCode).filter((c) =>
+        c.startsWith('DEP_')
+      );
+      expect(depCodes).toHaveLength(3);
     });
 
     it('should have all unique error codes', () => {

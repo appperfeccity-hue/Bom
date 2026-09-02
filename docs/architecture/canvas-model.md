@@ -166,6 +166,29 @@ reclassify a `LIGHT` or `FURNITURE` line. Classification flows
 `BomOutputLine.productType` → `actual_bom_line.product_type` →
 `final_bom_line.product_type`.
 
+### 8.1 SKU dependency graph (v1.2.6)
+
+`sku_dependency` (`migrations/v1.2.6_sku_dependency_graph.sql`) is the
+*generation* relationship: `parent_sku_id → child_sku_id` with
+`dependency_type` (`REQUIRED` | `CONDITIONAL` | `OPTIONAL`), an optional
+`condition` (`{field, operator, value}`), and a `quantity_rule`
+(`PER_PARENT` | `PER_AREA` | `PER_LENGTH` | `PER_EDGE` | `FIXED`) with
+`quantity_factor` and `unit_of_measure`. It is distinct from
+`sku_compatibility`, which remains *validation-only*. A trigger rejects an
+active edge that would close a cycle.
+
+`build_template_snapshot` freezes the transitive closure of every SKU the
+template references under `snapshot_data.sku_dependencies` (each row embeds the
+frozen child `sku_master` record). `skuDependencyEngine.resolveSkuDependencies`
+expands primary BOM lines recursively and deterministically after quantity
+calculation; each generated `BomOutputLine` carries `dependency = {parentSkuId,
+dependencyId, dependencyType, quantityRule, level}`, persisted in
+`actual_bom_line.calculation_inputs`, and reconciliation never merges lines
+across different parents or levels. Cycles and missing geometry context
+(`DEP_CIRCULAR_DEPENDENCY`, `DEP_CONTEXT_MISSING`) block the BOM; an
+unresolvable condition field (`DEP_CONDITION_UNRESOLVED`) is a warning and the
+child is omitted. Snapshots without `sku_dependencies` behave as an empty graph.
+
 ## 9. SKU identity invariant
 
 `sku_master` physical identity — width, height, thickness, depth, colour,

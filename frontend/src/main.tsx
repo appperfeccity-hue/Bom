@@ -18,6 +18,7 @@ import {
   DesignFamilyPage,
   SkuMasterPage,
   SkuCompatibilityPage,
+  SkuDependencyPage,
   CataloguePage,
   RuleSetPage,
 } from '@/pages/admin';
@@ -68,6 +69,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                   <Route path="/admin/design-families" element={<DesignFamilyPage />} />
                   <Route path="/admin/skus" element={<SkuMasterPage />} />
                   <Route path="/admin/compatibility" element={<SkuCompatibilityPage />} />
+                  <Route path="/admin/dependencies" element={<SkuDependencyPage />} />
                   <Route path="/admin/catalogue" element={<CataloguePage />} />
                   <Route path="/admin/rule-sets" element={<RuleSetPage />} />
                 </Route>

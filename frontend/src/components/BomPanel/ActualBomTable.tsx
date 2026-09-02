@@ -3,6 +3,8 @@ import { BomSectionTable } from './BomSectionTable';
 import { BomStatusBadge } from './BomStatusBadge';
 
 const columns = [
+  { key: 'level', header: 'Level' },
+  { key: 'parent_sku_id', header: 'Parent SKU' },
   { key: 'sku_id', header: 'SKU Code' },
   { key: 'quantity', header: 'Quantity' },
   { key: 'required_quantity', header: 'Required Qty' },
@@ -31,7 +33,12 @@ export function ActualBomTable() {
         <BomStatusBadge status={actualBom.status} />
       </div>
       <BomSectionTable
-        lines={actualBomLines as unknown as Record<string, unknown>[]}
+        lines={actualBomLines.map((line) => {
+          const inputs = line.calculation_inputs ?? {};
+          const level = typeof inputs.level === 'number' ? inputs.level : 0;
+          const parentSkuId = typeof inputs.parent_sku_id === 'string' ? inputs.parent_sku_id : '';
+          return { ...line, level, parent_sku_id: parentSkuId } as unknown as Record<string, unknown>;
+        })}
         columns={columns}
       />
     </div>

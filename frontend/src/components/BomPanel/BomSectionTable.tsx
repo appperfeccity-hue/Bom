@@ -20,6 +20,8 @@ function getProductTypeLabel(pt: string): string {
       return 'Light';
     case ProductType.FURNITURE:
       return 'Furniture';
+    case 'HIDDEN_COMPONENT':
+      return 'Hidden Components';
     default:
       return pt;
   }
